@@ -230,3 +230,53 @@ because nothing the user does in the Simulator will help.
 - Saving to Photos and Files is likewise unexercised — both need a real device.
 - `MeasurementOverlay` now draws the measured crown and chin (`RenderedOutput.crownFraction` /
   `chinFraction`) rather than the spec's targets, but has not been seen on screen.
+
+## Three countries, and hardening (2026-09-21)
+
+**United States** — `specs/us-passport.json`, sourced from **8 FAM 402.1**, the State
+Department's own adjudication manual (CT:CITZ-136, 12 Jan 2026), cross-checked against U.S.
+Mission Poland's public page. 2 x 2 in (50.8 mm), head 25-35 mm, no glasses, 54 KB-10 MB.
+Every source is `official`.
+
+The FAM measures the facial image "from the top of the head (not the hairline or the applicant's
+hair) to the bottom of the chin (not including facial hair)" — the **opposite** of this app,
+which deliberately measures the hair mass and the beard (LESSONS 1 and 2). Ours therefore reads
+larger than the official definition, so the target sits mid-band at 30 mm, leaving 5 mm either
+way. Recorded in the spec's notes and pinned by a test.
+
+**Schengen** — `specs/eu-schengen-visa.json`, sourced from the European Commission's own ICAO
+photograph guidelines (DG Migration and Home Affairs). It differs from the others in three ways
+that all exercised untested paths: the head is stated as a **percentage** (70-80%) rather than
+millimetres, the background is **light grey**, not white, and **glasses are permitted**.
+
+**The bug the third country found** — see LESSONS 18. A rule stated in a different unit was
+silently dropped in three places, including `ComplianceChecker`, where the Schengen head height
+was **never checked at all**. Fixed with `HeadHeightBand.inMM` and a public `eyeLineBand`, and
+guarded by `SpecRenderabilityTests`, which walks every file in `specs/`.
+
+**What was measured — IMG_0012 through all three specs**
+| | India | United States | Schengen |
+|---|---|---|---|
+| output | 630x810 | 1200x1200 | 827x1063 |
+| head | 35.39 mm (35.25-36.75) | 29.68 mm (25-35) | 33.44 mm (31.5-36.0) |
+| background | white, 99.9% pure | white, 99.9% pure | grey #F0F0F0, 99.9% pure |
+| verdict | meets requirements | meets requirements | meets requirements |
+All three inspected by eye. All ten reject fixtures are rejected under all three specs.
+
+**Bad input** — `BadInputTests` needs no private photos, so it runs on any clone: a blank wall,
+pure noise, a 32 px image, 2000x10 and 10x2000 and 1x1, empty and corrupt bytes. The contract is
+that the pipeline always returns, never crashes, and never emits a passport photo from something
+that is not a usable portrait. `BadPortraitTests` builds harder cases from the owner's photos: a
+two-person frame (rejected for faceCount) and a heavily blurred portrait (rejected for sharpness).
+
+**UI** — the country picker became one card per spec, because a segmented control truncated
+"Schengen Area, Schengen visa" at three entries. Cards come straight from the catalogue, so
+adding a country still touches no Swift.
+
+**Open issues**
+- The Result screen is still unverified by eye; see the M5 follow-up entry.
+- `earsVisible` is decoded and shown but no rule enforces it. India requires ears visible, the US
+  and EU do not.
+- Glasses are decoded and shown but not detected. Schengen permits them with conditions the app
+  cannot check.
+- The US spec's `topMargin` and eye band are this app's framing choices, not published figures.

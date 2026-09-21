@@ -1,3 +1,4 @@
+import PhotoPipeline
 import SpecKit
 import SwiftUI
 
@@ -20,11 +21,16 @@ struct RequirementsSheet: View {
                 }
 
                 Section("You in it") {
-                    if let band = spec.geometry.headHeight.passMM {
+                    // Specs state these in different units: India gives millimetres and a
+                    // fraction eye line, the US millimetres both ways, the EU a percentage for
+                    // the head. Reading only one form hid each country's rules in turn.
+                    if let band = HeadHeightBand.inMM(spec: spec) {
                         row("Head height", "\(trim(band.min))–\(trim(band.max)) mm, chin to crown")
                     }
                     if let eye = spec.geometry.eyeLine?.fromBottomFraction {
                         row("Eye line", "\(trim(eye.min * 100))–\(trim(eye.max * 100))% up from the bottom")
+                    } else if let eye = spec.geometry.eyeLine?.fromBottomMM {
+                        row("Eye line", "\(trim(eye.min))–\(trim(eye.max)) mm up from the bottom")
                     }
                     if let appearance = spec.appearance {
                         if appearance.eyesOpen == true { row("Eyes", "Open, looking at the camera") }
@@ -36,8 +42,8 @@ struct RequirementsSheet: View {
                             row("Glasses", glasses ? "Allowed" : "Not allowed")
                         }
                     }
-                    if spec.background?.colorHex == "#FFFFFF" {
-                        row("Background", "Plain white")
+                    if let hex = spec.background?.colorHex {
+                        row("Background", hex.uppercased() == "#FFFFFF" ? "Plain white" : "Plain light grey (\(hex))")
                     }
                 }
 

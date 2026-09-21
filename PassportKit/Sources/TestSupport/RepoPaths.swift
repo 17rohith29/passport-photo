@@ -18,6 +18,7 @@ public enum RepoPaths {
     public static var fixturePhotos: URL? { fixtures?.appendingPathComponent("photos") }
 
     public static var inPassportSpec: URL? { specs?.appendingPathComponent("in-passport.json") }
+    public static var usPassportSpec: URL? { specs?.appendingPathComponent("us-passport.json") }
     public static var squareTestSpec: URL? { specs?.appendingPathComponent("test/fixture-square.json") }
     public static var expectedJSON: URL? { fixtures?.appendingPathComponent("expected.json") }
 

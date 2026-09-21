@@ -91,3 +91,22 @@ that hid a Vision error completely.
 **Rule:** `PipelineResult` carries `failureReason` (plain language) and `technicalDetail` (the
 raw error, behind a disclosure). Never show the raw error as the headline, and never leave the
 screen with no explanation.
+
+## 18. A rule stated in different units gets silently dropped
+Specs state the same rule in whatever unit the authority publishes: India gives head height in
+millimetres, the EU gives it as "70-80% of the photograph", the US gives the eye line in
+millimetres where India gives a fraction. Code that reads only one form does not fail loudly —
+it reads `nil` and skips the rule.
+
+This bit in three places at once, all found by adding a third country:
+- `ComplianceChecker.headHeightCheck` read `passMM` only, so for the Schengen spec the **head
+  height was never checked at all** — the one rule the Commission actually publishes.
+- The requirements sheet read `passMM` only, so Schengen showed **no head-height row**.
+- It read `eyeLine.fromBottomFraction` only, so the US showed **no eye-line row**, and compared
+  `colorHex == "#FFFFFF"`, so Schengen showed **no background row**.
+
+**Rule:** resolve through `HeadHeightBand.inMM(spec:)` and `CropPlanner.eyeLineBand(spec:_:)`,
+never by reading one field. Never compare a spec value to a literal to decide whether to show it.
+**Test:** `SpecRenderabilityTests` walks every file in `specs/` and asserts each one resolves a
+head band, an eye line, geometry and a parseable background, so a new country cannot be added
+with a rule that silently does not apply.

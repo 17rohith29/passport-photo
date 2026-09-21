@@ -33,7 +33,21 @@ struct HomeView: View {
     private func content(spec: DocumentSpec) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                DocumentCard(spec: spec) { showingRequirements = true }
+                // One card per bundled spec, per docs/PLAN.md. A segmented control truncated
+                // "Schengen Area, Schengen visa" to "Schengen Area,..." at three entries.
+                VStack(spacing: 10) {
+                    ForEach(catalog.specs) { option in
+                        DocumentCard(
+                            spec: option,
+                            isSelected: option.id == spec.id,
+                            onSelect: { selectedSpec = option },
+                            onShowRequirements: {
+                                selectedSpec = option
+                                showingRequirements = true
+                            }
+                        )
+                    }
+                }
 
                 VStack(spacing: 12) {
                     PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
@@ -48,22 +62,6 @@ struct HomeView: View {
                         .buttonStyle(.bordered)
                         .controlSize(.large)
                         .frame(maxWidth: .infinity)
-                }
-
-                if catalog.specs.count > 1 {
-                    Picker("Document", selection: Binding(
-                        get: { (selectedSpec ?? spec).id },
-                        set: { id in selectedSpec = catalog.specs.first { $0.id == id } }
-                    )) {
-                        ForEach(catalog.specs) { option in
-                            Text("\(option.country.name), \(option.document.displayName)").tag(option.id)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                } else {
-                    Text("More countries coming")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
                 }
 
                 TipsSection()
@@ -98,6 +96,10 @@ struct HomeView: View {
         }
         .task {
             // Lets the flow be driven without tapping, for screenshotting the real screens.
+            if let id = DebugAutoRun.specID(), let match = catalog.specs.first(where: { $0.id == id }) {
+                selectedSpec = match
+                showingRequirements = DebugAutoRun.showRequirements
+            }
             if let data = DebugAutoRun.photoData() {
                 session.process(data: data, spec: spec)
             }
@@ -117,39 +119,79 @@ enum DebugAutoRun {
         return nil
         #endif
     }
+
+    /// `-selectSpec <id>` and `-showRequirements` drive the picker for screenshots.
+    static func specID() -> String? {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-selectSpec"), index + 1 < arguments.count
+        else { return nil }
+        return arguments[index + 1]
+        #else
+        return nil
+        #endif
+    }
+
+    static var showRequirements: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-showRequirements")
+        #else
+        return false
+        #endif
+    }
 }
 
 struct DocumentCard: View {
     let spec: DocumentSpec
-    let onTap: () -> Void
+    var isSelected: Bool = false
+    var onSelect: () -> Void = {}
+    var onShowRequirements: () -> Void = {}
 
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 14) {
-                Text(flag(for: spec.country.code))
-                    .font(.system(size: 40))
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(spec.country.name), \(spec.document.displayName)")
-                        .font(.headline)
-                    Text(summary)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+        HStack(spacing: 14) {
+            Button(action: onSelect) {
+                HStack(spacing: 14) {
+                    Text(flag(for: spec.country.code))
+                        .font(.system(size: 34))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("\(spec.country.name), \(spec.document.displayName)")
+                            .font(.headline)
+                            .multilineTextAlignment(.leading)
+                        Text(summary)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                    }
+                    Spacer(minLength: 0)
                 }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.tertiary)
             }
-            .padding()
-            .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
+            .buttonStyle(.plain)
+
+            Button(action: onShowRequirements) {
+                Image(systemName: "info.circle")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Requirements for \(spec.country.name)")
         }
-        .buttonStyle(.plain)
-        .accessibilityHint("Shows the full requirements")
+        .padding()
+        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .strokeBorder(isSelected ? Color.accentColor : .clear, lineWidth: 2)
+        )
+        .accessibilityElement(children: .contain)
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
     private var summary: String {
         let size = "\(trim(spec.photo.sizeMM.width)) × \(trim(spec.photo.sizeMM.height)) mm"
-        let background = spec.background?.colorHex == "#FFFFFF" ? "white background" : "coloured background"
-        return "\(size), \(background)"
+        switch spec.background?.colorHex.uppercased() {
+        case "#FFFFFF": return "\(size), white background"
+        case .none: return size
+        default: return "\(size), light grey background"
+        }
     }
 
     private func trim(_ value: Double) -> String {

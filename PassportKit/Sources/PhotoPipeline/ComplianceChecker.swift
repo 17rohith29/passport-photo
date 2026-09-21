@@ -177,11 +177,15 @@ public struct ComplianceChecker: Sendable {
         )
     }
 
-    func headHeightCheck(
+    /// Public so the head-height rule can be exercised directly, whichever way a spec states it.
+    public func headHeightCheck(
         crown: CGFloat, chin: CGFloat, geometry: SpecGeometry, spec: DocumentSpec
     ) -> CheckResult {
         let mm = geometry.pxToMM(Double(chin - crown))
-        let band = spec.geometry.headHeight.passMM
+        // A spec may state the head as millimetres or as a fraction of the photo height. The EU
+        // states only a fraction ("70-80% of the photograph"), and reading passMM alone silently
+        // skipped the check entirely for such a spec.
+        let band = HeadHeightBand.inMM(spec: spec)
         let status = ThresholdEvaluator.evaluateRange(mm, band)
         return CheckResult(
             id: .headHeight, status: status,

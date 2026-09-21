@@ -35,6 +35,19 @@ public enum PlanError: Error, CustomStringConvertible, Equatable {
     }
 }
 
+/// Resolves the head-height band to millimetres, whichever way the spec states it.
+public enum HeadHeightBand {
+    public static func inMM(spec: DocumentSpec) -> SpecKit.Range? {
+        let head = spec.geometry.headHeight
+        if let mm = head.passMM { return mm }
+        if let fraction = head.passFraction {
+            let height = spec.photo.sizeMM.height
+            return SpecKit.Range(min: fraction.min * height, max: fraction.max * height)
+        }
+        return nil
+    }
+}
+
 /// Pure geometry: where to cut the photo so the head lands at the spec's size and position.
 ///
 /// Ported from the crop maths in `reference/python/auto_passport.py`: aim for the target top
@@ -113,7 +126,8 @@ public enum CropPlanner {
         return .success(CropPlan(rect: rect, outputSize: outputSize, scale: scale))
     }
 
-    static func eyeLineBand(spec: DocumentSpec, photoHeightMM: Double) -> SpecKit.Range? {
+    /// The eye-line band as a fraction of photo height, whichever way the spec states it.
+    public static func eyeLineBand(spec: DocumentSpec, photoHeightMM: Double) -> SpecKit.Range? {
         guard let eyeLine = spec.geometry.eyeLine else { return nil }
         if let fraction = eyeLine.fromBottomFraction { return fraction }
         if let mm = eyeLine.fromBottomMM {

@@ -1,0 +1,68 @@
+{
+  "$schema": "./document-spec.schema.json",
+  "schemaVersion": 1,
+  "id": "us-passport",
+  "country": { "code": "US", "name": "United States" },
+  "document": { "type": "passport", "displayName": "Passport", "channel": "U.S. Department of State" },
+  "status": {
+    "lastVerified": "2026-09-21",
+    "confidence": "high",
+    "notes": [
+      "Size and head height come from 8 FAM 402.1, the Department of State's own adjudication manual (change CT:CITZ-136, 12 Jan 2026), and match the public guidance on travel.state.gov.",
+      "8 FAM 402.1-2(4) measures the facial image 'from the top of the head (not the hairline or the applicant's hair) to the bottom of the chin (not including facial hair)'. This app measures the top of the hair mass to the bottom of the beard (LESSONS 1 and 2), which reads LARGER than the official definition on people with tall hair or a beard. Targeting 30 mm, the middle of the 25-35 mm band, leaves 5 mm of margin either way so a conservative measurement still lands inside. A future schema `measure` value could model the skull-top definition properly.",
+      "The United States publishes NO eye-line requirement and NO top-margin requirement. The eye band here is the State Department photo composition template as reproduced by third parties, not an official figure, and is used only to frame the crop. Head height is the rule that actually matters.",
+      "8 FAM 402.1-3 requires uniform lighting with no shadows obscuring the face, and rejects grainy or pixelated images, but states no numbers. The lighting and sharpness thresholds here are this app's own calibration, shared with the India spec.",
+      "No pixel dimensions are published for the digital upload; the State Department states only a file size of 54 KB to 10 MB. 600x600 is 2 inches at 300 dpi, and 1200x1200 is the largest size commonly accepted.",
+      "Glasses have not been acceptable since 1 November 2016 except for documented medical reasons."
+    ]
+  },
+  "photo": {
+    "sizeMM": { "width": 50.8, "height": 50.8 },
+    "digital": {
+      "sizePxRange": { "min": { "width": 600, "height": 600 }, "max": { "width": 1200, "height": 1200 } },
+      "format": "jpeg",
+      "fileSizeKB": { "min": 54, "max": 10240 }
+    },
+    "print": { "dpi": 300, "copiesRequired": 1, "paperFinish": "any" }
+  },
+  "geometry": {
+    "headHeight": {
+      "measure": "chinToCrown",
+      "targetMM": 30.0,
+      "passMM": { "min": 25.0, "max": 35.0 },
+      "note": "8 FAM 402.1-2(4): 1 inch (25.4 mm) to 1 3/8 inches (34.9 mm). Rounded to the 25-35 mm the Department itself publishes. Target is mid-band because this app's crown and chin run large; see status.notes."
+    },
+    "topMargin": { "targetMM": 6.0, "passMM": { "min": 2.0, "max": 12.0 } },
+    "eyeLine": { "fromBottomMM": { "min": 28.0, "max": 35.0 } },
+    "horizontalOffsetFraction": { "failAbove": 0.02 },
+    "shouldersVisibleFraction": { "failBelow": 0.55 }
+  },
+  "pose": {
+    "rollDeg": { "inputFailAbove": 10, "outputFailAbove": 2 },
+    "yawDeg": { "warnAbove": 5, "failAbove": 8 },
+    "pitchDeg": { "warnAbove": 5, "failAbove": 8 }
+  },
+  "appearance": { "eyesOpen": true, "mouthClosed": true, "glassesAllowed": false, "expression": "neutral-or-slight-smile", "earsVisible": false },
+  "lighting": { "cheekImbalance": { "warnAbove": 0.08, "failAbove": 0.12 } },
+  "background": {
+    "colorHex": "#FFFFFF",
+    "pureFraction": { "failBelow": 0.95 },
+    "minChannelValue": 245,
+    "editingRisk": "We replaced the background. The State Department requires an unedited photo, so retake against a plain white wall if you can."
+  },
+  "input": { "allowUpscaling": false, "sharpness": { "failBelow": 100 } },
+  "sources": [
+    { "title": "8 FAM 402.1 Passport Photographs (CT:CITZ-136, 12 Jan 2026)", "authority": "official",
+      "url": "https://fam.state.gov/fam/08fam/08fam040201.html",
+      "says": "2\" x 2\" overall; facial image no less than 1\" and no more than 1 3/8\" from the top of the head (not the hairline or hair) to the bottom of the chin (not including facial hair); colour; taken within six months; plain white, off-white or light-coloured background; uniform lighting; no digital manipulation or filters" },
+    { "title": "U.S. Mission Poland: Photo Requirements", "authority": "official",
+      "url": "https://pl.usembassy.gov/photo-requirements/",
+      "says": "2 x 2 inches (51 x 51 mm); head between 1 inch and 1 3/8 inches (25-35 mm) from the bottom of the chin to the top of the head; taken within the last 6 months; plain white or off-white background; full-face view; neutral expression, both eyes open; no glasses" },
+    { "title": "Department of State: Uploading a Digital Photo", "authority": "official",
+      "url": "https://travel.state.gov/en/passports/renew-replace/online/upload-digital-photo.html",
+      "says": "JPG, PNG, HEIC or HEIF, 54 KB to 10 MB; sharp, in focus, not grainy or pixelated; original and unedited, no filters" },
+    { "title": "22 CFR 51.26 (photograph must be a good likeness)", "authority": "official",
+      "url": "https://www.ecfr.gov/current/title-22/chapter-I/subchapter-F/part-51/subpart-B/section-51.26",
+      "says": "A photograph must be a good likeness of and satisfactorily identify the applicant" }
+  ]
+}
