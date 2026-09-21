@@ -34,9 +34,24 @@ public struct VisionSubjectSegmenter: SubjectSegmenting {
         case .foregroundInstanceMask:
             return try await instanceMatte(for: image)
         case .preferred:
-            let person = try await personMatte(for: image)
-            if coverage(person) > 0.01 { return person }
-            return try await instanceMatte(for: image)
+            // Person segmentation can fail outright, not just come back empty: in the iOS
+            // Simulator it throws "Could not create inference context" (Vision code 9), which
+            // rejected every photo with a raw Vision dump. Treat a throw and an empty mask the
+            // same way and fall through to the instance mask.
+            var personFailure: Error?
+            do {
+                let person = try await personMatte(for: image)
+                if coverage(person) > 0.01 { return person }
+            } catch {
+                personFailure = error
+            }
+            do {
+                return try await instanceMatte(for: image)
+            } catch {
+                throw SegmentationError.bothSourcesFailed(
+                    person: personFailure.map { "\($0)" }, instance: "\(error)"
+                )
+            }
         }
     }
 
@@ -76,6 +91,16 @@ public struct VisionSubjectSegmenter: SubjectSegmenting {
 
 public enum SegmentationError: Error, CustomStringConvertible {
     case maskUnavailable
+    case bothSourcesFailed(person: String?, instance: String)
 
-    public var description: String { "Could not separate you from the background." }
+    public var description: String {
+        switch self {
+        case .maskUnavailable:
+            return "Could not separate you from the background."
+        case let .bothSourcesFailed(person, instance):
+            var text = "Could not separate you from the background. Instance mask: \(instance)."
+            if let person { text += " Person segmentation: \(person)." }
+            return text
+        }
+    }
 }

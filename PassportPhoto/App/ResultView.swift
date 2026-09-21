@@ -4,7 +4,8 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ResultView: View {
-    let session: PhotoSessionModel
+    let session: PhotoSession
+    let saver: PhotoSaver
     let spec: DocumentSpec
 
     enum Variant: String, CaseIterable { case upload = "Upload file", print = "Print sheet" }
@@ -95,7 +96,7 @@ struct ResultView: View {
     private var saveMenu: some View {
         Menu {
             Button("Save to Photos") {
-                if let data = currentData { session.saveToPhotos(data) }
+                if let data = currentData { saver.saveToPhotos(data) }
             }
             Button("Save to Files") { exporting = true }
         } label: {
@@ -109,7 +110,7 @@ struct ResultView: View {
 
     @ViewBuilder
     private var saveStatus: some View {
-        switch session.saveState {
+        switch saver.state {
         case .none:
             EmptyView()
         case .saving:
@@ -156,36 +157,25 @@ struct MeasurementOverlay: View {
     var body: some View {
         GeometryReader { geometry in
             let size = geometry.size
-            let pxHeight = Double(output.digital.height)
-            let geo = SpecGeometry(spec: spec)
-            let headMM = geo.map { $0.pxToMM(Double(output.headHeightPx)) } ?? 0
+            // These are where the crown and chin actually landed, not the spec's targets.
+            let headMM = SpecGeometry(spec: spec).map {
+                $0.pxToMM(Double(output.digital.height) * (output.chinFraction - output.crownFraction))
+            } ?? 0
 
             ZStack(alignment: .topLeading) {
-                line(at: crownFraction, in: size, label: "crown")
-                line(at: chinFraction, in: size, label: "chin")
+                line(at: output.crownFraction, in: size, label: "crown")
+                line(at: output.chinFraction, in: size, label: "chin")
                 Text(String(format: "head %.1f mm", headMM))
                     .font(.caption2.bold())
                     .padding(4)
                     .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 4))
-                    .position(x: size.width - 48, y: size.height * (crownFraction + chinFraction) / 2)
+                    .position(
+                        x: size.width - 52,
+                        y: size.height * (output.crownFraction + output.chinFraction) / 2
+                    )
             }
             .allowsHitTesting(false)
-            .onAppear { _ = pxHeight }
         }
-    }
-
-    // Crown and chin are measured in the crop, so express them as fractions of the output.
-    private var crownFraction: Double {
-        guard let geo = SpecGeometry(spec: spec) else { return 0 }
-        let topMM = spec.geometry.topMargin?.targetMM ?? 2.2
-        return topMM / spec.photo.sizeMM.height * (geo.outputSizePx.height / geo.outputSizePx.height)
-    }
-
-    private var chinFraction: Double {
-        guard let geo = SpecGeometry(spec: spec) else { return 0 }
-        let topMM = spec.geometry.topMargin?.targetMM ?? 2.2
-        let headMM = geo.pxToMM(Double(output.headHeightPx))
-        return (topMM + headMM) / spec.photo.sizeMM.height
     }
 
     private func line(at fraction: Double, in size: CGSize, label: String) -> some View {

@@ -1,10 +1,12 @@
+import PhotoPipeline
 import PhotosUI
 import SpecKit
 import SwiftUI
 
 struct HomeView: View {
     @State private var catalog = SpecCatalog()
-    @State private var session = PhotoSessionModel()
+    @State private var session = PhotoSession()
+    @State private var saver = PhotoSaver()
     @State private var pickerItem: PhotosPickerItem?
     @State private var showingRequirements = false
     @State private var showingFileImporter = false
@@ -72,10 +74,10 @@ struct HomeView: View {
             RequirementsSheet(spec: spec)
         }
         .fullScreenCover(isPresented: Binding(
-            get: { session.stage != .idle },
-            set: { if !$0 { session.reset() } }
+            get: { session.phase != .idle },
+            set: { if !$0 { session.reset(); saver.reset() } }
         )) {
-            SessionFlow(session: session, spec: spec)
+            SessionFlow(session: session, saver: saver, spec: spec)
         }
         .onChange(of: pickerItem) { _, item in
             guard let item else { return }
@@ -94,6 +96,26 @@ struct HomeView: View {
                 session.process(data: data, spec: spec)
             }
         }
+        .task {
+            // Lets the flow be driven without tapping, for screenshotting the real screens.
+            if let data = DebugAutoRun.photoData() {
+                session.process(data: data, spec: spec)
+            }
+        }
+    }
+}
+
+/// Debug builds only: `-autoProcessPhoto <path>` runs that file through the flow on launch.
+enum DebugAutoRun {
+    static func photoData() -> Data? {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-autoProcessPhoto"),
+              index + 1 < arguments.count else { return nil }
+        return try? Data(contentsOf: URL(fileURLWithPath: arguments[index + 1]))
+        #else
+        return nil
+        #endif
     }
 }
 

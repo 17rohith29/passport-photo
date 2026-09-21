@@ -185,3 +185,48 @@ control was not granted — so the UI beyond Home is unverified by me.
 - `MeasurementOverlay` derives its crown/chin lines from the spec's target top margin rather than
   from where the head actually landed, so the lines are nominal, not measured. Fix before M6.
 - No Dynamic Type / VoiceOver / dark mode pass yet (M6).
+
+## M5 follow-up — the flow actually runs (2026-09-21)
+
+Prompted by "I pass in a photo and it's just spinning, 'Reading your photo' is not checked".
+
+**Three real bugs, all found by running the app rather than the tests**
+1. **The step list never ticked.** The whole pipeline ran under one hardcoded step, so the UI sat
+   on step 2 forever and no step ever showed as done. `PassportPipeline.run` now reports a
+   `PipelineStage` at each stage, `PhotoSession` tracks a `completed` set, and the view shows
+   done / in-progress / waiting per step.
+2. **The matte ran at full resolution.** `MatteRefiner` allocates several image-sized buffers
+   (connected components, a signed distance field, a blur); at 24 MP that is hundreds of
+   megabytes, fine on a Mac and not on a phone. Segmentation and refinement now run at
+   `Tuning.matteWorkingSize` (2048 px) — the reference pipeline downsamples for the same reason —
+   and the renderer samples the smaller matte rather than upscaling it into another full buffer.
+   End to end went **2.875 s to 1.678 s** with the same result. Decode is also capped at 4500 px.
+3. **A stage that threw left a dead end.** The rejection screen only rendered failed *checks*, so
+   a thrown error produced a bare "This photo can't be used." with no reason at all. See
+   LESSONS 17.
+
+**The Simulator cannot run this app** (LESSONS 16). iOS 26.5 throws Vision code 9, "Could not
+create inference context", on the first landmarks request. iOS 18.4 runs Vision but returns zero
+faces for a photo macOS handles — indistinguishable from a real "no face". Both now surface as a
+device limitation, with a different headline, no "choose another photo" button and no tips,
+because nothing the user does in the Simulator will help.
+
+**What was verified**
+- 60 tests green in release, 6.6 s.
+- `PhotoSessionTests` drive the exact flow the app runs: every stage completes, a good photo
+  finishes with a renderable result and a print sheet, a rejected photo carries advice on every
+  failure, garbage data fails cleanly instead of hanging, and reset clears state.
+- `DecodeCapTests` pin that the new 4500 px decode cap still finds a face and agrees with the
+  uncapped image on head height within 5% — the cap was the first suspect for the iOS 18 "no
+  face" and was ruled out on macOS.
+- Screens seen for real in the Simulator: Home, Processing, and the rejection screen in both its
+  photo-problem and device-limitation forms.
+
+**Open issues**
+- **The Result screen has never been rendered.** No Simulator can reach it, and running the app on
+  this Mac via "Designed for iPad" needs the Mac registered for development signing, which
+  CLAUDE.md says to ask about first. It is the one screen still unverified by eye; its data is
+  covered by `PhotoSessionTests`.
+- Saving to Photos and Files is likewise unexercised — both need a real device.
+- `MeasurementOverlay` now draws the measured crown and chin (`RenderedOutput.crownFraction` /
+  `chinFraction`) rather than the spec's targets, but has not been seen on screen.

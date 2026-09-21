@@ -33,8 +33,11 @@ public struct RGB: Sendable, Equatable {
 /// downscale per output. LESSONS 10: sharpen only the subject, then revert the anti-aliased rim.
 public enum Renderer {
 
+    /// `matteScale` is source pixels to matte pixels. The matte is kept at the reduced working
+    /// resolution it was refined at and sampled here, rather than being upscaled into another
+    /// full-size buffer.
     public static func render(
-        source: PixelImage, matte: AlphaMatte, plan: CropPlan,
+        source: PixelImage, matte: AlphaMatte, matteScale: Double = 1, plan: CropPlan,
         background: RGB, sharpen: [SharpenPass], tuning: Tuning = .default
     ) -> PixelImage? {
         let outWidth = Int(plan.outputSize.width.rounded())
@@ -47,7 +50,9 @@ public enum Renderer {
         let cropHeight = Int(plan.rect.height.rounded())
         guard cropWidth > 0, cropHeight > 0 else { return nil }
 
-        let wall = estimateBackgroundColour(source: source, matte: matte, rect: plan.rect)
+        let wall = estimateBackgroundColour(
+            source: source, matte: matte, matteScale: matteScale, rect: plan.rect
+        )
 
         // Composite at source resolution, inside the crop only.
         var composite = [Float](repeating: 0, count: cropWidth * cropHeight * 3)
@@ -66,7 +71,7 @@ public enum Renderer {
                     alpha[index] = 0
                     continue
                 }
-                let a = min(max(matte[sx, sy], 0), 1)
+                let a = min(max(sampleMatte(matte, scale: matteScale, x: sx, y: sy), 0), 1)
                 let p = source.offset(x: sx, y: sy)
                 var colour = (
                     Float(source.pixels[p]) / 255,
@@ -130,6 +135,11 @@ public enum Renderer {
         return out
     }
 
+    static func sampleMatte(_ matte: AlphaMatte, scale: Double, x: Int, y: Int) -> Float {
+        guard scale < 1 else { return matte.at(x: x, y: y) }
+        return matte.sample(x: Float(Double(x) * scale), y: Float(Double(y) * scale))
+    }
+
     static func unmix(_ observed: Float, alpha: Float, background: Float) -> Float {
         guard alpha > 0.02 else { return observed }
         return min(max((observed - (1 - alpha) * background) / alpha, 0), 1)
@@ -137,7 +147,9 @@ public enum Renderer {
 
     /// Mean colour of pixels the matte calls background, inside the crop. That is the real wall,
     /// which is what has to be unmixed out of the edges.
-    static func estimateBackgroundColour(source: PixelImage, matte: AlphaMatte, rect: CGRect) -> RGB {
+    static func estimateBackgroundColour(
+        source: PixelImage, matte: AlphaMatte, matteScale: Double, rect: CGRect
+    ) -> RGB {
         var r: Double = 0, g: Double = 0, b: Double = 0, count: Double = 0
         let x0 = max(0, Int(rect.minX)), x1 = min(source.width - 1, Int(rect.maxX))
         let y0 = max(0, Int(rect.minY)), y1 = min(source.height - 1, Int(rect.maxY))
@@ -145,7 +157,8 @@ public enum Renderer {
 
         let step = max(1, (x1 - x0) / 200)
         for y in stride(from: y0, through: y1, by: step) {
-            for x in stride(from: x0, through: x1, by: step) where matte[x, y] < 0.05 {
+            for x in stride(from: x0, through: x1, by: step)
+            where sampleMatte(matte, scale: matteScale, x: x, y: y) < 0.05 {
                 let p = source.offset(x: x, y: y)
                 r += Double(source.pixels[p])
                 g += Double(source.pixels[p + 1])

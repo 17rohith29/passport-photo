@@ -67,6 +67,21 @@ public struct FaceMeasurements: Sendable, Equatable {
 
     public var contourMinX: CGFloat { contour.map(\.x).min() ?? boundingBox.minX }
     public var contourMaxX: CGFloat { contour.map(\.x).max() ?? boundingBox.maxX }
+
+    /// The same face expressed in a resized copy of the image. Segmentation and matte refinement
+    /// run at a reduced working resolution, and need the landmarks in that space.
+    public func scaled(by factor: Double) -> FaceMeasurements {
+        let f = CGFloat(factor)
+        func scale(_ point: CGPoint) -> CGPoint { CGPoint(x: point.x * f, y: point.y * f) }
+        var copy = self
+        copy.boundingBox = boundingBox.applying(CGAffineTransform(scaleX: f, y: f))
+        copy.leftEye = scale(leftEye)
+        copy.rightEye = scale(rightEye)
+        copy.contour = contour.map(scale)
+        copy.rawChin = scale(rawChin)
+        copy.browY = browY * f
+        return copy
+    }
 }
 
 public protocol FaceAnalyzing: Sendable {

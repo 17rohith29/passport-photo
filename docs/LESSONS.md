@@ -65,3 +65,29 @@ Unofficial sources claim the Passport Seva portal detects AI-replaced background
 - HEIC from iPhone carries EXIF orientation. Apply it before landmarks.
 - Very close shots (IMG_0010, about 0.5 m) add perspective distortion and side light. The capture milestone should aim for about 1.5 m with the 2x lens.
 - A visible necklace is allowed. It's not a defect.
+
+## 16. The iOS Simulator cannot run this pipeline at all
+Both installed Simulator runtimes fail, and they fail *differently*, which is what made it
+confusing:
+- **iOS 26.5:** every Vision request throws `VisionError.requestCancelled` wrapping
+  `Vision Code=9 "Could not create inference context"`. It fails on the very first
+  `DetectFaceLandmarksRequest`, before any photo measurement happens.
+- **iOS 18.4:** Vision runs but returns **zero face observations** for a photo that macOS detects
+  fine, which is indistinguishable from a genuine "no face in this photo".
+
+The second is the dangerous one: untreated, the app tells the user their clear portrait has no
+face in it, and invites them to pick another photo — none of which will ever work.
+**Rule:** the Mac fixture suite (`swift test`) is the gate, and the app is only meaningfully
+testable on a real iPhone. Vision failures, and `noFaceFound` when compiled for the Simulator,
+are reported as a device limitation: a different headline, no "choose another photo" button and
+no tips, because nothing the user does here will help.
+**Test:** `PhotoSessionTests` drive the real flow on macOS, and
+`PassportPipeline.isDeviceLimitation` is what the UI branches on.
+
+## 17. A stage that throws needs a user-visible reason
+The rejection screen originally showed failed *checks* only. When a stage threw instead, the
+screen fell through to a bare "This photo can't be used." with nothing else on it — a dead end
+that hid a Vision error completely.
+**Rule:** `PipelineResult` carries `failureReason` (plain language) and `technicalDetail` (the
+raw error, behind a disclosure). Never show the raw error as the headline, and never leave the
+screen with no explanation.

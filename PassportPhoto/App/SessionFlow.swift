@@ -4,26 +4,27 @@ import SwiftUI
 
 /// Processing → rejection or result, over the imported photo.
 struct SessionFlow: View {
-    @Bindable var session: PhotoSessionModel
+    let session: PhotoSession
+    let saver: PhotoSaver
     let spec: DocumentSpec
 
     var body: some View {
         NavigationStack {
             Group {
-                switch session.stage {
+                switch session.phase {
                 case .idle, .working:
                     ProcessingView(session: session)
                 case .rejected:
                     RejectionView(session: session, spec: spec)
                 case .finished:
-                    ResultView(session: session, spec: spec)
+                    ResultView(session: session, saver: saver, spec: spec)
                 }
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(session.isWorking ? "Cancel" : "Done") {
-                        session.cancel()
                         session.reset()
+                        saver.reset()
                     }
                 }
             }
@@ -32,15 +33,7 @@ struct SessionFlow: View {
 }
 
 struct ProcessingView: View {
-    let session: PhotoSessionModel
-
-    private static let steps = [
-        "Reading your photo",
-        "Checking quality and finding your face",
-        "Removing the background",
-        "Cropping to size",
-        "Verifying the result",
-    ]
+    let session: PhotoSession
 
     var body: some View {
         VStack(spacing: 28) {
@@ -53,22 +46,24 @@ struct ProcessingView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
 
-            // No fake progress bar: the current step is the only honest signal.
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(Self.steps, id: \.self) { step in
+            // No fake progress bar: the real stage the pipeline reports is the only honest signal.
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(PipelineStage.allCases, id: \.self) { step in
                     HStack(spacing: 10) {
-                        Image(systemName: icon(for: step))
-                            .foregroundStyle(isCurrent(step) ? Color.accentColor : .secondary)
-                        Text(step)
-                            .foregroundStyle(isCurrent(step) ? .primary : .secondary)
+                        icon(for: step)
+                            .frame(width: 20)
+                        Text(step.rawValue)
+                            .foregroundStyle(isCurrent(step) || isDone(step) ? .primary : .secondary)
                         Spacer()
                     }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel(accessibilityLabel(for: step))
                 }
             }
             .padding()
             .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
+            .animation(.default, value: session.completed)
 
-            ProgressView()
             Spacer()
         }
         .padding()
@@ -76,20 +71,29 @@ struct ProcessingView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private var currentStep: String? {
-        if case let .working(step) = session.stage { return step }
-        return nil
+    private func isCurrent(_ step: PipelineStage) -> Bool { session.currentStage == step }
+    private func isDone(_ step: PipelineStage) -> Bool { session.completed.contains(step) }
+
+    @ViewBuilder
+    private func icon(for step: PipelineStage) -> some View {
+        if isDone(step) {
+            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+        } else if isCurrent(step) {
+            ProgressView().controlSize(.small)
+        } else {
+            Image(systemName: "circle").foregroundStyle(.tertiary)
+        }
     }
 
-    private func isCurrent(_ step: String) -> Bool { currentStep == step }
-
-    private func icon(for step: String) -> String {
-        isCurrent(step) ? "circle.dotted" : "circle"
+    private func accessibilityLabel(for step: PipelineStage) -> String {
+        if isDone(step) { return "\(step.rawValue), done" }
+        if isCurrent(step) { return "\(step.rawValue), in progress" }
+        return "\(step.rawValue), waiting"
     }
 }
 
 struct RejectionView: View {
-    let session: PhotoSessionModel
+    let session: PhotoSession
     let spec: DocumentSpec
 
     var body: some View {
@@ -107,8 +111,22 @@ struct RejectionView: View {
                 Text(headline)
                     .font(.title2.bold())
 
-                if let error = session.loadError {
-                    Text(error).foregroundStyle(.secondary)
+                if session.failures.isEmpty, let reason = session.failureReason {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(reason)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        if let detail = session.technicalDetail {
+                            DisclosureGroup("Technical detail") {
+                                Text(detail)
+                                    .font(.caption2.monospaced())
+                                    .foregroundStyle(.secondary)
+                                    .textSelection(.enabled)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .font(.caption)
+                        }
+                    }
                 }
 
                 ForEach(session.failures) { check in
@@ -121,22 +139,30 @@ struct RejectionView: View {
                     ForEach(warnings) { check in CheckRow(check: check, emphasised: false) }
                 }
 
-                Button("Choose Another Photo") { session.reset() }
+                // No point offering another photo when no photo would work here.
+                Button(session.isDeviceLimitation ? "Back" : "Choose Another Photo") {
+                    session.reset()
+                }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                     .frame(maxWidth: .infinity)
                     .padding(.top)
 
-                TipsSection()
+                if !session.isDeviceLimitation { TipsSection() }
             }
             .padding()
         }
-        .navigationTitle("Can't use this photo")
+        .navigationTitle(session.isDeviceLimitation ? "Can't process here" : "Can't use this photo")
         .navigationBarTitleDisplayMode(.inline)
     }
 
     private var headline: String {
-        guard let first = session.failures.first else { return "This photo can't be used." }
+        if session.isDeviceLimitation { return "This device can't process photos" }
+        guard let first = session.failures.first else {
+            return session.failureReason == nil
+                ? "This photo can't be used."
+                : "Something went wrong processing this photo"
+        }
         switch first.id {
         case .lighting: return "Your face is lit unevenly"
         case .resolution: return "You're too far from the camera"

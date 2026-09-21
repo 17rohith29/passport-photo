@@ -31,6 +31,12 @@ public struct Tuning: Sendable, Equatable {
     /// Inset from the silhouette edge, so the region never samples hair, ear or background.
     public var cheekRegionEdgeInset: Double = 0.18
 
+    /// Longest edge that segmentation and matte refinement work at. Those stages allocate several
+    /// image-sized buffers, so running them at 24 MP costs hundreds of megabytes. The reference
+    /// pipeline downsamples to 2600 px for the same reason. Only the matte is computed here; the
+    /// photo itself is still composited and resampled at full resolution.
+    public var matteWorkingSize: Int = 2048
+
     /// Matte edge band, in px at a 3088 px reference size: wide in hair, narrow on skin.
     /// LESSONS 9; scaled by image size.
     public var bandWidthHair: Double = 18

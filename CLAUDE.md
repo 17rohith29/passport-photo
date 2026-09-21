@@ -74,7 +74,17 @@ xcodebuild -showdestinations -scheme PassportPhoto -project PassportPhoto.xcodep
 open /tmp/passportkit-debug/
 ```
 
+```bash
+# Debug builds only: run a photo through the flow on launch, without tapping. Used to screenshot
+# the real screens. The file must be inside the app container.
+xcrun simctl launch <device> com.rohith.PassportPhoto -autoProcessPhoto <path-in-container>
+```
+
 Notes:
+- **The app only works on a real iPhone.** Neither Simulator runtime can run Vision's models:
+  iOS 26.5 throws `Vision Code=9 "Could not create inference context"`, and iOS 18.4 silently
+  returns no faces. Both are reported in-app as a device limitation. See LESSONS 16. The Mac
+  fixture suite is the real gate.
 - **Run the app in Release when testing on a device.** Xcode's Run action defaults to Debug, which
   compiles PassportKit unoptimised: the same 24 MP photo takes ~141 s instead of ~2.9 s, which
   looks like a hang. Product → Scheme → Edit Scheme → Run → Build Configuration → Release.

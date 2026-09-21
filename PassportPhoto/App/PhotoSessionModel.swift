@@ -7,18 +7,13 @@ import SpecKit
 import SwiftUI
 import UniformTypeIdentifiers
 
+/// Saving is the only part of the flow that is app-specific. The processing state machine lives
+/// in `PhotoPipeline.PhotoSession`, so the flow the app runs is the flow the tests drive.
 @MainActor
 @Observable
-final class PhotoSessionModel {
+final class PhotoSaver {
 
-    enum Stage: Equatable {
-        case idle
-        case working(step: String)
-        case rejected
-        case finished
-    }
-
-    enum SaveState: Equatable {
+    enum State: Equatable {
         case none
         case saving
         case savedToPhotos
@@ -26,69 +21,17 @@ final class PhotoSessionModel {
         case failed(String)
     }
 
-    var stage: Stage = .idle
-    var sourceImage: CGImage?
-    var result: PipelineResult?
-    var saveState: SaveState = .none
-    var loadError: String?
+    var state: State = .none
 
-    private let pipeline = PassportPipeline()
-    private var task: Task<Void, Never>?
-
-    var checks: [CheckResult] { result?.allChecks ?? [] }
-    var failures: [CheckResult] { result?.failures ?? [] }
-    var warnings: [CheckResult] { result?.warnings ?? [] }
-    var output: RenderedOutput? { result?.output }
-
-    var isWorking: Bool {
-        if case .working = stage { return true }
-        return false
-    }
-
-    func process(data: Data, spec: DocumentSpec) {
-        cancel()
-        reset()
-        task = Task { [weak self] in
-            guard let self else { return }
-            do {
-                self.stage = .working(step: "Reading your photo")
-                let image = try ImageLoader.load(data: data)
-                guard !Task.isCancelled else { return }
-                self.sourceImage = image
-
-                self.stage = .working(step: "Checking quality and finding your face")
-                let outcome = await self.pipeline.run(image, spec: spec)
-                guard !Task.isCancelled else { return }
-
-                self.result = outcome
-                self.stage = outcome.output == nil ? .rejected : .finished
-            } catch {
-                self.loadError = "\(error)"
-                self.stage = .rejected
-            }
-        }
-    }
-
-    func cancel() {
-        task?.cancel()
-        task = nil
-    }
-
-    func reset() {
-        result = nil
-        sourceImage = nil
-        saveState = .none
-        loadError = nil
-        stage = .idle
-    }
+    func reset() { state = .none }
 
     /// Add-only Photos access: the app never reads the user's library.
     func saveToPhotos(_ data: Data) {
-        saveState = .saving
+        state = .saving
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { [weak self] status in
             guard let self else { return }
             guard status == .authorized || status == .limited else {
-                Task { @MainActor in self.saveState = .permissionDenied }
+                Task { @MainActor in self.state = .permissionDenied }
                 return
             }
             PHPhotoLibrary.shared().performChanges {
@@ -96,7 +39,9 @@ final class PhotoSessionModel {
                 request.addResource(with: .photo, data: data, options: nil)
             } completionHandler: { success, error in
                 Task { @MainActor in
-                    self.saveState = success ? .savedToPhotos : .failed(error?.localizedDescription ?? "Could not save.")
+                    self.state = success
+                        ? .savedToPhotos
+                        : .failed(error?.localizedDescription ?? "Could not save.")
                 }
             }
         }

@@ -122,3 +122,37 @@ struct FaceAnalysisFixtureTests {
         print(lines.joined(separator: "\n"))
     }
 }
+
+/// The app decodes with `ImageLoader.defaultMaxPixelSize`, which the other fixture tests do not
+/// exercise. If that cap ever breaks detection, every photo fails with "no face found".
+@Suite("Decode cap", .serialized, .enabled(if: RepoPaths.hasFixturePhotos))
+struct DecodeCapTests {
+
+    @Test("a face is still found at the app's default decode cap")
+    func faceFoundAtDefaultCap() async throws {
+        let url = try #require(RepoPaths.fixtures).appendingPathComponent("photos/IMG_0012.HEIC")
+        let data = try Data(contentsOf: url)
+        let image = try ImageLoader.load(data: data, maxPixelSize: ImageLoader.defaultMaxPixelSize)
+
+        #expect(max(image.width, image.height) <= ImageLoader.defaultMaxPixelSize)
+        let face = try await VisionFaceAnalyzer().analyze(image)
+        #expect(face.faceCount == 1)
+        print("capped size \(image.width)x\(image.height), faces \(face.faceCount)")
+    }
+
+    @Test("the capped and uncapped images agree on head height within a few percent")
+    func cappedMatchesFull() async throws {
+        let url = try #require(RepoPaths.fixtures).appendingPathComponent("photos/IMG_0012.HEIC")
+        let full = try ImageLoader.load(contentsOf: url)
+        let capped = try ImageLoader.load(data: try Data(contentsOf: url),
+                                          maxPixelSize: ImageLoader.defaultMaxPixelSize)
+        let fullFace = try await VisionFaceAnalyzer().analyze(full)
+        let cappedFace = try await VisionFaceAnalyzer().analyze(capped)
+
+        let scale = Double(capped.height) / Double(full.height)
+        let fullHead = Double(fullFace.rawChin.y - fullFace.browY) * scale
+        let cappedHead = Double(cappedFace.rawChin.y - cappedFace.browY)
+        #expect(abs(fullHead - cappedHead) / fullHead < 0.05,
+                "full \(fullHead) vs capped \(cappedHead)")
+    }
+}
