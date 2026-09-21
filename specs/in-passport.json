@@ -1,0 +1,65 @@
+{
+  "$schema": "./document-spec.schema.json",
+  "schemaVersion": 1,
+  "id": "in-passport",
+  "country": { "code": "IN", "name": "India" },
+  "document": { "type": "passport", "displayName": "Passport", "channel": "Passport Seva / VFS Global (USA)" },
+  "status": {
+    "lastVerified": "2026-09-20",
+    "confidence": "medium",
+    "notes": [
+      "Size, white background, no glasses and ICAO compliance come from the official VFS checklist (May 2026).",
+      "Head height is disputed: ICAO Doc 9303 gives 32-36 mm (70-80%); several photo-tool sites say 80-85% or 36-38 mm. 36.0 mm is the only value inside every range.",
+      "The 630x810 px / 10-250 KB digital upload spec comes from third-party guides, not an official page we could reach.",
+      "Unofficial sources claim the Passport Seva portal rejects AI-edited backgrounds. Unverified."
+    ]
+  },
+  "photo": {
+    "sizeMM": { "width": 35, "height": 45 },
+    "digital": { "sizePx": { "width": 630, "height": 810 }, "format": "jpeg", "fileSizeKB": { "min": 10, "max": 250 }, "dpi": 300 },
+    "print": { "dpi": 300, "copiesRequired": 2, "paperFinish": "any" }
+  },
+  "geometry": {
+    "headHeight": {
+      "measure": "chinToCrown",
+      "targetMM": 36.0,
+      "passMM": { "min": 35.25, "max": 36.75 },
+      "note": "Target sits on the boundary of the ICAO and India-strict readings; see status.notes."
+    },
+    "topMargin": { "targetMM": 2.2, "passMM": { "min": 1.5, "max": 4.0 } },
+    "eyeLine": { "fromBottomFraction": { "min": 0.50, "max": 0.60 } },
+    "horizontalOffsetFraction": { "failAbove": 0.02 },
+    "shouldersVisibleFraction": { "failBelow": 0.60 }
+  },
+  "pose": {
+    "rollDeg": { "inputFailAbove": 10, "outputFailAbove": 2 },
+    "yawDeg": { "warnAbove": 5, "failAbove": 8 },
+    "pitchDeg": { "warnAbove": 5, "failAbove": 8 }
+  },
+  "appearance": { "eyesOpen": true, "mouthClosed": true, "glassesAllowed": false, "expression": "neutral", "earsVisible": true },
+  "lighting": { "cheekImbalance": { "warnAbove": 0.08, "failAbove": 0.12 } },
+  "background": {
+    "colorHex": "#FFFFFF",
+    "pureFraction": { "failBelow": 0.95 },
+    "minChannelValue": 245,
+    "editingRisk": "We replaced the background. Upload to the Passport Seva portal first; it checks the photo instantly."
+  },
+  "input": { "allowUpscaling": false, "sharpness": { "failBelow": 100 } },
+  "sources": [
+    { "title": "VFS Global: adult re-issue checklist (May 2026)", "authority": "official-partner",
+      "url": "https://services.vfsglobal.com/one-pager/india/united-states-of-america/passport-services/pdf/new_adult_reissue_of_passport---MAY-2026-.pdf",
+      "says": "2 photos 35 mm x 45 mm, white background, identical, shoulders visible, without glasses, no flash reflection, good lighting, ICAO compliant" },
+    { "title": "VFS Global: Indian passport services in the USA", "authority": "official-partner",
+      "url": "https://services.vfsglobal.com/one-pager/india/united-states-of-america/passport-services/" },
+    { "title": "ICAO Doc 9303 photo requirements (summary)", "authority": "third-party",
+      "url": "https://compliantphoto.com/icao-9303-photo-requirements", "says": "Head 70-80% of image height, 31.5-36 mm for 45 mm" },
+    { "title": "ISO/ICAO 35x45 standard", "authority": "third-party",
+      "url": "https://www.visaphotocheck.com/document/iso-35x45", "says": "Head 32-36 mm (Schengen, Australia)" },
+    { "title": "New passport size photo rules India 2026", "authority": "third-party",
+      "url": "https://passportsizephoto.in/blog/new-passport-size-photo-rules-india-2026", "says": "Head 32-36 mm chin to crown AND 80-85% face coverage (self-contradictory)" },
+    { "title": "Visafoto: India passport photo requirements", "authority": "third-party",
+      "url": "https://visafoto.com/india/passport-photo-requirements-india", "says": "Head about 80-85% of the image; 630x810 px digital" },
+    { "title": "PhotoPass: Passport Seva photo rejected", "authority": "third-party",
+      "url": "https://www.photopass.ai/blog/passport-seva-photo-rejected-fix", "says": "630x810 px JPEG, 10-250 KB, 80-85% face coverage" }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "document-spec.schema.json",
+  "title": "Passport / ID photo document spec",
+  "description": "One file per country + document. Every country-specific number the app uses lives here. Units are explicit in field names (MM, Px, Deg, Fraction, KB).",
+  "type": "object",
+  "required": ["schemaVersion", "id", "country", "document", "status", "photo", "geometry", "sources"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9-]+$", "description": "Stable id, e.g. in-passport" },
+    "country": {
+      "type": "object", "required": ["code", "name"], "additionalProperties": false,
+      "properties": { "code": { "type": "string", "pattern": "^[A-Z]{2}$" }, "name": { "type": "string" } }
+    },
+    "document": {
+      "type": "object", "required": ["type", "displayName"], "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["passport", "visa", "oci", "id-card", "residence-permit", "other"] },
+        "displayName": { "type": "string" },
+        "channel": { "type": "string", "description": "Where it is submitted, e.g. 'Passport Seva / VFS Global (USA)'" }
+      }
+    },
+    "status": {
+      "type": "object", "required": ["lastVerified", "confidence"], "additionalProperties": false,
+      "properties": {
+        "lastVerified": { "type": "string", "format": "date" },
+        "confidence": { "enum": ["high", "medium", "low"] },
+        "isTestFixture": { "type": "boolean", "description": "true for fake specs used only in tests; never shown to users" },
+        "notes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "photo": {
+      "type": "object", "required": ["sizeMM", "digital", "print"], "additionalProperties": false,
+      "properties": {
+        "sizeMM": { "$ref": "#/$defs/size" },
+        "digital": {
+          "type": "object", "required": ["format"], "additionalProperties": false,
+          "properties": {
+            "sizePx": { "$ref": "#/$defs/size", "description": "Exact required pixel size" },
+            "sizePxRange": {
+              "type": "object", "required": ["min", "max"], "additionalProperties": false,
+              "properties": { "min": { "$ref": "#/$defs/size" }, "max": { "$ref": "#/$defs/size" } },
+              "description": "For documents that accept a range (the app picks the largest the source supports)"
+            },
+            "format": { "enum": ["jpeg"] },
+            "fileSizeKB": { "$ref": "#/$defs/range" },
+            "dpi": {
+              "type": "number", "exclusiveMinimum": 0,
+              "description": "Resolution metadata stamped into the exported JPEG. NOT a geometry input: the output's px-per-mm comes from sizePx / sizeMM. These can legitimately disagree (630x810 px at 35x45 mm is ~457 dpi while this field says 300); the loader raises an advisory when they do. Use photo.print.dpi for print tiles."
+            }
+          },
+          "oneOf": [ { "required": ["sizePx"] }, { "required": ["sizePxRange"] } ]
+        },
+        "print": {
+          "type": "object", "required": ["dpi"], "additionalProperties": false,
+          "properties": {
+            "dpi": { "type": "number", "exclusiveMinimum": 0 },
+            "copiesRequired": { "type": "integer", "minimum": 1 },
+            "paperFinish": { "enum": ["any", "glossy", "matte"] }
+          }
+        }
+      }
+    },
+    "geometry": {
+      "type": "object", "required": ["headHeight"], "additionalProperties": false,
+      "properties": {
+        "headHeight": {
+          "type": "object", "required": ["measure"], "additionalProperties": false,
+          "properties": {
+            "measure": { "enum": ["chinToCrown"] },
+            "targetMM": { "type": "number" },
+            "passMM": { "$ref": "#/$defs/range" },
+            "passFraction": { "$ref": "#/$defs/range", "description": "Of photo height, when a spec states a percentage" },
+            "note": { "type": "string" }
+          },
+          "anyOf": [ { "required": ["passMM"] }, { "required": ["passFraction"] } ]
+        },
+        "topMargin": {
+          "type": "object", "additionalProperties": false,
+          "properties": { "targetMM": { "type": "number" }, "passMM": { "$ref": "#/$defs/range" } }
+        },
+        "eyeLine": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "fromBottomFraction": { "$ref": "#/$defs/range" },
+            "fromBottomMM": { "$ref": "#/$defs/range" }
+          },
+          "minProperties": 1
+        },
+        "horizontalOffsetFraction": { "$ref": "#/$defs/threshold" },
+        "shouldersVisibleFraction": { "$ref": "#/$defs/threshold" }
+      }
+    },
+    "pose": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "rollDeg": {
+          "type": "object", "additionalProperties": false,
+          "properties": { "inputFailAbove": { "type": "number" }, "outputFailAbove": { "type": "number" } },
+          "description": "Roll is corrected automatically; input limit is what can be levelled, output limit is what the final photo must meet"
+        },
+        "yawDeg": { "$ref": "#/$defs/threshold" },
+        "pitchDeg": { "$ref": "#/$defs/threshold" }
+      }
+    },
+    "appearance": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "eyesOpen": { "type": "boolean" },
+        "mouthClosed": { "type": "boolean" },
+        "glassesAllowed": { "type": "boolean" },
+        "expression": { "enum": ["neutral", "neutral-or-slight-smile"] },
+        "earsVisible": { "type": "boolean" }
+      }
+    },
+    "lighting": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "cheekImbalance": { "$ref": "#/$defs/threshold" } }
+    },
+    "background": {
+      "type": "object", "required": ["colorHex"], "additionalProperties": false,
+      "properties": {
+        "colorHex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "pureFraction": { "$ref": "#/$defs/threshold" },
+        "minChannelValue": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "editingRisk": { "type": "string", "description": "Shown to the user when the background had to be replaced" }
+      }
+    },
+    "input": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "allowUpscaling": { "const": false },
+        "sharpness": { "$ref": "#/$defs/threshold" }
+      }
+    },
+    "sources": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["title", "url", "authority"], "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string" }, "url": { "type": "string" },
+          "authority": { "enum": ["official", "official-partner", "third-party"] },
+          "says": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "size":  { "type": "object", "required": ["width", "height"], "additionalProperties": false,
+               "properties": { "width": { "type": "number", "exclusiveMinimum": 0 }, "height": { "type": "number", "exclusiveMinimum": 0 } } },
+    "range": { "type": "object", "required": ["min", "max"], "additionalProperties": false,
+               "properties": { "min": { "type": "number" }, "max": { "type": "number" } } },
+    "threshold": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "description": "Max-type checks use warnAbove/failAbove, min-type checks use warnBelow/failBelow. Values are in the unit named by the field that holds this object.",
+      "properties": { "warnAbove": { "type": "number" }, "failAbove": { "type": "number" },
+                      "warnBelow": { "type": "number" }, "failBelow": { "type": "number" } }
+    }
+  }
+}

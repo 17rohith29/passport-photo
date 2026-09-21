@@ -1,0 +1,341 @@
+{
+  "specId": "in-passport",
+  "about": "Real photos of the owner, taken with an iPhone (24 MP HEIC) and a laptop webcam. Each is evaluated on its own (v1 imports one photo at a time).",
+  "howToAssert": [
+    "expect=accept: pipeline produces output; every output bound holds; only allowedWarnings may be warn.",
+    "expect=reject: input gate fails; at least one of primaryReasons (or alsoAcceptableReasons) is among the failed CheckIDs; no output is rendered.",
+    "expect=borderline: must not crash; log the verdict and checks to docs/PROGRESS.md.",
+    "pythonReference values come from dlib landmarks and are for diagnosis only. Do not assert Vision measurements against them."
+  ],
+  "checkIdVocabulary": [
+    "faceCount",
+    "resolution",
+    "sharpness",
+    "lighting",
+    "yaw",
+    "pitch",
+    "roll",
+    "eyesOpen",
+    "mouthClosed",
+    "dimensions",
+    "fileSize",
+    "headHeight",
+    "topMargin",
+    "eyeLine",
+    "centering",
+    "background",
+    "faceIntegrity",
+    "shouldersVisible"
+  ],
+  "cases": [
+    {
+      "file": "photos/IMG_0012.HEIC",
+      "expect": "accept",
+      "note": "The golden case. Same photo the owner submitted. Output must match reference_output/in-passport_IMG_0012.jpg.",
+      "allowedWarnings": [
+        "yaw",
+        "lighting"
+      ],
+      "groundTruth": {
+        "imageSizePx": [
+          4284,
+          5712
+        ],
+        "orientationApplied": true,
+        "rollDeg": {
+          "value": 2.7,
+          "tolerance": 0.5
+        },
+        "crownYPx": {
+          "value": 936,
+          "tolerance": 15
+        },
+        "chinYPx": {
+          "value": 2736,
+          "tolerance": 15
+        },
+        "headHeightPx": {
+          "value": 1800,
+          "tolerance": 25
+        },
+        "note": "y in EXIF-oriented source pixels (top-left origin). Crown = top of hair mass, not stray strands. Chin = bottom of beard, not the dlib landmark (which sat ~55 px higher). Placed by hand and confirmed by the reference pipeline within 11 px."
+      },
+      "output": {
+        "sizePx": [
+          630,
+          810
+        ],
+        "fileSizeKB": {
+          "min": 10,
+          "max": 250
+        },
+        "headHeightMM": {
+          "min": 35.25,
+          "max": 36.75
+        },
+        "topMarginMM": {
+          "min": 1.5,
+          "max": 4.0
+        },
+        "eyeLineFromBottomFraction": {
+          "min": 0.5,
+          "max": 0.6
+        },
+        "rollDeg": {
+          "max": 2.0
+        },
+        "horizontalOffsetFraction": {
+          "max": 0.02
+        },
+        "backgroundPureFraction": {
+          "min": 0.95
+        },
+        "faceIntegrity": "must pass",
+        "shouldersVisible": "must pass",
+        "referenceMeasured": {
+          "headHeightMM": 36.33,
+          "topMarginMM": 1.94,
+          "eyeLineFromBottom": 0.542,
+          "sharpnessEyeRegion": 567,
+          "cheekImbalance": 0.076
+        }
+      },
+      "pythonReference": {
+        "sharp": 351.896,
+        "cheek_imbalance": 0.089,
+        "yaw_deg": 4.639,
+        "roll": 2.677,
+        "eyes_open": 0.285,
+        "mouth_open": 0.011,
+        "head_px_ratio_vs_required": 2.82
+      }
+    },
+    {
+      "file": "photos/IMG_0010.HEIC",
+      "expect": "reject",
+      "primaryReasons": [
+        "lighting"
+      ],
+      "note": "Sharpest and closest shot (~0.5 m) but side-lit. Must be rejected even though it scores best on sharpness.",
+      "pythonReference": {
+        "sharp": 596.062,
+        "cheek_imbalance": 0.126,
+        "yaw_deg": 3.778,
+        "roll": 4.526,
+        "eyes_open": 0.281,
+        "mouth_open": 0.01,
+        "head_px_ratio_vs_required": 3.79
+      }
+    },
+    {
+      "file": "photos/IMG_0009.HEIC",
+      "expect": "reject",
+      "primaryReasons": [
+        "mouthClosed"
+      ],
+      "note": "Lips slightly parted.",
+      "pythonReference": {
+        "sharp": 315.067,
+        "cheek_imbalance": 0.043,
+        "yaw_deg": 6.296,
+        "roll": 6.367,
+        "eyes_open": 0.284,
+        "mouth_open": 0.124,
+        "head_px_ratio_vs_required": 2.08
+      }
+    },
+    {
+      "file": "photos/IMG_0011.HEIC",
+      "expect": "reject",
+      "primaryReasons": [
+        "resolution"
+      ],
+      "note": "Taken from far away.",
+      "alsoAcceptableReasons": [
+        "sharpness",
+        "lighting"
+      ],
+      "pythonReference": {
+        "sharp": 43.961,
+        "cheek_imbalance": 0.13,
+        "yaw_deg": 6.072,
+        "roll": 5.58,
+        "eyes_open": 0.264,
+        "mouth_open": 0.038,
+        "head_px_ratio_vs_required": 0.8
+      }
+    },
+    {
+      "file": "photos/IMG_0015.HEIC",
+      "expect": "reject",
+      "primaryReasons": [
+        "resolution"
+      ],
+      "note": "Taken from far away.",
+      "alsoAcceptableReasons": [
+        "sharpness"
+      ],
+      "pythonReference": {
+        "sharp": 42.956,
+        "cheek_imbalance": 0.072,
+        "yaw_deg": 3.933,
+        "roll": 4.247,
+        "eyes_open": 0.281,
+        "mouth_open": 0.026,
+        "head_px_ratio_vs_required": 0.88
+      }
+    },
+    {
+      "file": "photos/IMG_0016.HEIC",
+      "expect": "reject",
+      "primaryReasons": [
+        "resolution"
+      ],
+      "note": "Taken from far away.",
+      "alsoAcceptableReasons": [
+        "sharpness",
+        "lighting"
+      ],
+      "pythonReference": {
+        "sharp": 19.541,
+        "cheek_imbalance": 0.138,
+        "yaw_deg": 5.813,
+        "roll": 6.24,
+        "eyes_open": 0.238,
+        "mouth_open": 0.019,
+        "head_px_ratio_vs_required": 0.64
+      }
+    },
+    {
+      "file": "photos/IMG_0004.HEIC",
+      "expect": "reject",
+      "primaryReasons": [
+        "resolution"
+      ],
+      "note": "Older 12 MP set: head too few pixels (needs ~1.4x upscale).",
+      "alsoAcceptableReasons": [
+        "lighting"
+      ],
+      "pythonReference": {
+        "sharp": 154.886,
+        "cheek_imbalance": 0.13,
+        "yaw_deg": -1.855,
+        "roll": -0.698,
+        "eyes_open": 0.303,
+        "mouth_open": 0.039,
+        "head_px_ratio_vs_required": 0.72
+      }
+    },
+    {
+      "file": "photos/IMG_0005.HEIC",
+      "expect": "reject",
+      "primaryReasons": [
+        "resolution"
+      ],
+      "note": "Needs ~1.5x upscale.",
+      "pythonReference": {
+        "sharp": 154.255,
+        "cheek_imbalance": 0.099,
+        "yaw_deg": -1.894,
+        "roll": -0.781,
+        "eyes_open": 0.292,
+        "mouth_open": 0.043,
+        "head_px_ratio_vs_required": 0.67
+      }
+    },
+    {
+      "file": "photos/IMG_0006.HEIC",
+      "expect": "reject",
+      "primaryReasons": [
+        "resolution"
+      ],
+      "note": "Needs ~1.4x upscale. The owner originally liked this pose; it is still unusable.",
+      "pythonReference": {
+        "sharp": 173.61,
+        "cheek_imbalance": 0.022,
+        "yaw_deg": -1.404,
+        "roll": 2.669,
+        "eyes_open": 0.327,
+        "mouth_open": 0.019,
+        "head_px_ratio_vs_required": 0.72
+      }
+    },
+    {
+      "file": "photos/IMG_0007.HEIC",
+      "expect": "reject",
+      "primaryReasons": [
+        "resolution"
+      ],
+      "note": "Needs ~1.5x upscale.",
+      "pythonReference": {
+        "sharp": 189.4,
+        "cheek_imbalance": 0.091,
+        "yaw_deg": -1.224,
+        "roll": 0.559,
+        "eyes_open": 0.327,
+        "mouth_open": 0.03,
+        "head_px_ratio_vs_required": 0.66
+      }
+    },
+    {
+      "file": "photos/webcam.jpg",
+      "expect": "reject",
+      "primaryReasons": [
+        "sharpness",
+        "lighting"
+      ],
+      "note": "Laptop webcam, grey wall, strong side light. Either reason alone is enough.",
+      "pythonReference": {
+        "sharp": 34.477,
+        "cheek_imbalance": 0.468,
+        "yaw_deg": -3.15,
+        "roll": -0.357,
+        "eyes_open": 0.316,
+        "mouth_open": 0.017,
+        "head_px_ratio_vs_required": 1.15
+      }
+    },
+    {
+      "file": "photos/IMG_0008.HEIC",
+      "expect": "borderline",
+      "note": "Usable in the reference (lighting 8.2%, head ~1.3x required px). Pass or warn are both fine; must not crash.",
+      "pythonReference": {
+        "sharp": 153.537,
+        "cheek_imbalance": 0.082,
+        "yaw_deg": 4.753,
+        "roll": 5.986,
+        "eyes_open": 0.281,
+        "mouth_open": 0.033,
+        "head_px_ratio_vs_required": 1.28
+      }
+    },
+    {
+      "file": "photos/IMG_0013.HEIC",
+      "expect": "borderline",
+      "note": "Lighting measured 2.1% or 11.0% depending on patch placement. Pass, warn or lighting-reject are all acceptable; record which.",
+      "pythonReference": {
+        "sharp": 196.053,
+        "cheek_imbalance": 0.11,
+        "yaw_deg": 5.635,
+        "roll": 3.816,
+        "eyes_open": 0.263,
+        "mouth_open": 0.034,
+        "head_px_ratio_vs_required": 1.96
+      }
+    },
+    {
+      "file": "photos/IMG_0014.HEIC",
+      "expect": "borderline",
+      "note": "Lighting 11.9% in the reference. Warn or lighting-reject acceptable.",
+      "pythonReference": {
+        "sharp": 104.639,
+        "cheek_imbalance": 0.119,
+        "yaw_deg": 5.871,
+        "roll": 3.128,
+        "eyes_open": 0.272,
+        "mouth_open": 0.023,
+        "head_px_ratio_vs_required": 1.31
+      }
+    }
+  ]
+}

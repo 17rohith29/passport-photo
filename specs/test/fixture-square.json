@@ -1,0 +1,22 @@
+{
+  "$schema": "../document-spec.schema.json",
+  "schemaVersion": 1,
+  "id": "test-square",
+  "country": { "code": "ZZ", "name": "Testland" },
+  "document": { "type": "other", "displayName": "Square test document" },
+  "status": { "lastVerified": "2026-09-20", "confidence": "low", "isTestFixture": true,
+              "notes": ["FAKE. Exists only so tests catch code that assumes 35x45 mm, 7:9 or a fraction-based eye line. Never shown to users."] },
+  "photo": {
+    "sizeMM": { "width": 51, "height": 51 },
+    "digital": { "sizePxRange": { "min": { "width": 600, "height": 600 }, "max": { "width": 1200, "height": 1200 } }, "format": "jpeg", "fileSizeKB": { "min": 10, "max": 240 } },
+    "print": { "dpi": 300, "copiesRequired": 2 }
+  },
+  "geometry": {
+    "headHeight": { "measure": "chinToCrown", "passMM": { "min": 25, "max": 35 } },
+    "eyeLine": { "fromBottomMM": { "min": 28, "max": 35 } },
+    "horizontalOffsetFraction": { "failAbove": 0.03 }
+  },
+  "pose": { "yawDeg": { "failAbove": 8 } },
+  "background": { "colorHex": "#F4F4F4" },
+  "sources": [ { "title": "none: test fixture", "url": "about:blank", "authority": "third-party" } ]
+}

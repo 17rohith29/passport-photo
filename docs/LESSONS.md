@@ -1,0 +1,67 @@
+# Lessons from prototyping
+
+Each lesson comes from a real failure while building the Python reference on the owner's photos (September 2026). The "Test" line says how to keep it fixed.
+
+## 1. Landmark chins sit inside beards
+dlib's chin point landed 3.7-5% of head height above the true chin on a bearded face. That's about 1.5 mm on the print, enough to push head size out of spec. Vision's contour may have the same bias, so measure it.
+**Rule:** start from the landmark chin and walk down a centre strip (about ±10% of face width) until beard texture (local Laplacian energy) falls to the smooth-neck level. For clean-shaven faces, fall back to the strongest light-to-dark edge (chin into the under-chin shadow). See `reference/python/chin.py`.
+**Test:** IMG_0012 chin within the tolerance in `fixtures/expected.json`.
+
+## 2. Flyaway hair inflates the crown
+Stray strands sit about 0.2 mm above the hair mass. Taking the first mask pixel as the crown makes the head measure taller than it is.
+**Rule:** crown = first row where the mask spans at least 8% of face width.
+**Test:** IMG_0012 crown within tolerance.
+
+## 3. The photo is the product
+A webcam shot and photos taken across the room couldn't be fixed. Even EDSR super-resolution only partly recovered them. Shooting closer fixed everything.
+**Rule:** reject when head height in pixels is below the output's required head pixels. Never upscale.
+**Test:** IMG_0004-0007, 0011, 0015 and 0016 are rejected for `resolution`.
+
+## 4. Resample once, with area averaging
+Upscaling with the wrong filter, and building the print sheet by shrinking an already-resized image, both visibly blurred results.
+**Rule:** measure and composite at native resolution, then do one area-averaging downscale per output. The print tiles are rendered from the source, not from the 630x810 file.
+
+## 5. Lighting can't be fixed afterwards, and the metric is fragile
+IMG_0010 was the sharpest shot but side-lit, with cheeks 12.6-18.9% apart depending on where the patches sat. The same photo can score 2% or 11% under two patch placements (IMG_0013).
+**Rule:** one documented patch method, calibrated on fixtures, with a warn band (spec: warn above 8%, fail above 12%). Check it at the input gate.
+**Test:** IMG_0010 rejected for `lighting`. IMG_0013 and 0014 may be pass or warn, but must not crash or reject for anything else.
+
+## 6. Yaw: don't trust a generic 3D fit
+`solvePnP` with a generic face model returned -21° to +12° on photos that looked frontal. Half-face asymmetry suggested about 5° of turn in all nine new photos and about 1-2° the other way in the older set. That points at the phone being slightly off to one side.
+**Rule:** use Vision's yaw and pitch. Warn above 5° (ISO/IEC 19794-5), fail above 8°. Record Vision's value for IMG_0012 in `docs/PROGRESS.md`; the Python estimate was 5.5° ± 2°.
+
+## 7. Wall fragments survive segmentation
+A grey rim, and bits of the ceiling light and a wall vent, stayed attached to the silhouette.
+**Rule:** clean up only the outer rim: low-saturation, bright pixels within the edge band, never the silhouette core.
+
+## 8. Mask seams let cleanup whiten the face
+A seam in the mask along the eyebrows let the rim cleanup paint a white streak across the brows. Every metric still passed.
+**Rule:** fill interior holes in the silhouette before any edge processing. The `faceIntegrity` check (no pixel inside the face oval turned near-white) is mandatory on every output.
+**Test:** `faceIntegrity` passes on every accepted fixture, and debug PNGs are inspected by eye.
+
+## 9. Edge band width: narrow on skin, wide in hair
+A hard mask gave stair-stepped edges. A uniformly wide matting band let white bleed into the jaw.
+**Rule:** the band width varies with y: wide above the brow line (hair), narrow below it (skin, shirt), with a smooth transition.
+
+## 10. Sharpen the subject only
+Unsharp masking on the whole image drew dark halos along the silhouette and grey noise in the background.
+**Rule:** sharpen only where alpha is above 0.02, force background to the spec colour, and revert the 1-2 px anti-aliased rim to the unsharpened value. Two-stage unsharp looked natural at 630x810: (radius 1.3, amount 0.28) then (radius 0.8, amount 0.32). CLAHE was rejected because it looked like a beauty filter.
+
+## 11. The spec itself is disputed
+India head height: ICAO Doc 9303 gives 32-36 mm (70-80%). Several photo-tool sites say "80-85%" or 36-38 mm. One site states both, which is self-contradictory. The photo PDF VFS links is the stale 2x2 in format.
+**Rule:** target 36.0 mm, the only value inside every range. Keep sources, `lastVerified` and a confidence field in the spec, and show them in the UI.
+
+## 12. Edited backgrounds may be rejected
+Unofficial sources claim the Passport Seva portal detects AI-replaced backgrounds. This is unverified.
+**Rule:** v1 tells users plainly that the background was replaced and that the portal upload is the real test. The capture milestone will guide users to a genuinely white wall so processing becomes light cleanup.
+
+## 13. A validator that reuses the planner's measurements can't find the planner's mistakes
+**Rule:** `ComplianceChecker` re-runs face analysis and crown/chin detection on the output image. A second, independent chin method is a stretch goal.
+
+## 14. Printing
+**Rule:** a 4x6 in sheet at 300 dpi with 413x531 px tiles (35x45 mm), grey cut guides, and printed instructions: print at 100%, no auto-crop or enhance, measure one photo with a ruler. Glossy or matte photo paper are both fine.
+
+## 15. Other small things
+- HEIC from iPhone carries EXIF orientation. Apply it before landmarks.
+- Very close shots (IMG_0010, about 0.5 m) add perspective distortion and side light. The capture milestone should aim for about 1.5 m with the 2x lens.
+- A visible necklace is allowed. It's not a defect.

@@ -1,0 +1,10 @@
+# Owner's face photos: keep local, never push
+fixtures/photos/
+# Xcode
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.build/
+.swiftpm/
+# debug output
+/tmp/
