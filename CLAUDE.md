@@ -71,7 +71,8 @@ open /tmp/passportkit-debug/
 Notes:
 - `PassportKit` builds for iOS 18 and macOS 15, so the fixture suite runs on the Mac. Several
   Vision requests are limited or behave differently in the iOS Simulator; the Mac run is the gate.
-- `fixtures/photos/` is gitignored. Tests that need it skip cleanly when it is absent.
+- `fixtures/photos/` and `fixtures/reference_output/` are gitignored. Tests that need them skip
+  cleanly when they are absent.
 
 ## Working style
 
@@ -79,4 +80,4 @@ Notes:
 - **Look at outputs, not just numbers.** Fixture tests write debug PNGs (mask, crop overlay with crown, chin and eye lines, final photo) to `/tmp/passportkit-debug/`. Open and inspect them. During prototyping, every metric passed while the output had a white streak across the eyebrows.
 - If a threshold has to change to make a fixture pass, explain why in the commit message. If it's a new finding, add it to `docs/LESSONS.md`.
 - Ask the owner before changing any value in `specs/`, adding dependencies, or doing signing or App Store work.
-- `fixtures/photos/` contains the owner's face. It's gitignored. Tests that need it skip with a clear message if it's missing. Never copy those images anywhere else.
+- `fixtures/photos/` and `fixtures/reference_output/` contain the owner's face, the latter as a finished identity-document photo. Both are gitignored. Tests that need them skip with a clear message if they're missing. Never copy those images anywhere else, and never commit them.

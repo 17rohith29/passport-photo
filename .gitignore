@@ -1,5 +1,8 @@
 # Owner's face photos: keep local, never push
 fixtures/photos/
+# The finished passport photo is the owner's face too, and an identity-document
+# one at that. M4 compares against it on disk; it never needs to be in history.
+fixtures/reference_output/
 # Xcode
 DerivedData/
 *.xcuserstate
