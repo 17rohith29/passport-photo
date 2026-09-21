@@ -42,6 +42,12 @@ swift test --package-path PassportKit
 ```
 
 ```bash
+# Release is ~50x faster and is what the fixture suite should be timed with.
+# The golden case takes 2.9 s in release and 141 s in debug.
+swift test -c release --package-path PassportKit
+```
+
+```bash
 # One suite, or one test by name.
 swift test --package-path PassportKit --filter SpecKitTests
 swift test --package-path PassportKit --filter "required head px"
@@ -69,6 +75,9 @@ open /tmp/passportkit-debug/
 ```
 
 Notes:
+- **Run the app in Release when testing on a device.** Xcode's Run action defaults to Debug, which
+  compiles PassportKit unoptimised: the same 24 MP photo takes ~141 s instead of ~2.9 s, which
+  looks like a hang. Product → Scheme → Edit Scheme → Run → Build Configuration → Release.
 - `PassportKit` builds for iOS 18 and macOS 15, so the fixture suite runs on the Mac. Several
   Vision requests are limited or behave differently in the iOS Simulator; the Mac run is the gate.
 - `fixtures/photos/` and `fixtures/reference_output/` are gitignored. Tests that need them skip

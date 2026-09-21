@@ -104,3 +104,84 @@ Advisories are for whoever edits `specs/`, never shown to users.
 - Nothing surfaces advisories yet. When the requirements sheet is built at M5, decide whether a
   low-confidence spec should show anything to the user (the spec already carries `status.confidence`
   and `notes` for that purpose; advisories are a separate, developer-facing channel).
+
+## M2-M4 — Analysis, geometry, render and verify (2026-09-21)
+
+**What changed**
+- PhotoAnalysis: `ImageLoader`, `VisionFaceAnalyzer`, `ImageMetrics`, `ChinRefiner`,
+  `VisionSubjectSegmenter`, `MatteRefiner`, `CrownFinder`, `Tuning`.
+- PhotoPipeline: `InputGate` + `GateCalibration`, `CropPlanner`, `Leveler`, `Renderer`,
+  `PrintSheetComposer`, `JPEGExporter`, `ComplianceChecker`, `PassportPipeline`.
+
+**What was measured — IMG_0012, against `fixtures/expected.json`**
+| | measured | required |
+|---|---|---|
+| crown y | 948 px | 936 ± 15 |
+| chin y | 2742 px | 2736 ± 15 |
+| head | 1794 px | 1800 ± 25 |
+| head | 35.39 mm | 35.25–36.75 |
+| top margin | 2.83 mm | 1.5–4.0 |
+| eye line | 54.7% | 50–60% |
+| roll | 0.19° | under 2° |
+| background | 99.9% pure, darkest 245 | ≥95%, ≥245 |
+| faceIntegrity | 0.00% | under 0.5% |
+| file | 134 KB | 10–250 |
+
+Verdict `meetsRequirements` with **no warnings**. Output inspected by eye against
+`fixtures/reference_output/` and matches it; mine keeps slightly less flyaway hair.
+All 14 fixtures behave as the manifest states. 52 tests green.
+
+**Vision's raw numbers for IMG_0012** (owed since M0)
+- **Chin bias: the landmark chin sits 40.9 px above the true chin, 2.27% of head height.**
+  dlib's was ~55 px. Same direction as LESSONS 1, smaller magnitude.
+- **Yaw 3.78°** (Python estimated 5.5° ± 2°, and its own report FAILed the photo at 5.5°).
+  Under the spec's 5° warn threshold, so the golden case now passes yaw outright.
+- Pitch -1.54°, capture quality 0.625.
+
+**Four bugs only real photos could have found** — see the M2-M4 commit message for detail:
+EXIF orientation flipped every 24 MP HEIC upside down; the Leveler rotated the wrong way and
+doubled the tilt; Vision's pose roll is not the eye-line angle; and the cheek metric had to be
+rebuilt twice before it ranked IMG_0012 below IMG_0010.
+
+**Performance**
+2.875 s end to end for a 24 MP photo in release on this Mac — inside the M6 target. Debug is
+141 s, because PassportKit compiles unoptimised. Anyone testing the app on a device must switch
+the Run configuration to Release or it looks like a hang.
+
+**Open issues**
+- The renderer is scalar Swift. It hits the target already, but Accelerate or Metal would give
+  headroom for 48 MP inputs (M6).
+- `GateCalibration.maxMouthOpenness` is 0.070, splitting IMG_0009 (0.083, a required rejection)
+  from IMG_0016 (0.059). That is a 0.024 gap on one photo — it needs more faces before it can be
+  trusted as a general threshold.
+- Cheek imbalance now runs lower than the Python's on every fixture (0.036 vs 0.089 on IMG_0012),
+  because it is a different, more robust estimator. The spec's 0.08/0.12 thresholds were taken
+  from the Python's scale, so they are effectively stricter in ranking than in absolute value.
+  The two decisions the manifest forces are pinned by tests, but the thresholds deserve a look
+  once there are more faces.
+
+## M5 — App flow (2026-09-21)
+
+**What changed**
+- `SpecCatalog` loads every bundled spec and hides `isTestFixture` ones. `specs/` is a
+  synchronized folder in the Xcode project, so adding a country adds no code.
+- Screens: `HomeView` (spec-driven document card, Choose Photo, Import from Files, tips),
+  `RequirementsSheet` (every number read from the spec, with sources, `lastVerified`, confidence,
+  and an explicit "can't guarantee acceptance" line), `ProcessingView` (real step list, no fake
+  progress bar), `RejectionView` (headline naming the main problem, then measured vs required vs
+  how to fix), `ResultView` (verdict pill, all-checks sheet, measurements toggle, Upload/Print
+  segmented control, Save menu), plus the printing instructions after saving.
+- `PhotoSessionModel` drives the pipeline off the main actor, supports cancel, and saves to
+  Photos with **add-only** authorization or to Files via `fileExporter`.
+- `INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription` added — without it, saving crashes.
+
+**What was measured**
+Builds and runs on the iPhone 17 simulator; the Home screen renders the India card from
+`in-passport.json`. The end-to-end flow inside the app has **not** been driven yet — simulator
+control was not granted — so the UI beyond Home is unverified by me.
+
+**Open issues**
+- Drive the whole flow on a real device with a real photo. That is the next thing to do.
+- `MeasurementOverlay` derives its crown/chin lines from the spec's target top margin rather than
+  from where the head actually landed, so the lines are nominal, not measured. Fix before M6.
+- No Dynamic Type / VoiceOver / dark mode pass yet (M6).
