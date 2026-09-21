@@ -49,8 +49,17 @@ struct SpecGeometryTests {
         let geometry = try #require(SpecGeometry(spec: spec))
         // fixtures/expected.json groundTruth for IMG_0012: headHeightPx 1800.
         #expect(1800.0 / geometry.requiredHeadPx > 2.7)
-        // IMG_0011 measured 0.8x in the reference: must fall short.
-        #expect(0.8 * geometry.requiredHeadPx < geometry.requiredHeadPx)
+
+        // Three-way cross-check: our requiredHeadPx, the oracle's head_px_ratio_vs_required
+        // (2.82) and the hand-placed ground truth (1800 px) are independently derived, so
+        // ratio * requiredHeadPx must land near 1800. It comes out at 1827 — 1.5% high,
+        // because the Python ratio uses its est_head = (chin - brow) * 1.64 estimate rather
+        // than a measured crown. Tight enough to catch a wrong pxPerMM, loose enough to
+        // tolerate that estimator.
+        let oracleHeadPx = 2.82 * geometry.requiredHeadPx
+        #expect(abs(oracleHeadPx - 1800) / 1800 < 0.03)
+        // The same arithmetic with dpi-derived px/mm would give 425 px and blow this apart.
+        #expect(abs(2.82 * 36.0 * Units.mmToPx(1, dpi: 300) - 1800) / 1800 > 0.3)
     }
 
     @Test("head height in mm converts back through pxPerMM")
