@@ -10,6 +10,7 @@ struct HomeView: View {
     @State private var pickerItem: PhotosPickerItem?
     @State private var showingRequirements = false
     @State private var showingFileImporter = false
+    @State private var showingCamera = false
     @State private var selectedSpec: DocumentSpec?
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -60,6 +61,16 @@ struct HomeView: View {
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
 
+                    Button {
+                        showingCamera = true
+                    } label: {
+                        Label("Take a Photo", systemImage: "camera")
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+
                     Button("Import from Files") { showingFileImporter = true }
                         .buttonStyle(.bordered)
                         .controlSize(.large)
@@ -72,6 +83,11 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingRequirements) {
             RequirementsSheet(spec: spec)
+        }
+        .fullScreenCover(isPresented: $showingCamera) {
+            CaptureView(spec: spec) { data in
+                session.process(data: data, spec: spec)
+            }
         }
         .fullScreenCover(isPresented: Binding(
             get: { session.phase != .idle },
@@ -102,6 +118,7 @@ struct HomeView: View {
                 selectedSpec = match
                 showingRequirements = DebugAutoRun.showRequirements
             }
+            if DebugAutoRun.opensCamera { showingCamera = true }
             if let data = DebugAutoRun.photoData() {
                 session.process(data: data, spec: spec)
             }
@@ -131,6 +148,14 @@ enum DebugAutoRun {
         return arguments[index + 1]
         #else
         return nil
+        #endif
+    }
+
+    static var opensCamera: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-openCamera")
+        #else
+        return false
         #endif
     }
 
@@ -266,6 +291,7 @@ struct TipsSection: View {
     }
 
     static let tips = [
+        "Ask someone to take it, or prop the phone on a shelf — the back camera is sharper than the selfie one.",
         "Face a window so the light is even on both cheeks.",
         "Stand in front of a plain, light wall.",
         "Hold the phone at eye level, about 1.5 m away.",

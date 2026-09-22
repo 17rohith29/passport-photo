@@ -317,3 +317,50 @@ that produced the upside-down bug — was unreferenced and is gone, so nobody re
 **Open issues**
 - Perf and the Result screen still need a real device.
 - The visual design is tidy and native but has had no art direction: no custom palette, no icon.
+
+## M7 — Guided capture (2026-09-21)
+
+Brought forward from "Later" at the owner's request: a mode that helps take the photo rather than
+only judging one that already exists.
+
+**The advice is pure code.** `CaptureGuidance` lives in `PhotoPipeline` and takes
+`FaceMeasurements` plus a frame size and a spec, returning ordered cues. It reads the **same
+spec and the same `GateCalibration`** as the import gate, so the camera asks for exactly what the
+gate will accept. No camera, no Vision, no UI in it — 13 tests drive it without hardware.
+
+**Distance is derived, not guessed.** The passport crop is `head / headFraction` tall, so aiming
+the crop at ~75% of the frame puts the head at `0.75 × headFraction`: 0.60 of frame height for
+India, 0.44 for the US, 0.56 for Schengen. The on-screen oval is that number, so filling it means
+the head is the right size *for the selected document*. A test asserts the US band sits entirely
+below India's.
+
+**Cue order matters.** Framing first (nobody is helped by "lift your chin" while they are across
+the room), then centring and camera height, then pose, then eyes and mouth. Lighting **advises
+but never blocks**: a preview frame is too small and noisy to refuse someone on, and it is
+measured properly on the full-resolution capture.
+
+**Auto-capture needs a streak.** `CaptureStabiliser` requires six consecutive ready frames, so one
+lucky frame cannot fire the shutter; a single bad frame resets it. The shutter ring fills as the
+streak builds.
+
+**Friend or tripod**, as asked: the tips list now leads with it, and choosing the front camera
+shows "The back camera is sharper. Ask someone to hold the phone, or prop it up."
+
+**App layer.** `CameraController` owns AVFoundation only: frames are analysed five times a second
+rather than every frame, and spoken cues (`AVSpeechSynthesizer`) do not repeat until the cue
+changes or three seconds pass. Frames are converted to `CGImage` **synchronously on the capture
+queue**, because the `CVPixelBuffer` is recycled the moment the delegate returns — Swift 6 strict
+concurrency caught the original version sending the buffer across actors.
+
+**What was verified**
+- 103 tests green in release; 13 of them are the capture coach, none need a camera.
+- The capture screen renders and handles "no camera" cleanly in the Simulator, which is the only
+  state the Simulator can show.
+
+**Open issues**
+- **The camera path has never run against a real camera.** Preview orientation, mirroring on the
+  front camera, and the head-fraction bands all need a device to confirm. Front-camera frames are
+  mirrored, which has not been accounted for in the left/right cues yet — expect "move left" and
+  "move right" to be reversed on the selfie camera until that is checked.
+- Burst best-frame selection from the plan is not implemented; auto-capture takes one photo.
+- Lighting is not measured live at all (the cue only fires if a caller supplies a value).
