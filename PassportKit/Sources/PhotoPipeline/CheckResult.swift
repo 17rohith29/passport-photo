@@ -6,7 +6,7 @@ public enum CheckID: String, Codable, Sendable, CaseIterable {
     case yaw, pitch, roll
     case eyesOpen, mouthClosed
     case dimensions, fileSize
-    case headHeight, topMargin, eyeLine, centering
+    case headHeight, topMargin, eyeLine, centering, headroom
     case background, faceIntegrity, shouldersVisible
 }
 

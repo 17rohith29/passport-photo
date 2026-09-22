@@ -181,6 +181,7 @@ struct RejectionView: View {
         case .eyesOpen: return "Your eyes look closed"
         case .yaw, .pitch, .roll: return "Your head isn't straight on"
         case .faceCount: return "We need exactly one face"
+        case .headroom: return "The top of your head is cut off"
         default: return "This photo can't be used"
         }
     }
@@ -242,6 +243,7 @@ struct CheckRow: View {
         case .fileSize: return "File size"
         case .headHeight: return "Head height"
         case .topMargin: return "Space above the head"
+        case .headroom: return "Top of head visible"
         case .eyeLine: return "Eye position"
         case .centering: return "Centred"
         case .background: return "Background"

@@ -136,3 +136,34 @@ passport portal will catch a genuinely open mouth anyway.
 is a change to the owner's ground truth, recorded in the case's own note and reversible.
 **Test:** `ThresholdCalibrationTests` measures the third-party set and prints the distribution,
 so the next threshold change is judged against a population rather than one face.
+
+## 20. Numeric checks pass while the cut-out is mangled
+Running 118 third-party portraits through the whole pipeline (not just the metrics) produced
+three photos. **Two of the three were visibly broken** — one kept a rectangular slab of the
+original dark photo with hard straight edges, another had blue fringing and a blue patch on the
+shoulder — and both scored **99%+ pure background with faceIntegrity passing**.
+
+The background check measured purity *inside* the backdrop region connected to the top corners.
+When the cut-out fails, that region is **small but perfectly pure**, so it sails through. This is
+LESSONS 8 in a new place: the metric was measuring the part that was fine.
+**Rule:** also require the narrow strip down each side, level with the head, to be background. A
+correctly framed passport photo always has clear space either side of the face; a mangled cut-out
+does not. The worst of the three is now rejected.
+**Test:** `CalibrationPipelineTests` runs the whole third-party set and reports what it refuses
+and why, and asserts that nothing accepted misses its own head-height band.
+
+## 21. The rim rule only ever worked for a pale wall
+LESSONS 7 says to clean the outer rim of "low-saturation, bright pixels". That was written for the
+owner's grey wall and it only matches a pale wall. Against a saturated backdrop it never fires, so
+the wall's colour survives as a fringe — a blue-backdrop portrait came out with blue edging along
+the hair.
+
+The obvious generalisation — clean rim pixels close to *this photo's* wall colour — **was tried and
+reverted**. Against a near-white wall, "close to the wall colour" also matches bright skin: it
+wiped out IMG_0012's face entirely (faceIntegrity 100% near-white). Restricting it to saturated
+walls still damaged the face at 0.47%, above the 0.5%... below the limit but a clear regression
+from 0.00%, so it went back.
+**Rule:** the fringe on coloured backdrops is a known limitation, not a solved problem. A real fix
+needs per-pixel colour unmixing against a local background estimate, not a global colour-distance
+test. **Do not reintroduce a colour-distance rim rule without checking faceIntegrity on IMG_0012**,
+which is the test that caught it both times.

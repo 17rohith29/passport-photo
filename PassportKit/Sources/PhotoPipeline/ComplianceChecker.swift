@@ -109,16 +109,57 @@ public struct ComplianceChecker: Sendable {
         }
         let fraction = total > 0 ? Double(pure) / Double(total) : 0
 
+        // Purity inside the backdrop region is not enough on its own. When the cut-out fails, the
+        // region it finds is SMALL but perfectly pure, so it sails through: on a third-party set,
+        // two of three accepted photos kept a rectangular slab of the original background and
+        // still scored 99% pure with faceIntegrity passing (LESSONS 8 again). What gives those
+        // away is that the space beside the head is not background.
+        let margins = sideMarginPurity(pixels, background: background, minimum: UInt8(minimum))
+
         let status = ThresholdEvaluator.evaluateMinimum(fraction, spec.pureFraction)
         let channelOK = darkest >= minimum
+        let marginsOK = margins >= 0.9
+        let ok = status == .pass && channelOK && marginsOK
+        let failed = status == .fail || !channelOK || !marginsOK
+
         return [CheckResult(
             id: .background,
-            status: (status == .pass && channelOK) ? .pass : (status == .fail || !channelOK ? .fail : .warn),
-            measured: String(format: "%.1f%% pure, darkest channel %d", 100 * fraction, darkest),
-            requirement: String(format: "at least %.0f%% pure, no channel under %d",
+            status: ok ? .pass : (failed ? .fail : .warn),
+            measured: String(format: "%.1f%% pure, darkest channel %d, %.0f%% clear beside the head",
+                             100 * fraction, darkest, 100 * margins),
+            requirement: String(format: "at least %.0f%% pure, no channel under %d, clear either side",
                                 100 * (spec.pureFraction?.failBelow ?? 0.95), minimum),
+            userMessage: marginsOK ? nil : "We couldn't separate you from the background cleanly. Try a photo taken against a plain, light wall.",
             fixability: .automatic
         )]
+    }
+
+    /// How much of the narrow strip down each side, level with the head, is background.
+    ///
+    /// A correctly framed passport photo always has clear space either side of the head at eye
+    /// level. A mangled cut-out does not, which is what catches a matte that kept a slab of the
+    /// original photo even though everything it did keep is the right colour.
+    func sideMarginPurity(_ pixels: PixelImage, background: RGB, minimum: UInt8) -> Double {
+        let width = pixels.width, height = pixels.height
+        guard width > 20, height > 20 else { return 1 }
+
+        let strip = max(1, width / 14)
+        let top = Int(Double(height) * 0.25)
+        let bottom = Int(Double(height) * 0.55)
+        guard bottom > top else { return 1 }
+
+        var clear = 0, total = 0
+        for y in top..<bottom {
+            for x in 0..<strip {
+                for column in [x, width - 1 - x] {
+                    let p = pixels.offset(x: column, y: y)
+                    let darkest = min(pixels.pixels[p], min(pixels.pixels[p + 1], pixels.pixels[p + 2]))
+                    total += 1
+                    if darkest >= minimum { clear += 1 }
+                }
+            }
+        }
+        return total > 0 ? Double(clear) / Double(total) : 1
     }
 
     /// Light pixels reachable from the top corners. Mirrors the reference pipeline, which takes

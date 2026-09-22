@@ -198,6 +198,22 @@ public actor PassportPipeline {
 
         // 4. Crown and chin, then the crop. The crown is found in working pixels and scaled back.
         onStage?(.cropping)
+
+        // A photo cropped above the hairline still yields a crown - the clipped edge - and then
+        // passes headHeight and topMargin while the top of the head is simply missing.
+        if CrownFinder.touchesTopEdge(matte: matte, face: workFace, tuning: tuning) {
+            inputChecks.append(CheckResult(
+                id: .headroom, status: .fail,
+                measured: "the top of your head is outside the photo",
+                requirement: "the whole head, with space above it",
+                userMessage: "The top of your head is cut off. Use a photo with space above your hair.",
+                fixability: .retakeRequired
+            ))
+            return PipelineResult(
+                verdict: .cannotUse, inputChecks: inputChecks, outputChecks: [], output: nil
+            )
+        }
+
         guard let workCrown = CrownFinder.find(matte: matte, face: workFace, tuning: tuning) else {
             throw PipelineError.crownNotFound
         }
