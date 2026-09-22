@@ -20,6 +20,11 @@ struct SessionFlow: View {
                     ResultView(session: session, saver: saver, spec: spec)
                 }
             }
+            // These screens are presented in a fullScreenCover, and a VStack or ScrollView only
+            // sizes to its content — so without an explicit opaque background the Home screen
+            // showed straight through and the cover looked like an overlay rather than a screen.
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(.systemBackground))
             .onChange(of: session.phase) { _, phase in
                 switch phase {
                 case .finished: Haptics.forVerdict(session.result?.verdict ?? .meetsRequirements)

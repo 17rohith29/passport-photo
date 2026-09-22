@@ -217,3 +217,23 @@ result is not impossible.
 **Test:** `SpecCrashSafetyTests` and `GeometryCrashSafetyTests` feed NaN, infinity, zero,
 negative and absurd values to every such site. Two of them crashed the test process when first
 written, which is exactly what they are for.
+
+## 25. A fullScreenCover with no background is an overlay
+Reported from the device: "the next screen seems to be an overlay of the first screen". It was.
+`ProcessingView` is rooted in a `VStack` and the result and rejection screens in a `ScrollView`;
+neither fills the frame or paints a background, so the cover was transparent and Home showed
+straight through it.
+**Rule:** anything presented in a `fullScreenCover` or `sheet` gets
+`.frame(maxWidth: .infinity, maxHeight: .infinity)` and an explicit background. Applied once on
+the `Group` inside `SessionFlow`, which covers all three screens.
+
+## 26. GOV.UK's own two pages disagree about the shape of a UK photo
+The printed rules say 45 mm by 35 mm — 7:9. The digital rules say "at least 600 pixels wide and
+750 pixels tall" — 4:5. Rendering a 7:9 crop into a 600x750 frame stretches every face about
+2.9% wider, and nothing in the pipeline would have complained, because both numbers came from the
+spec.
+**Rule:** `gb-passport` outputs **700x900**, which is exactly 7:9 and still clears both stated
+minimums. When an authority's own figures disagree, satisfy the constraint that is checkable
+(the minimums) and keep the geometry that is physical (the printed aspect).
+**Test:** `UKPassportSpecTests` asserts the pixel aspect equals the millimetre aspect, that the
+minimums are still met, and that the naive 600x750 reading really would have been wrong.

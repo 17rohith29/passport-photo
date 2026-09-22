@@ -1,0 +1,62 @@
+{
+  "$schema": "./document-spec.schema.json",
+  "schemaVersion": 1,
+  "id": "gb-passport",
+  "country": { "code": "GB", "name": "United Kingdom" },
+  "document": { "type": "passport", "displayName": "Passport", "channel": "HM Passport Office" },
+  "status": {
+    "lastVerified": "2026-09-21",
+    "confidence": "high",
+    "notes": [
+      "Every rule here is stated on GOV.UK's own photo pages: 45 mm high by 35 mm wide, head 29-34 mm from crown to chin, plain cream or light grey background, digital photo at least 600x750 px and 50 KB to 10 MB, taken in the last month.",
+      "GOV.UK's digital minimum and its printed size DISAGREE on shape: 600x750 px is 4:5, while 35x45 mm is 7:9. Rendering a 7:9 crop into a 4:5 frame would stretch every face about 2.9% wider. This spec therefore outputs 700x900, which is exactly 7:9 and still clears both stated minimums.",
+      "The background is NOT white. GOV.UK says 'plain cream or light grey'; a neutral light grey is used here, which is the same value as the Schengen spec.",
+      "Glasses are discouraged rather than banned: 'Do not wear glasses in your photo unless you have to do so.' The app cannot detect glasses, so this is shown to the user rather than enforced.",
+      "UK photos must be taken in the LAST MONTH, stricter than the six months the US and Schengen allow. The app cannot check when a photo was taken.",
+      "Lighting and sharpness thresholds are this app's own calibration, shared with the other specs. GOV.UK requires a photo with no shadows on the face or behind it but states no numbers."
+    ]
+  },
+  "photo": {
+    "sizeMM": { "width": 35, "height": 45 },
+    "digital": {
+      "sizePx": { "width": 700, "height": 900 },
+      "format": "jpeg",
+      "fileSizeKB": { "min": 50, "max": 10240 }
+    },
+    "print": { "dpi": 300, "copiesRequired": 2, "paperFinish": "any" }
+  },
+  "geometry": {
+    "headHeight": {
+      "measure": "chinToCrown",
+      "targetMM": 31.5,
+      "passMM": { "min": 29.0, "max": 34.0 },
+      "note": "GOV.UK: 'The image of you - from the crown of your head to your chin - must be between 29mm and 34mm high.' Target is the middle of that band."
+    },
+    "topMargin": { "targetMM": 4.0, "passMM": { "min": 1.5, "max": 8.0 } },
+    "eyeLine": { "fromBottomFraction": { "min": 0.50, "max": 0.60 } },
+    "horizontalOffsetFraction": { "failAbove": 0.02 },
+    "shouldersVisibleFraction": { "failBelow": 0.55 }
+  },
+  "pose": {
+    "rollDeg": { "inputFailAbove": 10, "outputFailAbove": 2 },
+    "yawDeg": { "warnAbove": 5, "failAbove": 8 },
+    "pitchDeg": { "warnAbove": 5, "failAbove": 8 }
+  },
+  "appearance": { "eyesOpen": true, "mouthClosed": true, "glassesAllowed": false, "expression": "neutral", "earsVisible": false },
+  "lighting": { "cheekImbalance": { "warnAbove": 0.08, "failAbove": 0.12 } },
+  "background": {
+    "colorHex": "#F0F0F0",
+    "pureFraction": { "failBelow": 0.95 },
+    "minChannelValue": 235,
+    "editingRisk": "We replaced the background with a neutral light grey. GOV.UK requires a photo unaltered by computer software, so a photo taken against a plain cream or light grey wall is safer."
+  },
+  "input": { "allowUpscaling": false, "sharpness": { "failBelow": 100 } },
+  "sources": [
+    { "title": "GOV.UK: Get a passport photo - printed photos", "authority": "official",
+      "url": "https://www.gov.uk/photos-for-passports/photo-requirements",
+      "says": "measure 45 millimetres (mm) high by 35mm wide (the standard size used in photo booths in the UK); the image of you - from the crown of your head to your chin - must be between 29mm and 34mm high; taken against a plain cream or light grey background; in colour on plain white photographic paper with no border; clear and in focus; unaltered by computer software" },
+    { "title": "GOV.UK: Get a passport photo - digital photos", "authority": "official",
+      "url": "https://www.gov.uk/photos-for-passports",
+      "says": "taken in the last month; at least 600 pixels wide and 750 pixels tall; at least 50KB and no more than 10MB; clear and in focus; in colour; unaltered by computer software; plain light-coloured background; facing forwards and looking straight at the camera; plain expression and mouth closed; eyes open and visible; no head covering unless religious or medical; do not wear glasses unless you have to" }
+  ]
+}
