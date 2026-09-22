@@ -358,9 +358,12 @@ concurrency caught the original version sending the buffer across actors.
   state the Simulator can show.
 
 **Open issues**
-- **The camera path has never run against a real camera.** Preview orientation, mirroring on the
-  front camera, and the head-fraction bands all need a device to confirm. Front-camera frames are
-  mirrored, which has not been accounted for in the left/right cues yet — expect "move left" and
-  "move right" to be reversed on the selfie camera until that is checked.
+- **The camera path has never run against a real camera.** The head-fraction bands, preview
+  framing and the feel of the spoken cues all need a device to confirm.
+- ~~Front-camera cues reversed.~~ Fixed: the preview mirrors the front camera, so the instruction
+  is reversed while the measurement is not. Frames Vision measures and the captured photo are now
+  explicitly never mirrored, and both connections are pinned to portrait.
+- ~~The captured photo could vanish.~~ Fixed: two `fullScreenCover`s were fighting, so the photo
+  is now held until the camera sheet has gone and processed in `onDismiss`.
 - Burst best-frame selection from the plan is not implemented; auto-capture takes one photo.
 - Lighting is not measured live at all (the cue only fires if a caller supplies a value).
