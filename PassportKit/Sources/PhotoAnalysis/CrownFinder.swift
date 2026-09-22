@@ -12,7 +12,10 @@ public enum CrownFinder {
         matte: AlphaMatte, face: FaceMeasurements, tuning: Tuning = .default
     ) -> CGFloat? {
         let faceWidth = Double(face.faceWidth)
-        guard faceWidth > 0, matte.width > 0, matte.height > 0 else { return nil }
+        guard faceWidth.isFinite, faceWidth > 0, faceWidth < 1e6,
+              Double(face.contourMinX).isFinite, Double(face.contourMaxX).isFinite,
+              Double(face.rawChin.y).isFinite,
+              matte.width > 0, matte.height > 0 else { return nil }
 
         // Search a column window around the face, so a raised hand or shoulder cannot qualify.
         let x0 = max(0, Int((Double(face.contourMinX) - 0.3 * faceWidth).rounded()))
@@ -41,7 +44,9 @@ public enum CrownFinder {
         matte: AlphaMatte, face: FaceMeasurements, tuning: Tuning = .default
     ) -> Bool {
         let faceWidth = Double(face.faceWidth)
-        guard faceWidth > 0, matte.width > 0, matte.height > 2 else { return false }
+        guard faceWidth.isFinite, faceWidth > 0, faceWidth < 1e6,
+              Double(face.contourMinX).isFinite, Double(face.contourMaxX).isFinite,
+              matte.width > 0, matte.height > 2 else { return false }
 
         let x0 = max(0, Int((Double(face.contourMinX) - 0.3 * faceWidth).rounded()))
         let x1 = min(matte.width - 1, Int((Double(face.contourMaxX) + 0.3 * faceWidth).rounded()))

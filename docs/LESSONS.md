@@ -189,3 +189,31 @@ shutter stayed live-looking forever.
 failure surfaces an alert. Capture is also guarded so the shutter and auto-capture cannot fire
 together, and cancelling during the permission prompt no longer starts the session behind a
 dismissed screen.
+
+## 24. Swift traps on bad numbers; it does not throw
+A crash hunt across the shipping code found four live trap sites. None of them would ever have
+surfaced as an error — they kill the process:
+
+- **`background.minChannelValue` was never validated.** The JSON schema bounds it 0-255 but
+  `Codable` does not enforce that, and the value is converted straight to `UInt8` when a finished
+  photo is checked. A country file with `minChannelValue: 300` would have crashed the app. The
+  whole architecture is "countries are data", so a data file must not be able to do that.
+  `validate()` now bounds it, along with sizes, dpi, copies, and a head height that must fit
+  inside its own photo.
+- **`GrayImage.at()` indexed out of bounds on an empty image.** It clamps to `width - 1`, which
+  is -1 when the image is empty — and degenerate crops legitimately return empty images, so every
+  caller could reach it.
+- **`ImageMetrics.clamp` converted a NaN rect with `Int(_:)`.** A face whose landmarks collapse to
+  a point divides by a zero width and produces exactly that NaN.
+- **`RGB.bytes` did not clamp** before `UInt8(_:)`, and the type has a public memberwise
+  initialiser that polices nothing.
+
+`ChinRefiner` and `CrownFinder` also convert landmark coordinates to `Int` and now refuse
+non-finite or absurd input rather than reaching the conversion.
+
+**Rule:** anything that becomes an `Int`, a buffer length, an array index or a `ClosedRange` needs
+a finite-and-in-range guard first, however impossible the bad value looks. A degenerate Vision
+result is not impossible.
+**Test:** `SpecCrashSafetyTests` and `GeometryCrashSafetyTests` feed NaN, infinity, zero,
+negative and absurd values to every such site. Two of them crashed the test process when first
+written, which is exactly what they are for.

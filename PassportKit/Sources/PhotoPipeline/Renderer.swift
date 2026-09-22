@@ -22,8 +22,14 @@ public struct RGB: Sendable, Equatable {
         self.b = Float(value & 0xFF) / 255
     }
 
-    var bytes: (UInt8, UInt8, UInt8) {
-        (UInt8((r * 255).rounded()), UInt8((g * 255).rounded()), UInt8((b * 255).rounded()))
+    /// Clamped: `UInt8(_:)` traps on anything outside 0-255 or on a non-finite value, and this
+    /// type has a public memberwise initialiser that does not police its inputs.
+    public var bytes: (UInt8, UInt8, UInt8) {
+        func byte(_ value: Float) -> UInt8 {
+            guard value.isFinite else { return 0 }
+            return UInt8(min(max(value * 255, 0), 255).rounded())
+        }
+        return (byte(r), byte(g), byte(b))
     }
 }
 

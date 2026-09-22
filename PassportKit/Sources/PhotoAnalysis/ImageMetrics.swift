@@ -125,8 +125,10 @@ public enum ImageMetrics {
     }
 
     static func meanPatch(_ image: GrayImage, centreX: Double, centreY: Double, radius: Double) -> Double {
-        let r = Int(radius.rounded())
-        let cx = Int(centreX.rounded()), cy = Int(centreY.rounded())
+        guard centreX.isFinite, centreY.isFinite, radius.isFinite, radius >= 0 else { return 0 }
+        let r = Int(min(radius, 4096).rounded())
+        let cx = Int(min(max(centreX, -1e6), 1e6).rounded())
+        let cy = Int(min(max(centreY, -1e6), 1e6).rounded())
         var total = 0.0
         var count = 0
         for y in (cy - r)...(cy + r) {
@@ -145,7 +147,16 @@ public enum ImageMetrics {
         return sum / Double(values.count)
     }
 
+    /// Clamps a region to the image. Non-finite input returns an empty rect rather than reaching
+    /// `Int(_:)`, which traps on NaN and on infinity — a face whose landmarks collapse to a point
+    /// divides by a zero width and produces exactly that.
     static func clamp(_ rect: CGRect, width: Int, height: Int) -> CGRect {
+        guard rect.minX.isFinite, rect.minY.isFinite,
+              rect.maxX.isFinite, rect.maxY.isFinite else { return .zero }
+        let limit = CGFloat(Int.max / 4)
+        guard abs(rect.minX) < limit, abs(rect.minY) < limit,
+              abs(rect.maxX) < limit, abs(rect.maxY) < limit else { return .zero }
+
         let x0 = max(0, Int(rect.minX.rounded(.down)))
         let y0 = max(0, Int(rect.minY.rounded(.down)))
         let x1 = min(width, Int(rect.maxX.rounded(.up)))

@@ -55,7 +55,9 @@ public enum CaptureGuidance {
             ?? photoHeightMM * 0.75
         let headFraction = max(0.1, min(0.95, targetMM / photoHeightMM))
         let centre = 0.75 * headFraction
-        return (centre - tolerance)...(centre + tolerance)
+        // ClosedRange traps when lower > upper, so the tolerance cannot be trusted as given.
+        let safe = tolerance.isFinite ? abs(tolerance) : 0.07
+        return (centre - safe)...(centre + safe)
     }
 
     /// `isMirrored` is true for the front camera, whose preview is flipped. The measurement is

@@ -134,9 +134,51 @@ public extension DocumentSpec {
         checkRange(geometry.eyeLine?.fromBottomFraction, "geometry.eyeLine.fromBottomFraction", &issues)
         checkRange(geometry.eyeLine?.fromBottomMM, "geometry.eyeLine.fromBottomMM", &issues)
 
-        if let bg = background,
-           bg.colorHex.range(of: "^#[0-9A-Fa-f]{6}$", options: .regularExpression) == nil {
-            issues.append("background.colorHex '\(bg.colorHex)' must be #RRGGBB")
+        if let bg = background {
+            if bg.colorHex.range(of: "^#[0-9A-Fa-f]{6}$", options: .regularExpression) == nil {
+                issues.append("background.colorHex '\(bg.colorHex)' must be #RRGGBB")
+            }
+            // The schema bounds this 0-255 but Codable does not enforce it, and the value is
+            // converted straight to UInt8 when checking a finished photo — out of range it traps
+            // and takes the app with it. A country file must not be able to crash the app.
+            if let value = bg.minChannelValue, value < 0 || value > 255 {
+                issues.append("background.minChannelValue \(value) must be between 0 and 255")
+            }
+        }
+
+        // Sizes and dpi are multiplied out into pixel counts and buffer allocations.
+        checkPositive(photo.sizeMM.width, "photo.sizeMM.width", &issues)
+        checkPositive(photo.sizeMM.height, "photo.sizeMM.height", &issues)
+        checkPositive(photo.print.dpi, "photo.print.dpi", &issues)
+        if let dpi = photo.digital.dpi { checkPositive(dpi, "photo.digital.dpi", &issues) }
+        if let size = photo.digital.sizePx {
+            checkPositive(size.width, "photo.digital.sizePx.width", &issues)
+            checkPositive(size.height, "photo.digital.sizePx.height", &issues)
+        }
+        if let range = photo.digital.sizePxRange {
+            checkPositive(range.min.width, "photo.digital.sizePxRange.min.width", &issues)
+            checkPositive(range.min.height, "photo.digital.sizePxRange.min.height", &issues)
+            checkPositive(range.max.width, "photo.digital.sizePxRange.max.width", &issues)
+            checkPositive(range.max.height, "photo.digital.sizePxRange.max.height", &issues)
+        }
+        if let copies = photo.print.copiesRequired, copies < 1 {
+            issues.append("photo.print.copiesRequired must be at least 1, got \(copies)")
+        }
+
+        // A head taller than the photo, or a negative one, makes the crop maths meaningless.
+        if let band = geometry.headHeight.passMM {
+            if band.min <= 0 { issues.append("geometry.headHeight.passMM.min must be positive") }
+            if band.max > photo.sizeMM.height {
+                issues.append("geometry.headHeight.passMM.max (\(band.max)) exceeds the photo height (\(photo.sizeMM.height))")
+            }
+        }
+        if let fraction = geometry.headHeight.passFraction {
+            if fraction.min <= 0 || fraction.max > 1 {
+                issues.append("geometry.headHeight.passFraction must lie within 0-1, got \(fraction.min)-\(fraction.max)")
+            }
+        }
+        if let target = geometry.headHeight.targetMM, target <= 0 || target > photo.sizeMM.height {
+            issues.append("geometry.headHeight.targetMM \(target) must be positive and fit the photo")
         }
         if sources.isEmpty {
             issues.append("sources must not be empty")
@@ -144,6 +186,12 @@ public extension DocumentSpec {
 
         if !issues.isEmpty {
             throw SpecValidationError(issues: issues)
+        }
+    }
+
+    private func checkPositive(_ value: Double, _ name: String, _ issues: inout [String]) {
+        if !value.isFinite || value <= 0 {
+            issues.append("\(name) must be a positive, finite number, got \(value)")
         }
     }
 

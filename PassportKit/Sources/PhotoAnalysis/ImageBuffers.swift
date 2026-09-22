@@ -62,16 +62,26 @@ public struct GrayImage: Sendable {
         set { values[y * width + x] = newValue }
     }
 
+    /// Clamped read. Guards the empty case: with width 0, clamping to `width - 1` produces -1
+    /// and indexes out of bounds, which traps. Degenerate crops return empty images, so every
+    /// caller can reach this.
     public func at(x: Int, y: Int) -> Float {
+        guard width > 0, height > 0 else { return 0 }
         let cx = Swift.min(Swift.max(x, 0), width - 1)
         let cy = Swift.min(Swift.max(y, 0), height - 1)
-        return values[cy * width + cx]
+        let index = cy * width + cx
+        guard index >= 0, index < values.count else { return 0 }
+        return values[index]
     }
 
     /// Bilinear sample in this image's pixel space.
     public func sample(x: Float, y: Float) -> Float {
-        let x0 = Int(x.rounded(.down)), y0 = Int(y.rounded(.down))
-        let fx = x - Float(x0), fy = y - Float(y0)
+        guard x.isFinite, y.isFinite, width > 0, height > 0 else { return 0 }
+        // Clamped before converting: Int(_:) traps on a value beyond Int's range.
+        let cx = min(max(x, -1), Float(width) + 1)
+        let cy = min(max(y, -1), Float(height) + 1)
+        let x0 = Int(cx.rounded(.down)), y0 = Int(cy.rounded(.down))
+        let fx = cx - Float(x0), fy = cy - Float(y0)
         let a = at(x: x0, y: y0), b = at(x: x0 + 1, y: y0)
         let c = at(x: x0, y: y0 + 1), d = at(x: x0 + 1, y: y0 + 1)
         return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy
@@ -94,8 +104,15 @@ public struct GrayImage: Sendable {
     }
 
     public func cropped(to rect: CGRect) -> GrayImage {
+        // A non-finite or negative rect would convert-trap on Int() or allocate a negative
+        // buffer. Vision landmarks can degenerate, so this has to be defensive.
+        guard rect.minX.isFinite, rect.minY.isFinite,
+              rect.width.isFinite, rect.height.isFinite,
+              rect.width >= 1, rect.height >= 1 else {
+            return GrayImage(width: 0, height: 0, values: [])
+        }
         let x0 = Int(rect.minX.rounded()), y0 = Int(rect.minY.rounded())
-        let w = Int(rect.width.rounded()), h = Int(rect.height.rounded())
+        let w = max(0, Int(rect.width.rounded())), h = max(0, Int(rect.height.rounded()))
         var out = GrayImage(width: w, height: h)
         for y in 0..<h {
             for x in 0..<w {

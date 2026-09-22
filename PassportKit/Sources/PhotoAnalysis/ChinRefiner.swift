@@ -30,7 +30,13 @@ public enum ChinRefiner {
         let faceWidth = Double(face.faceWidth)
         let chinY = Double(face.rawChin.y)
         let faceHeight = chinY - Double(face.browY)
-        guard faceWidth > 0, faceHeight > 0 else { return (face.rawChin.y, nil) }
+        // Every one of these is converted to Int below, which traps on NaN or infinity.
+        guard faceWidth.isFinite, chinY.isFinite, faceHeight.isFinite,
+              Double(face.rawChin.x).isFinite,
+              faceWidth > 0, faceHeight > 0,
+              faceWidth < 1e6, faceHeight < 1e6 else {
+            return (face.rawChin.y.isFinite ? face.rawChin.y : 0, nil)
+        }
 
         let halfWidth = max(2, Int((tuning.chinStripHalfWidth * faceWidth).rounded()))
         let centreX = Int(face.rawChin.x.rounded())
