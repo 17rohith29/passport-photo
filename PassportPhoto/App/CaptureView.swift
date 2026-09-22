@@ -37,7 +37,11 @@ struct CaptureView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { camera.stop(); dismiss() }
+                    Button("Cancel") {
+                        camera.stop()
+                        dismiss()
+                    }
+                    .accessibilityLabel("Cancel and go back")
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -51,6 +55,17 @@ struct CaptureView: View {
         }
         .task { await camera.start(spec: spec) }
         .onDisappear { camera.stop() }
+        .alert(
+            "Couldn't take the photo",
+            isPresented: Binding(
+                get: { camera.captureError != nil },
+                set: { if !$0 { camera.clearError() } }
+            )
+        ) {
+            Button("OK") { camera.clearError() }
+        } message: {
+            Text(camera.captureError ?? "")
+        }
         .onChange(of: camera.capturedData) { _, data in
             guard let data else { return }
             onCaptured(data)
@@ -125,9 +140,13 @@ struct CaptureView: View {
                             .stroke(Color.green, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                             .frame(width: 74, height: 74)
                             .rotationEffect(.degrees(-90))
+                        if camera.isCapturing {
+                            ProgressView().tint(.black)
+                        }
                     }
                 }
-                .accessibilityLabel("Take photo")
+                .disabled(camera.isCapturing)
+                .accessibilityLabel(camera.isCapturing ? "Taking the photo" : "Take photo")
 
                 Toggle("Voice", isOn: $camera.speaksCues)
                     .toggleStyle(.button)

@@ -27,6 +27,8 @@ final class CameraController: NSObject {
     private(set) var assessment: CaptureAssessment?
     private(set) var readiness: Double = 0
     private(set) var capturedData: Data?
+    private(set) var captureError: String?
+    private(set) var isCapturing = false
     var usingFrontCamera = false
     var autoCapture = true
     var speaksCues = true
@@ -43,6 +45,7 @@ final class CameraController: NSObject {
     private var spec: DocumentSpec?
     private var stabiliser = CaptureStabiliser()
     private var analysing = false
+    private var stopped = false
     private var lastAnalysis = Date.distantPast
     private var lastSpoken: CaptureCue.Kind?
     private var lastSpokenAt = Date.distantPast
@@ -53,18 +56,30 @@ final class CameraController: NSObject {
 
     func start(spec: DocumentSpec) async {
         self.spec = spec
+        stopped = false
         guard await requestAccess() else { status = .denied; return }
+        // Cancelling during the permission prompt used to start the session anyway, leaving the
+        // camera running behind a dismissed screen.
+        guard !stopped, !Task.isCancelled else { return }
         guard configure() else { return }
+        guard !stopped, !Task.isCancelled else { return }
+
         await withCheckedContinuation { continuation in
             queue.async { [session] in
                 if !session.isRunning { session.startRunning() }
                 continuation.resume()
             }
         }
+        guard !stopped, !Task.isCancelled else {
+            queue.async { [session] in if session.isRunning { session.stopRunning() } }
+            return
+        }
         status = .running
     }
 
     func stop() {
+        stopped = true
+        isCapturing = false
         queue.async { [session] in
             if session.isRunning { session.stopRunning() }
         }
@@ -81,6 +96,7 @@ final class CameraController: NSObject {
     }
 
     func clearCapture() { capturedData = nil }
+    func clearError() { captureError = nil }
 
     private func requestAccess() async -> Bool {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -121,6 +137,11 @@ final class CameraController: NSObject {
                 return false
             }
             session.addOutput(photoOutput)
+            // Must be raised on the OUTPUT before any request asks for .quality. It defaults to
+            // .balanced, and capturing with a higher prioritisation than the output allows raises
+            // an Objective-C exception that Swift cannot catch — it crashed the app on the first
+            // shutter press, which is also why auto-capture appeared to break everything.
+            photoOutput.maxPhotoQualityPrioritization = .quality
             videoOutput.alwaysDiscardsLateVideoFrames = true
             videoOutput.setSampleBufferDelegate(self, queue: queue)
             session.addOutput(videoOutput)
@@ -149,9 +170,31 @@ final class CameraController: NSObject {
     }
 
     func capture() {
+        guard status == .running, !isCapturing else { return }
+        isCapturing = true
+
         let settings = AVCapturePhotoSettings()
-        settings.photoQualityPrioritization = .quality
+        // Clamped defensively as well: never ask for more than this output allows.
+        let ceiling = photoOutput.maxPhotoQualityPrioritization
+        settings.photoQualityPrioritization =
+            ceiling.rawValue < AVCapturePhotoOutput.QualityPrioritization.quality.rawValue
+            ? ceiling : .quality
         photoOutput.capturePhoto(with: settings, delegate: self)
+    }
+
+    fileprivate func finishCapture(_ data: Data?, error: Error?) {
+        isCapturing = false
+        stabiliser.reset()
+        readiness = 0
+
+        if let data {
+            capturedData = data
+            stop()
+            return
+        }
+        // A failed capture used to return silently, leaving the shutter dead with nothing said.
+        captureError = error?.localizedDescription ?? "The photo could not be taken. Try again."
+        Haptics.failure()
     }
 
     /// Whether this frame should be analysed at all. Checked on the main actor before the
@@ -196,7 +239,7 @@ final class CameraController: NSObject {
         let fired = stabiliser.update(isReady: result.isReady)
         readiness = stabiliser.progress
         speak(result.primary)
-        if fired, autoCapture, capturedData == nil {
+        if fired, autoCapture, capturedData == nil, !isCapturing {
             Haptics.success()
             capture()
         }
@@ -244,10 +287,9 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
         _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto,
         error: Error?
     ) {
-        guard let data = photo.fileDataRepresentation() else { return }
+        let data = photo.fileDataRepresentation()
         Task { @MainActor [weak self] in
-            self?.capturedData = data
-            self?.stop()
+            self?.finishCapture(data, error: error)
         }
     }
 }

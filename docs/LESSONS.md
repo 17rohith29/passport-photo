@@ -167,3 +167,25 @@ from 0.00%, so it went back.
 needs per-pixel colour unmixing against a local background estimate, not a global colour-distance
 test. **Do not reintroduce a colour-distance rim rule without checking faceIntegrity on IMG_0012**,
 which is the test that caught it both times.
+
+## 22. AVCapturePhotoOutput crashes if you ask for more quality than you allowed
+`settings.photoQualityPrioritization = .quality` raises
+
+    *** -[AVCapturePhotoOutput capturePhotoWithSettings:delegate:] settings.photoQualityPrioritization
+        must not be higher than self.maxPhotoQualityPrioritization
+
+unless `photoOutput.maxPhotoQualityPrioritization` has been raised to match. It defaults to
+`.balanced`, and this is an **Objective-C exception, so Swift cannot catch it** — the app dies on
+the first shutter press. With auto-capture on it fires by itself, so the whole capture screen
+looks broken rather than one button.
+**Rule:** set `maxPhotoQualityPrioritization` on the output during session configuration, before
+the session runs, and clamp the per-request value to the output's ceiling anyway.
+
+## 23. A capture delegate that drops failures leaves a dead shutter
+`guard let data = photo.fileDataRepresentation() else { return }` discards both a nil payload and
+the delegate's `error`, so a failed capture did nothing at all: no photo, no message, and the
+shutter stayed live-looking forever.
+**Rule:** the delegate always calls one completion path that clears the in-flight flag, and a
+failure surfaces an alert. Capture is also guarded so the shutter and auto-capture cannot fire
+together, and cancelling during the permission prompt no longer starts the session behind a
+dismissed screen.
