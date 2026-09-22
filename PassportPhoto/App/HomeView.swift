@@ -11,6 +11,7 @@ struct HomeView: View {
     @State private var showingRequirements = false
     @State private var showingFileImporter = false
     @State private var selectedSpec: DocumentSpec?
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         NavigationStack {
@@ -26,6 +27,7 @@ struct HomeView: View {
                 }
             }
             .navigationTitle("Passport Photo")
+            .navigationBarTitleDisplayMode(typeSize.isAccessibilitySize ? .inline : .large)
         }
     }
 
@@ -147,33 +149,43 @@ struct DocumentCard: View {
     var onSelect: () -> Void = {}
     var onShowRequirements: () -> Void = {}
 
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
-        HStack(spacing: 14) {
-            Button(action: onSelect) {
-                HStack(spacing: 14) {
-                    Text(flag(for: spec.country.code))
-                        .font(.system(size: 34))
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("\(spec.country.name), \(spec.document.displayName)")
-                            .font(.headline)
-                            .multilineTextAlignment(.leading)
-                        Text(summary)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.leading)
+        // At accessibility sizes a flag beside the text squeezes it into a column so narrow that
+        // "Passport" hyphenates to "Pass-port". Stack instead, and give the text the full width.
+        let stacked = typeSize.isAccessibilitySize
+
+        Button(action: onSelect) {
+            VStack(alignment: .leading, spacing: 10) {
+                if stacked {
+                    label
+                    summaryText
+                } else {
+                    HStack(spacing: 14) {
+                        flagView
+                        VStack(alignment: .leading, spacing: 3) {
+                            label
+                            summaryText
+                        }
+                        Spacer(minLength: 0)
                     }
-                    Spacer(minLength: 0)
                 }
             }
-            .buttonStyle(.plain)
-
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .overlay(alignment: stacked ? .bottomTrailing : .trailing) {
             Button(action: onShowRequirements) {
                 Image(systemName: "info.circle")
                     .font(.title3)
                     .foregroundStyle(.secondary)
+                    .padding(6)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Requirements for \(spec.country.name)")
+            .accessibilityLabel("Requirements for \(spec.country.name) \(spec.document.displayName)")
         }
         .padding()
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
@@ -185,8 +197,35 @@ struct DocumentCard: View {
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
+    private var flagView: some View {
+        Text(flag(for: spec.country.code))
+            // Scales with Dynamic Type instead of staying a fixed 34 pt.
+            .font(.system(size: 34))
+            .accessibilityHidden(true)
+    }
+
+    private var label: some View {
+        HStack(spacing: 8) {
+            if typeSize.isAccessibilitySize { flagView.font(.title) }
+            Text("\(spec.country.name), \(spec.document.displayName)")
+                .font(.headline)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var summaryText: some View {
+        Text(summary)
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
     private var summary: String {
         let size = "\(trim(spec.photo.sizeMM.width)) × \(trim(spec.photo.sizeMM.height)) mm"
+        // The background colour is detail; at accessibility sizes the size alone is the point.
+        guard !typeSize.isAccessibilitySize else { return size }
         switch spec.background?.colorHex.uppercased() {
         case "#FFFFFF": return "\(size), white background"
         case .none: return size

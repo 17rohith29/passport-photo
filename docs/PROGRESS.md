@@ -280,3 +280,40 @@ adding a country still touches no Swift.
 - Glasses are decoded and shown but not detected. Schengen permits them with conditions the app
   cannot check.
 - The US spec's `topMargin` and eye band are this app's framing choices, not published figures.
+
+## M6 — Polish (2026-09-21)
+
+**The decode cap could reject a photo that would pass.** `docs/PLAN.md` asks for 48 MP inputs to
+downsample "without dropping below required head pixels", and the 4500 px cap added earlier caps
+the *frame*, not the head: on a 48 MP photo where the head fills a small part of the frame, the
+cap scales a ~1100 px head to ~650 px, right on India's 648 px requirement. `PhotoSession` now
+retries at full resolution when — and only when — the gate failed on `resolution` and the source
+was actually larger than the cap. Nothing else is retried: every other rejection is about the
+photo, not the decode.
+
+**Dynamic Type.** At accessibility sizes the document card put a flag beside the text and
+squeezed it into a column so narrow that "Passport" hyphenated to "Pass-port", and the large
+navigation title truncated to "Passport Ph…". The card now stacks at accessibility sizes, the
+title goes inline, long check text wraps instead of truncating, and the dimmed source photo on
+the processing screen is dropped where vertical space is scarce. Verified at
+`accessibility-extra-extra-extra-large`: nothing truncates.
+
+**VoiceOver.** A check row read as a pile of fragments; it now reads as one sentence —
+"Even lighting, failed. Measured 14.0% difference between cheeks. Needs under 12%. One side of
+your face is brighter…". Progress steps announce done / in progress / waiting. The decorative
+source photo and the flag are hidden from the reader.
+
+**Haptics.** Three moments only: success, warning and failure on the verdict. Haptics that fire
+on every navigation stop carrying information.
+
+**Dark mode.** Verified in both appearances at normal and accessibility sizes.
+
+**Performance.** 1.678 s end to end for a 24 MP photo in release on this Mac, inside the plan's
+3 s target. **Still not measured on a real iPhone.**
+
+**Dead code removed.** `ImageLoader.applying(_:to:)` — the hand-rolled EXIF orientation matrices
+that produced the upside-down bug — was unreferenced and is gone, so nobody reaches for it again.
+
+**Open issues**
+- Perf and the Result screen still need a real device.
+- The visual design is tidy and native but has had no art direction: no custom palette, no icon.

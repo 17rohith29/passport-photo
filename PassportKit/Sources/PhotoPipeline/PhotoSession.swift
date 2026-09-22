@@ -77,6 +77,13 @@ public final class PhotoSession {
     }
 
     private func run(data: Data, spec: DocumentSpec) async {
+        let report: @Sendable (PipelineStage) -> Void = { [weak self] stage in
+            Task { @MainActor [weak self] in
+                guard let self, self.isWorking else { return }
+                if let current = self.currentStage { self.completed.insert(current) }
+                self.phase = .working(stage)
+            }
+        }
         phase = .working(.reading)
         do {
             // Decoding a 24 MP HEIC would stutter the UI on the main actor.
@@ -88,11 +95,26 @@ public final class PhotoSession {
             sourceImage = image
             completed.insert(.reading)
 
-            let outcome = await pipeline.run(image, spec: spec) { [weak self] stage in
-                Task { @MainActor [weak self] in
-                    guard let self, self.isWorking else { return }
-                    if let current = self.currentStage { self.completed.insert(current) }
-                    self.phase = .working(stage)
+            var outcome = await pipeline.run(image, spec: spec, onStage: report)
+            guard !Task.isCancelled else { return }
+
+            // The decode cap shrinks the frame, which shrinks the head with it. A photo whose
+            // head clears the requirement at full resolution can fall under it once capped, so a
+            // resolution rejection is retried at full size before it is believed. Nothing else
+            // is retried: every other rejection is about the photo, not the decode.
+            if outcome.output == nil,
+               outcome.failures.contains(where: { $0.id == .resolution }),
+               let full = ImageLoader.pixelSize(data: data),
+               Int(max(full.width, full.height)) > maxPixelSize {
+                if let fullImage = try? await Task.detached(priority: .userInitiated, operation: {
+                    try ImageLoader.load(data: data)
+                }).value {
+                    guard !Task.isCancelled else { return }
+                    let retry = await pipeline.run(fullImage, spec: spec, onStage: report)
+                    if retry.output != nil {
+                        sourceImage = fullImage
+                        outcome = retry
+                    }
                 }
             }
             guard !Task.isCancelled else { return }

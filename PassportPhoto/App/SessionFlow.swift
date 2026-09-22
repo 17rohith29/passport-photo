@@ -20,6 +20,13 @@ struct SessionFlow: View {
                     ResultView(session: session, saver: saver, spec: spec)
                 }
             }
+            .onChange(of: session.phase) { _, phase in
+                switch phase {
+                case .finished: Haptics.forVerdict(session.result?.verdict ?? .meetsRequirements)
+                case .rejected: Haptics.failure()
+                default: break
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(session.isWorking ? "Cancel" : "Done") {
@@ -34,27 +41,30 @@ struct SessionFlow: View {
 
 struct ProcessingView: View {
     let session: PhotoSession
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         VStack(spacing: 28) {
-            if let image = session.sourceImage {
+            if let image = session.sourceImage, !typeSize.isAccessibilitySize {
                 Image(decorative: image, scale: 1)
                     .resizable()
                     .scaledToFit()
                     .frame(maxHeight: 280)
                     .opacity(0.35)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .accessibilityHidden(true)
             }
 
             // No fake progress bar: the real stage the pipeline reports is the only honest signal.
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(PipelineStage.allCases, id: \.self) { step in
-                    HStack(spacing: 10) {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
                         icon(for: step)
                             .frame(width: 20)
                         Text(step.rawValue)
+                            .fixedSize(horizontal: false, vertical: true)
                             .foregroundStyle(isCurrent(step) || isDone(step) ? .primary : .secondary)
-                        Spacer()
+                        Spacer(minLength: 0)
                     }
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel(accessibilityLabel(for: step))
@@ -190,14 +200,31 @@ struct CheckRow: View {
                 Text("Measured \(check.measured) · needs \(check.requirement)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 if let message = check.userMessage {
-                    Text(message).font(.subheadline).padding(.top, 2)
+                    Text(message)
+                        .font(.subheadline)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 2)
                 }
             }
             Spacer()
         }
         .padding(.vertical, 6)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityDescription)
+    }
+
+    private var accessibilityDescription: String {
+        let verdict: String
+        switch check.status {
+        case .pass: verdict = "passed"
+        case .warn: verdict = "warning"
+        case .fail: verdict = "failed"
+        }
+        var text = "\(title), \(verdict). Measured \(check.measured). Needs \(check.requirement)."
+        if let message = check.userMessage { text += " \(message)" }
+        return text
     }
 
     private var title: String {
