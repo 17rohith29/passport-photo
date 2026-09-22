@@ -185,3 +185,41 @@ struct CaptureStabiliserTests {
         #expect(abs(half - 0.5) < 1e-9)
     }
 }
+
+/// The front camera shows a mirror, so the instruction has to be reversed even though the
+/// measurement does not change. Getting this backwards sends people the wrong way.
+@Suite("Mirrored guidance")
+struct MirroredGuidanceTests {
+
+    @Test("left and right swap on the front camera, and nothing else does")
+    func mirroredCentring() throws {
+        let spec = try CaptureGuidanceTests.spec()
+        var face = CaptureGuidanceTests.goodFace()
+        face.leftEye.x -= CaptureGuidanceTests.frame.width * 0.2
+        face.rightEye.x -= CaptureGuidanceTests.frame.width * 0.2
+
+        func message(mirrored: Bool) -> String? {
+            CaptureGuidance.assess(
+                face: face, headHeightPx: nil, cheekImbalance: nil,
+                frameSize: CaptureGuidanceTests.frame, spec: spec, isMirrored: mirrored
+            ).cues.first { $0.kind == .offCentre }?.message
+        }
+
+        #expect(message(mirrored: false) == "Move right")
+        #expect(message(mirrored: true) == "Move left")
+    }
+
+    @Test("mirroring does not change distance, pose or readiness")
+    func mirroringChangesNothingElse() throws {
+        let spec = try CaptureGuidanceTests.spec()
+        let face = CaptureGuidanceTests.goodFace()
+        func assess(_ mirrored: Bool) -> CaptureAssessment {
+            CaptureGuidance.assess(
+                face: face, headHeightPx: nil, cheekImbalance: nil,
+                frameSize: CaptureGuidanceTests.frame, spec: spec, isMirrored: mirrored
+            )
+        }
+        #expect(assess(false).isReady == assess(true).isReady)
+        #expect(assess(false).headFraction == assess(true).headFraction)
+    }
+}

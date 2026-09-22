@@ -58,12 +58,17 @@ public enum CaptureGuidance {
         return (centre - tolerance)...(centre + tolerance)
     }
 
+    /// `isMirrored` is true for the front camera, whose preview is flipped. The measurement is
+    /// unaffected — the face really is on that side of the frame — but the *instruction* must be
+    /// reversed, because the person is watching a mirror: moving towards what looks like their
+    /// left moves them right in the frame.
     public static func assess(
         face: FaceMeasurements?,
         headHeightPx: Double?,
         cheekImbalance: Double?,
         frameSize: CGSize,
         spec: DocumentSpec,
+        isMirrored: Bool = false,
         calibration: GateCalibration = .default
     ) -> CaptureAssessment {
         let band = targetHeadFraction(spec: spec)
@@ -98,9 +103,10 @@ public enum CaptureGuidance {
 
         let centreX = Double(face.eyeMidpoint.x) / Double(frameSize.width)
         if abs(centreX - 0.5) > 0.06 {
+            let needsToMoveRight = (centreX < 0.5) != isMirrored
             cues.append(CaptureCue(
                 kind: .offCentre,
-                message: centreX < 0.5 ? "Move right" : "Move left",
+                message: needsToMoveRight ? "Move right" : "Move left",
                 isBlocking: true
             ))
         }

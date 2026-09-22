@@ -75,6 +75,8 @@ final class CameraController: NSObject {
 
     func flipCamera() {
         usingFrontCamera.toggle()
+        stabiliser.reset()
+        readiness = 0
         _ = configure()
     }
 
@@ -123,7 +125,27 @@ final class CameraController: NSObject {
             videoOutput.setSampleBufferDelegate(self, queue: queue)
             session.addOutput(videoOutput)
         }
+        orient(photoOutput.connection(with: .video))
+        orient(videoOutput.connection(with: .video))
         return true
+    }
+
+    /// Portrait, and never mirrored.
+    ///
+    /// The preview layer mirrors the front camera on its own, which is what people expect to see.
+    /// The frames Vision measures must NOT be mirrored, or the face would be reported on the wrong
+    /// side; `CaptureGuidance` is told separately that the preview is a mirror so it can reverse
+    /// the instruction. The captured photo must not be mirrored either — a flipped passport photo
+    /// is a wrong passport photo.
+    private func orient(_ connection: AVCaptureConnection?) {
+        guard let connection else { return }
+        if connection.isVideoRotationAngleSupported(90) {
+            connection.videoRotationAngle = 90
+        }
+        if connection.isVideoMirroringSupported {
+            connection.automaticallyAdjustsVideoMirroring = false
+            connection.isVideoMirrored = false
+        }
     }
 
     func capture() {
@@ -145,13 +167,15 @@ final class CameraController: NSObject {
 
     fileprivate func analyse(_ frame: Frame) {
         guard let spec else { analysing = false; return }
+        let mirrored = usingFrontCamera
         Task { [weak self] in
             guard let self else { return }
             let image = frame.image
             let face = try? await self.analyzer.analyze(image)
             let result = CaptureGuidance.assess(
                 face: face, headHeightPx: nil, cheekImbalance: nil,
-                frameSize: CGSize(width: image.width, height: image.height), spec: spec
+                frameSize: CGSize(width: image.width, height: image.height),
+                spec: spec, isMirrored: mirrored
             )
             self.apply(result)
             self.analysing = false

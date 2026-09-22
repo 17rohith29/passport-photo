@@ -11,6 +11,10 @@ struct HomeView: View {
     @State private var showingRequirements = false
     @State private var showingFileImporter = false
     @State private var showingCamera = false
+    /// Held until the camera sheet has actually gone. Presenting the processing sheet while the
+    /// capture sheet is still dismissing makes SwiftUI drop the second presentation, and the
+    /// photo silently vanishes.
+    @State private var pendingCapture: Data?
     @State private var selectedSpec: DocumentSpec?
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -84,10 +88,13 @@ struct HomeView: View {
         .sheet(isPresented: $showingRequirements) {
             RequirementsSheet(spec: spec)
         }
-        .fullScreenCover(isPresented: $showingCamera) {
-            CaptureView(spec: spec) { data in
+        .fullScreenCover(isPresented: $showingCamera, onDismiss: {
+            if let data = pendingCapture {
+                pendingCapture = nil
                 session.process(data: data, spec: spec)
             }
+        }) {
+            CaptureView(spec: spec) { data in pendingCapture = data }
         }
         .fullScreenCover(isPresented: Binding(
             get: { session.phase != .idle },
