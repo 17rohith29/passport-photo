@@ -11,3 +11,6 @@ xcuserdata/
 .swiftpm/
 # debug output
 /tmp/
+# Third-party faces used only to calibrate thresholds. Permissively licensed, but they are
+# still real people's faces, so they stay local like the owner's own photos.
+fixtures/calibration/

@@ -18,8 +18,9 @@ struct FixtureManifestTests {
         #expect(suite.specId == "in-passport")
         #expect(suite.cases.count == 14)
         #expect(suite.cases.filter { $0.expect == .accept }.count == 1)
-        #expect(suite.cases.filter { $0.expect == .reject }.count == 10)
-        #expect(suite.cases.filter { $0.expect == .borderline }.count == 3)
+        // IMG_0009 moved from reject to borderline on 2026-09-21 — see its note and LESSONS 19.
+        #expect(suite.cases.filter { $0.expect == .reject }.count == 9)
+        #expect(suite.cases.filter { $0.expect == .borderline }.count == 4)
     }
 
     @Test("every reason in the manifest is a known CheckID")

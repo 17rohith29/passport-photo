@@ -16,6 +16,14 @@ public enum RepoPaths {
     public static var specs: URL? { root?.appendingPathComponent("specs") }
     public static var fixtures: URL? { root?.appendingPathComponent("fixtures") }
     public static var fixturePhotos: URL? { fixtures?.appendingPathComponent("photos") }
+    /// Third-party portraits used only to calibrate thresholds. Gitignored; absent on a clone.
+    public static var calibrationPhotos: URL? { fixtures?.appendingPathComponent("calibration") }
+
+    public static var hasCalibrationPhotos: Bool {
+        guard let dir = calibrationPhotos else { return false }
+        let contents = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
+        return contents.contains { $0.lowercased().hasSuffix(".jpg") }
+    }
 
     public static var inPassportSpec: URL? { specs?.appendingPathComponent("in-passport.json") }
     public static var usPassportSpec: URL? { specs?.appendingPathComponent("us-passport.json") }

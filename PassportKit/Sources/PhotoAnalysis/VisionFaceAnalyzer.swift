@@ -55,6 +55,8 @@ public struct VisionFaceAnalyzer: FaceAnalyzing {
             leftEye: eyeA,
             rightEye: eyeB,
             contour: contour,
+            outerLips: points(landmarks.outerLips),
+            innerLips: points(landmarks.innerLips),
             rawChin: rawChin,
             browY: browY,
             yawDeg: face.yaw.converted(to: .degrees).value,
@@ -63,7 +65,8 @@ public struct VisionFaceAnalyzer: FaceAnalyzing {
             captureQuality: quality,
             eyeOpenness: Self.eyeAspectRatio(leftEyePoints, rightEyePoints),
             mouthOpenness: Self.mouthOpenness(
-                outer: points(landmarks.outerLips), inner: points(landmarks.innerLips)
+                outer: points(landmarks.outerLips), inner: points(landmarks.innerLips),
+                interocular: hypot(eyeB.x - eyeA.x, eyeB.y - eyeA.y)
             )
         )
     }
@@ -96,14 +99,18 @@ public struct VisionFaceAnalyzer: FaceAnalyzing {
         return Double((maxY - minY) / (maxX - minX))
     }
 
-    /// Mouth opening: inner-lip height over outer-lip width.
-    static func mouthOpenness(outer: [CGPoint], inner: [CGPoint]) -> Double {
-        let width = outer.map(\.x).max().flatMap { maxX in
-            outer.map(\.x).min().map { maxX - $0 }
-        } ?? 0
-        guard width > 0 else { return 0 }
+    /// Mouth opening: the inner-lip gap over the interocular distance.
+    ///
+    /// Normalising by outer-lip WIDTH looked natural but is yaw-sensitive: turning the head
+    /// foreshortens the lips horizontally and inflates the ratio, so profile shots scored as
+    /// wide-open mouths. Measured on stock portraits, closed mouths landed at 0.081-0.110 by that
+    /// method - above the threshold meant to catch parted lips. The interocular distance barely
+    /// changes with yaw, so it is the stabler denominator.
+    static func mouthOpenness(outer: [CGPoint], inner: [CGPoint], interocular: CGFloat) -> Double {
+        guard interocular > 0 else { return 0 }
         guard let top = inner.map(\.y).min(), let bottom = inner.map(\.y).max() else { return 0 }
-        return Double((bottom - top) / width)
+        _ = outer
+        return Double((bottom - top) / interocular)
     }
 }
 

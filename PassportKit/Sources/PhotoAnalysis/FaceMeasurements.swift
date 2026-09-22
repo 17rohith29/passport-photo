@@ -8,6 +8,9 @@ public struct FaceMeasurements: Sendable, Equatable {
     public var leftEye: CGPoint
     public var rightEye: CGPoint
     public var contour: [CGPoint]
+    /// Lip contours, so mouth opening can be measured from pixels rather than landmark geometry.
+    public var outerLips: [CGPoint]
+    public var innerLips: [CGPoint]
     /// Lowest contour point, before `ChinRefiner` walks into the beard.
     public var rawChin: CGPoint
     public var browY: CGFloat
@@ -20,7 +23,8 @@ public struct FaceMeasurements: Sendable, Equatable {
 
     public init(
         faceCount: Int, boundingBox: CGRect, leftEye: CGPoint, rightEye: CGPoint,
-        contour: [CGPoint], rawChin: CGPoint, browY: CGFloat,
+        contour: [CGPoint], outerLips: [CGPoint] = [], innerLips: [CGPoint] = [],
+        rawChin: CGPoint, browY: CGFloat,
         yawDeg: Double, pitchDeg: Double, rollDeg: Double,
         captureQuality: Double?, eyeOpenness: Double, mouthOpenness: Double
     ) {
@@ -29,6 +33,8 @@ public struct FaceMeasurements: Sendable, Equatable {
         self.leftEye = leftEye
         self.rightEye = rightEye
         self.contour = contour
+        self.outerLips = outerLips
+        self.innerLips = innerLips
         self.rawChin = rawChin
         self.browY = browY
         self.yawDeg = yawDeg
@@ -78,6 +84,8 @@ public struct FaceMeasurements: Sendable, Equatable {
         copy.leftEye = scale(leftEye)
         copy.rightEye = scale(rightEye)
         copy.contour = contour.map(scale)
+        copy.outerLips = outerLips.map(scale)
+        copy.innerLips = innerLips.map(scale)
         copy.rawChin = scale(rawChin)
         copy.browY = browY * f
         return copy

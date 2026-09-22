@@ -110,3 +110,29 @@ never by reading one field. Never compare a spec value to a literal to decide wh
 **Test:** `SpecRenderabilityTests` walks every file in `specs/` and asserts each one resolves a
 head band, an eye line, geometry and a parseable background, so a new country cannot be added
 with a rule that silently does not apply.
+
+## 19. One face is not a calibration set
+`GateCalibration.maxMouthOpenness` was 0.070 because it split two of the owner's photos:
+IMG_0009 (lips parted, 0.083) from IMG_0016 (0.059). Measured against 17 third-party portraits,
+that threshold **rejected 12 of them** — people with visibly closed mouths.
+
+Two things were wrong. The metric normalised the inner-lip gap by outer-lip **width**, which is
+yaw-sensitive: turning the head foreshortens the lips horizontally and inflates the ratio, so
+profile shots scored as wide-open mouths. Normalising by interocular distance instead removed
+that, and tightened the owner's own set to 0.015-0.030.
+
+But it did not fix the real problem: **the populations overlap.** Vision's inner-lip contour has
+thickness even when the lips touch, so a closed mouth reads up to 0.096 (a frontal one at 0.077)
+while the owner's parted-lip photo reads 0.062. No threshold separates them. A pixel-based
+attempt — looking for teeth or cavity inside the lip ring — did not separate them either and was
+removed rather than left in half-working.
+
+What *is* separable is clearly-open from closed: closed tops out at 0.096, clearly-open starts at
+0.156.
+**Rule:** `mouthClosed` warns above 0.050 and fails only above 0.130, in that gap. A false
+rejection is worse than a missed warning here: the user cannot argue with the app, and the
+passport portal will catch a genuinely open mouth anyway.
+**Consequence:** IMG_0009 moved from `reject` to `borderline` in `fixtures/expected.json`. That
+is a change to the owner's ground truth, recorded in the case's own note and reversible.
+**Test:** `ThresholdCalibrationTests` measures the third-party set and prints the distribution,
+so the next threshold change is judged against a population rather than one face.

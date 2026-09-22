@@ -150,14 +150,26 @@ public enum InputGate {
         )
     }
 
+    /// Warn band then fail band, because the measurement cannot separate a closed mouth from
+    /// slightly parted lips reliably enough to reject on. See `GateCalibration`.
     static func mouthClosedCheck(_ face: FaceMeasurements, calibration: GateCalibration) -> CheckResult {
-        let ok = face.mouthOpenness <= calibration.maxMouthOpenness
+        let value = face.mouthOpenness
+        let status: CheckStatus
+        if value > calibration.mouthFailAbove {
+            status = .fail
+        } else if value > calibration.mouthWarnAbove {
+            status = .warn
+        } else {
+            status = .pass
+        }
         return CheckResult(
             id: .mouthClosed,
-            status: ok ? .pass : .fail,
-            measured: String(format: "%.3f", face.mouthOpenness),
-            requirement: String(format: "at most %.3f", calibration.maxMouthOpenness),
-            userMessage: ok ? nil : "Close your mouth and keep a neutral expression.",
+            status: status,
+            measured: String(format: "%.3f", value),
+            requirement: String(format: "at most %.3f", calibration.mouthFailAbove),
+            userMessage: status == .pass ? nil : (status == .fail
+                ? "Close your mouth and keep a neutral expression."
+                : "Your lips may be slightly apart. A closed, neutral mouth is safest."),
             fixability: .retakeRequired
         )
     }
@@ -171,9 +183,18 @@ public struct GateCalibration: Sendable, Equatable {
     /// below the observed floor and only catches genuinely shut eyes.
     public var minEyeOpenness: Double = 0.18
 
-    /// Vision inner-lip height over outer-lip width. IMG_0009 (lips parted, a required rejection)
-    /// measures 0.083; the next highest fixture is IMG_0016 at 0.059. 0.070 splits them.
-    public var maxMouthOpenness: Double = 0.070
+    /// Inner-lip gap over interocular distance, warn band then fail band.
+    ///
+    /// Measured on 17 third-party portraits as well as the owner's fixtures, the two populations
+    /// OVERLAP: mouths that are visibly closed read as high as 0.096 (including a frontal one at
+    /// 0.077), while the owner's parted-lip IMG_0009 reads 0.062. No single threshold separates
+    /// them, so a hard reject at 0.07 would have turned away real users with closed mouths -
+    /// 12 of those 17 portraits.
+    ///
+    /// Clearly-open mouths are separable: they start at 0.156, well clear of 0.096. So the fail
+    /// band sits at 0.13, in that gap, and everything in between only warns.
+    public var mouthWarnAbove: Double = 0.050
+    public var mouthFailAbove: Double = 0.130
 
     public static let `default` = GateCalibration()
 
