@@ -11,17 +11,20 @@ struct HomeView: View {
     @State private var showingRequirements = false
     @State private var showingFileImporter = false
     @State private var showingCamera = false
+    @State private var showingPicker = false
     /// Held until the camera sheet has actually gone. Presenting the processing sheet while the
     /// capture sheet is still dismissing makes SwiftUI drop the second presentation, and the
     /// photo silently vanishes.
     @State private var pendingCapture: Data?
     @State private var selectedSpec: DocumentSpec?
+    @State private var debugSaved: SaveOutcome?
+    @AppStorage("selectedDocumentID") private var storedDocumentID = ""
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         NavigationStack {
             Group {
-                if let spec = selectedSpec ?? catalog.specs.first {
+                if let spec = currentSpec {
                     content(spec: spec)
                 } else {
                     ContentUnavailableView(
@@ -36,25 +39,32 @@ struct HomeView: View {
         }
     }
 
+    /// The chosen document: whatever is selected now, else the one remembered from last time,
+    /// else the first available.
+    private var currentSpec: DocumentSpec? {
+        selectedSpec
+            ?? catalog.specs.first { $0.id == storedDocumentID }
+            ?? catalog.specs.first
+    }
+
+    private func select(_ spec: DocumentSpec) {
+        selectedSpec = spec
+        storedDocumentID = spec.id
+    }
+
     @ViewBuilder
     private func content(spec: DocumentSpec) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                // One card per bundled spec, per docs/PLAN.md. A segmented control truncated
-                // "Schengen Area, Schengen visa" to "Schengen Area,..." at three entries.
-                VStack(spacing: 10) {
-                    ForEach(catalog.specs) { option in
-                        DocumentCard(
-                            spec: option,
-                            isSelected: option.id == spec.id,
-                            onSelect: { selectedSpec = option },
-                            onShowRequirements: {
-                                selectedSpec = option
-                                showingRequirements = true
-                            }
-                        )
-                    }
-                }
+                // One card per document stopped scaling at eight: the list pushed Choose Photo
+                // below the fold. The selected document is shown and the rest live behind a
+                // searchable picker.
+                SelectedDocumentCard(
+                    spec: spec,
+                    otherCount: max(0, catalog.specs.count - 1),
+                    onChange: { showingPicker = true },
+                    onShowRequirements: { showingRequirements = true }
+                )
 
                 VStack(spacing: 12) {
                     PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
@@ -87,6 +97,16 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingRequirements) {
             RequirementsSheet(spec: spec)
+        }
+        .sheet(item: $debugSaved) { outcome in
+            SavedView(spec: spec, outcome: outcome) { debugSaved = nil }
+        }
+        .sheet(isPresented: $showingPicker) {
+            DocumentPickerSheet(
+                specs: catalog.specs,
+                selectedID: spec.id,
+                onSelect: { select($0) }
+            )
         }
         .fullScreenCover(isPresented: $showingCamera, onDismiss: {
             if let data = pendingCapture {
@@ -122,9 +142,13 @@ struct HomeView: View {
         .task {
             // Lets the flow be driven without tapping, for screenshotting the real screens.
             if let id = DebugAutoRun.specID(), let match = catalog.specs.first(where: { $0.id == id }) {
-                selectedSpec = match
+                select(match)
                 showingRequirements = DebugAutoRun.showRequirements
             }
+            if let variant = DebugAutoRun.savedVariant() {
+                debugSaved = SaveOutcome(destination: .photos, variant: variant)
+            }
+            if DebugAutoRun.opensPicker { showingPicker = true }
             if DebugAutoRun.opensCamera { showingCamera = true }
             if let data = DebugAutoRun.photoData() {
                 session.process(data: data, spec: spec)
@@ -158,11 +182,32 @@ enum DebugAutoRun {
         #endif
     }
 
+    static var opensPicker: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-openPicker")
+        #else
+        return false
+        #endif
+    }
+
     static var opensCamera: Bool {
         #if DEBUG
         return ProcessInfo.processInfo.arguments.contains("-openCamera")
         #else
         return false
+        #endif
+    }
+
+    /// `-showSaved single|sheet` opens the end screen directly. Vision does not run in the
+    /// simulator, so this is the only way to see it there.
+    static func savedVariant() -> PrintGuidance.Variant? {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-showSaved"), index + 1 < arguments.count
+        else { return nil }
+        return PrintGuidance.Variant(rawValue: arguments[index + 1])
+        #else
+        return nil
         #endif
     }
 
@@ -175,108 +220,62 @@ enum DebugAutoRun {
     }
 }
 
-struct DocumentCard: View {
+/// The document in use, and the way to change it.
+struct SelectedDocumentCard: View {
     let spec: DocumentSpec
-    var isSelected: Bool = false
-    var onSelect: () -> Void = {}
-    var onShowRequirements: () -> Void = {}
+    let otherCount: Int
+    let onChange: () -> Void
+    let onShowRequirements: () -> Void
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        // At accessibility sizes a flag beside the text squeezes it into a column so narrow that
-        // "Passport" hyphenates to "Pass-port". Stack instead, and give the text the full width.
-        let stacked = typeSize.isAccessibilitySize
-
-        Button(action: onSelect) {
-            VStack(alignment: .leading, spacing: 10) {
-                if stacked {
-                    label
-                    summaryText
-                } else {
-                    HStack(spacing: 14) {
-                        flagView
-                        VStack(alignment: .leading, spacing: 3) {
-                            label
-                            summaryText
-                        }
-                        Spacer(minLength: 0)
+        VStack(alignment: .leading, spacing: 12) {
+            Button(action: onChange) {
+                HStack(spacing: 14) {
+                    if !typeSize.isAccessibilitySize {
+                        Text(DocumentStyle.flag(for: spec.country.code))
+                            .font(.system(size: 34))
+                            .accessibilityHidden(true)
                     }
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("\(spec.country.name), \(spec.document.displayName)")
+                            .font(.headline)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(DocumentStyle.summary(for: spec))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
                 }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .overlay(alignment: stacked ? .bottomTrailing : .trailing) {
-            Button(action: onShowRequirements) {
-                Image(systemName: "info.circle")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                    .padding(6)
-                    .contentShape(Rectangle())
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("\(spec.country.name), \(spec.document.displayName). \(DocumentStyle.summary(for: spec))")
+            .accessibilityHint(otherCount > 0 ? "Change document. \(otherCount) others available" : "Change document")
+
+            Divider()
+
+            Button(action: onShowRequirements) {
+                HStack(spacing: 6) {
+                    Image(systemName: "info.circle")
+                    Text("Requirements")
+                    Spacer(minLength: 0)
+                }
+                .font(.subheadline)
+                .contentShape(Rectangle())
+            }
             .accessibilityLabel("Requirements for \(spec.country.name) \(spec.document.displayName)")
         }
         .padding()
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(isSelected ? Color.accentColor : .clear, lineWidth: 2)
-        )
-        .accessibilityElement(children: .contain)
-        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
-    }
-
-    private var flagView: some View {
-        Text(flag(for: spec.country.code))
-            // Scales with Dynamic Type instead of staying a fixed 34 pt.
-            .font(.system(size: 34))
-            .accessibilityHidden(true)
-    }
-
-    private var label: some View {
-        HStack(spacing: 8) {
-            if typeSize.isAccessibilitySize { flagView.font(.title) }
-            Text("\(spec.country.name), \(spec.document.displayName)")
-                .font(.headline)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private var summaryText: some View {
-        Text(summary)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            .multilineTextAlignment(.leading)
-            .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private var summary: String {
-        let size = "\(trim(spec.photo.sizeMM.width)) × \(trim(spec.photo.sizeMM.height)) mm"
-        // The background colour is detail; at accessibility sizes the size alone is the point.
-        guard !typeSize.isAccessibilitySize else { return size }
-        switch spec.background?.colorHex.uppercased() {
-        case "#FFFFFF": return "\(size), white background"
-        case .none: return size
-        default: return "\(size), light grey background"
-        }
-    }
-
-    private func trim(_ value: Double) -> String {
-        value == value.rounded() ? String(Int(value)) : String(format: "%g", value)
-    }
-
-    /// Regional indicator symbols from the ISO country code.
-    private func flag(for code: String) -> String {
-        let base: UInt32 = 127397
-        var result = ""
-        for scalar in code.unicodeScalars {
-            if let value = UnicodeScalar(base + scalar.value) { result.unicodeScalars.append(value) }
-        }
-        return result.isEmpty ? "🏳️" : result
     }
 }
 

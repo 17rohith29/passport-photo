@@ -65,6 +65,19 @@ public enum PrintSheetComposer {
         public var paperSizeInches: CGSize
     }
 
+    /// How many tiles fit on the sheet. Shared so the printing advice and the sheet itself can
+    /// never disagree about how many photos someone is about to cut out.
+    public static func layout(
+        tileWidth: Int, tileHeight: Int, sheetWidth: Int, sheetHeight: Int, gutterPx: Int
+    ) -> (columns: Int, rows: Int) {
+        guard tileWidth > 0, tileHeight > 0 else { return (1, 1) }
+        let gutter = max(0, gutterPx)
+        return (
+            max(1, (sheetWidth + gutter) / (tileWidth + gutter)),
+            max(1, (sheetHeight + gutter) / (tileHeight + gutter))
+        )
+    }
+
     public static func compose(
         tile: PixelImage, spec: DocumentSpec,
         paperSizeInches: CGSize = CGSize(width: 4, height: 6),
@@ -75,8 +88,10 @@ public enum PrintSheetComposer {
         let sheetHeight = Int((paperSizeInches.height * dpi).rounded())
         guard sheetWidth > 0, sheetHeight > 0, tile.width > 0, tile.height > 0 else { return nil }
 
-        let columns = max(1, (sheetWidth + gutterPx) / (tile.width + gutterPx))
-        let rows = max(1, (sheetHeight + gutterPx) / (tile.height + gutterPx))
+        let (columns, rows) = layout(
+            tileWidth: tile.width, tileHeight: tile.height,
+            sheetWidth: sheetWidth, sheetHeight: sheetHeight, gutterPx: gutterPx
+        )
 
         var sheet = PixelImage(width: sheetWidth, height: sheetHeight, fill: (255, 255, 255))
         let gridWidth = columns * tile.width + (columns - 1) * gutterPx

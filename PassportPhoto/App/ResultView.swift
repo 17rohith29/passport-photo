@@ -8,9 +8,12 @@ struct ResultView: View {
     let saver: PhotoSaver
     let spec: DocumentSpec
 
-    enum Variant: String, CaseIterable { case upload = "Upload file", print = "Print sheet" }
+    /// The two things a user can walk away with. `PrintGuidance.Variant` is the shared name for
+    /// these, so the advice on the Saved screen matches what was actually saved.
+    typealias Variant = PrintGuidance.Variant
 
-    @State private var variant: Variant = .upload
+    @State private var variant: Variant = .single
+    @State private var savedOutcome: SaveOutcome?
     @State private var showingMeasurements = false
     @State private var showingChecks = false
     @State private var exporting = false
@@ -22,7 +25,7 @@ struct ResultView: View {
                 verdictPill
 
                 Picker("Output", selection: $variant) {
-                    ForEach(Variant.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    ForEach(Variant.allCases, id: \.self) { Text(Self.label(for: $0)).tag($0) }
                 }
                 .pickerStyle(.segmented)
 
@@ -51,7 +54,25 @@ struct ResultView: View {
             document: JPEGDocument(data: currentData ?? Data()),
             contentType: .jpeg,
             defaultFilename: filename
-        ) { _ in }
+        ) { result in
+            if case .success = result {
+                savedOutcome = SaveOutcome(destination: .files, variant: variant)
+            }
+        }
+        // Saving to Photos finishes asynchronously, so the end screen follows the saver's state
+        // rather than the button tap.
+        .onChange(of: saver.state) { _, state in
+            if state == .savedToPhotos {
+                savedOutcome = SaveOutcome(destination: .photos, variant: variant)
+            }
+        }
+        .sheet(item: $savedOutcome) { outcome in
+            SavedView(spec: spec, outcome: outcome) {
+                savedOutcome = nil
+                session.reset()
+                saver.reset()
+            }
+        }
     }
 
     @ViewBuilder
@@ -61,7 +82,7 @@ struct ResultView: View {
                 Image(decorative: image, scale: 1)
                     .resizable()
                     .scaledToFit()
-                if showingMeasurements, variant == .upload, let output = session.output {
+                if showingMeasurements, variant == .single, let output = session.output {
                     MeasurementOverlay(output: output, spec: spec)
                 }
             }
@@ -116,14 +137,18 @@ struct ResultView: View {
         case .saving:
             ProgressView()
         case .savedToPhotos:
-            VStack(alignment: .leading, spacing: 6) {
-                Label("Saved to Photos", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                Text("Printing: order a standard 4 × 6 in print, not the store's passport service. Turn off crop, zoom and enhance, and measure one photo before cutting.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            Button {
+                savedOutcome = SaveOutcome(destination: .photos, variant: variant)
+            } label: {
+                HStack(spacing: 6) {
+                    Label("Saved to Photos", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                    Text("See next steps").font(.footnote).foregroundStyle(.secondary)
+                    Image(systemName: "chevron.right").font(.caption2).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .buttonStyle(.plain)
         case .permissionDenied:
             Text("Photos access was declined. You can still use Save to Files, or allow adding photos in Settings.")
                 .font(.footnote)
@@ -135,17 +160,24 @@ struct ResultView: View {
 
     private var currentImage: CGImage? {
         guard let output = session.output else { return nil }
-        return variant == .upload ? output.digital : (output.printSheet ?? output.digital)
+        return variant == .single ? output.digital : (output.printSheet ?? output.digital)
     }
 
     private var currentData: Data? {
         guard let output = session.output else { return nil }
-        return variant == .upload ? output.digitalJPEG : (output.printSheetJPEG ?? output.digitalJPEG)
+        return variant == .single ? output.digitalJPEG : (output.printSheetJPEG ?? output.digitalJPEG)
+    }
+
+    static func label(for variant: Variant) -> String {
+        switch variant {
+        case .single: "Single photo"
+        case .sheet: "Print sheet"
+        }
     }
 
     private var filename: String {
         let base = spec.id
-        return variant == .upload ? "\(base)-upload" : "\(base)-print-4x6"
+        return variant == .single ? "\(base)-photo" : "\(base)-print-4x6"
     }
 }
 
