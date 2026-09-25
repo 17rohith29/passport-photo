@@ -1,0 +1,66 @@
+{
+  "$schema": "./document-spec.schema.json",
+  "schemaVersion": 1,
+  "id": "ca-passport",
+  "country": { "code": "CA", "name": "Canada" },
+  "document": { "type": "passport", "displayName": "Passport", "channel": "Immigration, Refugees and Citizenship Canada" },
+  "status": {
+    "lastVerified": "2026-09-25",
+    "confidence": "high",
+    "notes": [
+      "Read directly from canada.ca's passport photo page.",
+      "Canada's photo is much larger than most - 50 x 70 mm - while the face stays 31-36 mm, so the head fills only about 48% of the height. Expect a noticeably wider crop with far more space around the head than an Indian or UK photo.",
+      "Canada is the strictest of the supported documents about editing: it requires 'an original photo that isn't altered or edited in any way' and explicitly rules out 'photo editing software, filters, and AI tools'. This app replaces the background, which IS an edit. Read the warning below before submitting.",
+      "Canada also requires the photo to be taken in person by a commercial photographer or photo studio, which the app cannot satisfy or verify.",
+      "Glasses are allowed provided the eyes are clearly visible and there is no glare; sunglasses and tinted glasses are not.",
+      "Canada states no digital pixel size because the application is print-based. The pixel sizes here are 300 to 600 dpi at 50 x 70 mm, keeping the 5:7 aspect exactly."
+    ],
+    "notEnforced": [
+      "The photo must be taken in person by a commercial photographer or photo studio.",
+      "The photo must be an original, not altered or edited in any way, with no editing software, filters or AI tools. This app replaces the background, so it does not meet that rule.",
+      "Taken no more than 6 months before the application is submitted.",
+      "Professionally printed on plain, high-quality photographic paper.",
+      "Glasses are permitted but must not glare or obscure the eyes - the app cannot detect glasses.",
+      "The photographer's name, address and the date must be shown on the back of one photo."
+    ]
+  },
+  "photo": {
+    "sizeMM": { "width": 50, "height": 70 },
+    "digital": {
+      "sizePxRange": { "min": { "width": 600, "height": 840 }, "max": { "width": 1200, "height": 1680 } },
+      "format": "jpeg"
+    },
+    "print": { "dpi": 300, "copiesRequired": 2, "paperFinish": "any" }
+  },
+  "geometry": {
+    "headHeight": {
+      "measure": "chinToCrown",
+      "targetMM": 33.5,
+      "passMM": { "min": 31.0, "max": 36.0 },
+      "note": "canada.ca: 'between 31 mm (1¼ inches) and 36 mm (1⁷⁄₁₆ inches) from chin to crown'. Target is mid-band. Note this is only ~48% of a 70 mm photo."
+    },
+    "topMargin": { "targetMM": 8.0, "passMM": { "min": 3.0, "max": 16.0 } },
+    "eyeLine": { "fromBottomFraction": { "min": 0.50, "max": 0.65 } },
+    "horizontalOffsetFraction": { "failAbove": 0.02 },
+    "shouldersVisibleFraction": { "failBelow": 0.50 }
+  },
+  "pose": {
+    "rollDeg": { "inputFailAbove": 10, "outputFailAbove": 2 },
+    "yawDeg": { "warnAbove": 5, "failAbove": 8 },
+    "pitchDeg": { "warnAbove": 5, "failAbove": 8 }
+  },
+  "appearance": { "eyesOpen": true, "mouthClosed": true, "glassesAllowed": true, "expression": "neutral", "earsVisible": false },
+  "lighting": { "cheekImbalance": { "warnAbove": 0.08, "failAbove": 0.12 } },
+  "background": {
+    "colorHex": "#FFFFFF",
+    "pureFraction": { "failBelow": 0.95 },
+    "minChannelValue": 245,
+    "editingRisk": "Canada requires an UNEDITED photo and rules out editing software. We replaced the background, so this photo does not meet that rule. Use it to check your framing, then have a photo taken by a commercial studio."
+  },
+  "input": { "allowUpscaling": false, "sharpness": { "failBelow": 100 } },
+  "sources": [
+    { "title": "Government of Canada: Photos for passports and travel documents", "authority": "official",
+      "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/canadian-passports/photos.html",
+      "says": "50 mm wide by 70 mm high (2 inches wide by 2¾ inches high); face height between 31 mm and 36 mm from chin to crown; plain white or light-coloured background; 2 identical and unaltered photos; neutral expression with eyes open and clearly visible, looking straight at the camera and mouth closed; regular glasses accepted if eyes clearly visible with no glare, sunglasses and tinted glasses rejected; taken no more than 6 months before the application; taken in person by a commercial photographer or photo studio; an original photo that isn't altered or edited in any way, no photo editing software, filters or AI tools" }
+  ]
+}

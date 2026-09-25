@@ -28,7 +28,11 @@
         "lastVerified": { "type": "string", "format": "date" },
         "confidence": { "enum": ["high", "medium", "low"] },
         "isTestFixture": { "type": "boolean", "description": "true for fake specs used only in tests; never shown to users" },
-        "notes": { "type": "array", "items": { "type": "string" } }
+        "notes": { "type": "array", "items": { "type": "string" } },
+        "notEnforced": {
+          "type": "array", "items": { "type": "string" },
+          "description": "Requirements this authority states that the app CANNOT check - paper stock, how recent the photo is, whether it was retouched, who took it. Shown to the user so a green verdict is never mistaken for full compliance. Never leave a stated rule out of both the checks and this list."
+        }
       }
     },
     "photo": {

@@ -1,0 +1,139 @@
+{
+  "$schema": "./document-spec.schema.json",
+  "schemaVersion": 1,
+  "id": "cn-visa",
+  "country": {
+    "code": "CN",
+    "name": "China"
+  },
+  "document": {
+    "type": "visa",
+    "displayName": "Visa",
+    "channel": "Chinese Visa Application Service Center"
+  },
+  "status": {
+    "lastVerified": "2026-09-25",
+    "confidence": "high",
+    "notes": [
+      "Read directly from the Chinese Visa Application Service Center's own photo FAQ. This is the VISA photo, which is what a traveller to China needs; it is not the Chinese passport photo.",
+      "China also states a head WIDTH of 15-22 mm. This app measures head HEIGHT only, and the schema has no width field, so that rule is listed as not enforced rather than quietly dropped. It is ambiguous in any case whether 'width of head' means the face contour or the head including hair, and enforcing the wrong reading would reject good photos.",
+      "China's pose tolerances are far looser than ICAO: up to 20 degrees of left/right turn and 25 degrees up or down. Those are used as the FAIL limits so the app matches the published rule, but the warn bands stay at 5 degrees, because a squarely framed photo is still the safer submission.",
+      "Ears must be visible, unlike the US, Schengen, UK, Australia and Canada.",
+      "Glasses are allowed except thick-rimmed, tinted or glare glasses. The app cannot detect glasses.",
+      "China states no digital pixel size on this page, so the sizes here are 300 to 600 dpi at 33 x 48 mm, keeping the 11:16 aspect exactly."
+    ],
+    "notEnforced": [
+      "Head WIDTH must be 15-22 mm. The app measures head height only.",
+      "Ears must be visible - the app does not check this.",
+      "Taken within the last 6 months.",
+      "Printed on glossy finish photo paper, not matte or plain paper.",
+      "Stainless, scratchless and without any crease.",
+      "Glasses allowed except thick-rimmed, tinted or glare glasses - the app cannot detect glasses.",
+      "Head covering permitted only for religious reasons and must not obscure any facial feature.",
+      "No edge frame around the photo."
+    ]
+  },
+  "photo": {
+    "sizeMM": {
+      "width": 33,
+      "height": 48
+    },
+    "digital": {
+      "sizePxRange": {
+        "min": {
+          "width": 385,
+          "height": 560
+        },
+        "max": {
+          "width": 770,
+          "height": 1120
+        }
+      },
+      "format": "jpeg"
+    },
+    "print": {
+      "dpi": 300,
+      "copiesRequired": 1,
+      "paperFinish": "glossy"
+    }
+  },
+  "geometry": {
+    "headHeight": {
+      "measure": "chinToCrown",
+      "targetMM": 30.5,
+      "passMM": {
+        "min": 28.0,
+        "max": 33.0
+      },
+      "note": "Chinese Visa Application Service Center: 'head height of head: 28mm to 33mm'. Target is mid-band."
+    },
+    "topMargin": {
+      "targetMM": 4.0,
+      "passMM": {
+        "min": 2.0,
+        "max": 9.0
+      }
+    },
+    "eyeLine": {
+      "fromBottomFraction": {
+        "min": 0.5,
+        "max": 0.62
+      }
+    },
+    "horizontalOffsetFraction": {
+      "failAbove": 0.02
+    },
+    "shouldersVisibleFraction": {
+      "failBelow": 0.5
+    }
+  },
+  "pose": {
+    "rollDeg": {
+      "inputFailAbove": 20,
+      "outputFailAbove": 2
+    },
+    "yawDeg": {
+      "warnAbove": 5,
+      "failAbove": 20
+    },
+    "pitchDeg": {
+      "warnAbove": 5,
+      "failAbove": 25
+    }
+  },
+  "appearance": {
+    "eyesOpen": true,
+    "mouthClosed": true,
+    "glassesAllowed": true,
+    "expression": "neutral",
+    "earsVisible": true
+  },
+  "lighting": {
+    "cheekImbalance": {
+      "warnAbove": 0.08,
+      "failAbove": 0.12
+    }
+  },
+  "background": {
+    "colorHex": "#FFFFFF",
+    "pureFraction": {
+      "failBelow": 0.95
+    },
+    "minChannelValue": 245,
+    "editingRisk": "We replaced the background. The visa centre requires a white or near-white background with no edge frame; a photo taken against a plain white wall is safer."
+  },
+  "input": {
+    "allowUpscaling": false,
+    "sharpness": {
+      "failBelow": 100
+    }
+  },
+  "sources": [
+    {
+      "title": "Chinese Visa Application Service Center: Photo requirements FAQ",
+      "authority": "official",
+      "url": "https://www.visaforchina.cn/SYD3_EN/qianzhengyewu/jichuzhishi/changjianwenti/355135188537315328.html",
+      "says": "Photo size: 48mm x 33mm, width of head: 15mm to 22mm, head height of head: 28mm to 33mm; taken recently within the last 6 months; colour photo; neutral with eyes open, lips closed; ears visible; glasses allowed except thick-rimmed, tinted or glare glasses; head covering only permitted due to religious reasons; head position no more than 20 degrees left or right tilt and 25 degrees up or down tilt; background white or close to white, and with no edge frame; printed on glossy finish photo paper"
+    }
+  ]
+}

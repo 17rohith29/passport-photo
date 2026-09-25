@@ -2,8 +2,15 @@
   "$schema": "./document-spec.schema.json",
   "schemaVersion": 1,
   "id": "eu-schengen-visa",
-  "country": { "code": "EU", "name": "Schengen Area" },
-  "document": { "type": "visa", "displayName": "Schengen visa", "channel": "Consulate of the main destination country" },
+  "country": {
+    "code": "EU",
+    "name": "Schengen Area"
+  },
+  "document": {
+    "type": "visa",
+    "displayName": "Schengen visa",
+    "channel": "Consulate of the main destination country"
+  },
   "status": {
     "lastVerified": "2026-09-21",
     "confidence": "medium",
@@ -15,51 +22,128 @@
       "Glasses ARE permitted, unlike the US and India, provided the eyes are clearly visible with no flash reflection, no tinted lenses and frames not covering the eyes. The app does not detect glasses, so this is shown to the user rather than enforced.",
       "No EU-wide digital pixel or file size standard exists; individual consulates and VFS centres set their own. The range here is 35 x 45 mm at 300 to 600 dpi.",
       "Lighting and sharpness thresholds are this app's own calibration, shared with the other specs. The Commission requires uniform lighting with no shadows or flash reflections but states no numbers."
+    ],
+    "notEnforced": [
+      "No more than 6 months old.",
+      "Glasses ARE permitted, but must show the eyes clearly with no flash reflection, no tinted lenses and frames not covering the eyes - the app cannot detect glasses.",
+      "Head coverings are permitted only for religious reasons and must show the face from chin to forehead.",
+      "Printed on high quality paper at high resolution.",
+      "No ink marks or creases on the print."
     ]
   },
   "photo": {
-    "sizeMM": { "width": 35, "height": 45 },
+    "sizeMM": {
+      "width": 35,
+      "height": 45
+    },
     "digital": {
-      "sizePxRange": { "min": { "width": 413, "height": 531 }, "max": { "width": 827, "height": 1063 } },
+      "sizePxRange": {
+        "min": {
+          "width": 413,
+          "height": 531
+        },
+        "max": {
+          "width": 827,
+          "height": 1063
+        }
+      },
       "format": "jpeg"
     },
-    "print": { "dpi": 300, "copiesRequired": 2, "paperFinish": "any" }
+    "print": {
+      "dpi": 300,
+      "copiesRequired": 2,
+      "paperFinish": "any"
+    }
   },
   "geometry": {
     "headHeight": {
       "measure": "chinToCrown",
       "targetMM": 33.75,
-      "passFraction": { "min": 0.70, "max": 0.80 },
+      "passFraction": {
+        "min": 0.7,
+        "max": 0.8
+      },
       "note": "The Commission states 70-80% of the photograph. On a 45 mm photo that is 31.5-36.0 mm. The target is 75%, the middle of the band."
     },
-    "topMargin": { "targetMM": 3.0, "passMM": { "min": 1.0, "max": 6.0 } },
-    "eyeLine": { "fromBottomFraction": { "min": 0.50, "max": 0.60 } },
-    "horizontalOffsetFraction": { "failAbove": 0.02 },
-    "shouldersVisibleFraction": { "failBelow": 0.55 }
+    "topMargin": {
+      "targetMM": 3.0,
+      "passMM": {
+        "min": 1.0,
+        "max": 6.0
+      }
+    },
+    "eyeLine": {
+      "fromBottomFraction": {
+        "min": 0.5,
+        "max": 0.6
+      }
+    },
+    "horizontalOffsetFraction": {
+      "failAbove": 0.02
+    },
+    "shouldersVisibleFraction": {
+      "failBelow": 0.55
+    }
   },
   "pose": {
-    "rollDeg": { "inputFailAbove": 10, "outputFailAbove": 2 },
-    "yawDeg": { "warnAbove": 5, "failAbove": 8 },
-    "pitchDeg": { "warnAbove": 5, "failAbove": 8 }
+    "rollDeg": {
+      "inputFailAbove": 10,
+      "outputFailAbove": 2
+    },
+    "yawDeg": {
+      "warnAbove": 5,
+      "failAbove": 8
+    },
+    "pitchDeg": {
+      "warnAbove": 5,
+      "failAbove": 8
+    }
   },
-  "appearance": { "eyesOpen": true, "mouthClosed": true, "glassesAllowed": true, "expression": "neutral", "earsVisible": false },
-  "lighting": { "cheekImbalance": { "warnAbove": 0.08, "failAbove": 0.12 } },
+  "appearance": {
+    "eyesOpen": true,
+    "mouthClosed": true,
+    "glassesAllowed": true,
+    "expression": "neutral",
+    "earsVisible": false
+  },
+  "lighting": {
+    "cheekImbalance": {
+      "warnAbove": 0.08,
+      "failAbove": 0.12
+    }
+  },
   "background": {
     "colorHex": "#F0F0F0",
-    "pureFraction": { "failBelow": 0.95 },
+    "pureFraction": {
+      "failBelow": 0.95
+    },
     "minChannelValue": 235,
     "editingRisk": "We replaced the background with a neutral light grey. Consulates differ on edited backgrounds, so a photo taken against a plain light wall is safer."
   },
-  "input": { "allowUpscaling": false, "sharpness": { "failBelow": 100 } },
+  "input": {
+    "allowUpscaling": false,
+    "sharpness": {
+      "failBelow": 100
+    }
+  },
   "sources": [
-    { "title": "European Commission, DG Migration and Home Affairs: ICAO photograph guidelines", "authority": "official",
+    {
+      "title": "European Commission, DG Migration and Home Affairs: ICAO photograph guidelines",
+      "authority": "official",
       "url": "https://home-affairs.ec.europa.eu/document/download/5bb16566-c8c2-4afb-b038-530f488cb72a_en?filename=icao_photograph_guidelines_en.pdf",
-      "says": "no more than 6 months old; 35-40 mm in width; close up of head and top of shoulders so that your face takes up 70-80% of the photograph; in sharp focus and clear; plain light-coloured background; uniform lighting with no shadows or flash reflections and no red eye; eyes open and clearly visible; facing square on, not tilted; neutral expression and mouth closed; shown alone; glasses permitted if eyes are clear, with no flash reflection, no tinted lenses and frames not covering the eyes; head coverings only for religious reasons" },
-    { "title": "European Commission: Applying for a Schengen visa", "authority": "official",
+      "says": "no more than 6 months old; 35-40 mm in width; close up of head and top of shoulders so that your face takes up 70-80% of the photograph; in sharp focus and clear; plain light-coloured background; uniform lighting with no shadows or flash reflections and no red eye; eyes open and clearly visible; facing square on, not tilted; neutral expression and mouth closed; shown alone; glasses permitted if eyes are clear, with no flash reflection, no tinted lenses and frames not covering the eyes; head coverings only for religious reasons"
+    },
+    {
+      "title": "European Commission: Applying for a Schengen visa",
+      "authority": "official",
       "url": "https://home-affairs.ec.europa.eu/policies/schengen/visa-policy/applying-schengen-visa_en",
-      "says": "A photo in compliance with ICAO standards is required with a Schengen visa application" },
-    { "title": "ICAO Doc 9303 machine readable travel documents", "authority": "official",
+      "says": "A photo in compliance with ICAO standards is required with a Schengen visa application"
+    },
+    {
+      "title": "ICAO Doc 9303 machine readable travel documents",
+      "authority": "official",
       "url": "https://www.icao.int/publications/pages/publication.aspx?docnum=9303",
-      "says": "The international specification the Commission's guidelines apply" }
+      "says": "The international specification the Commission's guidelines apply"
+    }
   ]
 }

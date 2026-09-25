@@ -47,6 +47,9 @@ public struct Status: Codable, Sendable, Equatable {
     public var confidence: Confidence
     public var isTestFixture: Bool?
     public var notes: [String]?
+    /// Requirements the authority states that the app cannot check. Shown to the user, so a
+    /// green verdict is never mistaken for full compliance.
+    public var notEnforced: [String]?
 
     /// Parsed `lastVerified` (yyyy-MM-dd), or nil if it is not a valid date.
     public var lastVerifiedDate: Date? { DateOnly.parse(lastVerified) }

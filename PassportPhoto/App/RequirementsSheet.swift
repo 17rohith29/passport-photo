@@ -47,6 +47,28 @@ struct RequirementsSheet: View {
                     }
                 }
 
+                // A green verdict must never be mistaken for full compliance. These are rules the
+                // authority states that the app cannot measure, listed by the spec itself.
+                if let notEnforced = spec.status.notEnforced, !notEnforced.isEmpty {
+                    Section {
+                        ForEach(notEnforced, id: \.self) { item in
+                            Label {
+                                Text(item)
+                                    .font(.subheadline)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            } icon: {
+                                Image(systemName: "eye.slash")
+                                    .foregroundStyle(.orange)
+                            }
+                        }
+                    } header: {
+                        Text("What we can't check")
+                    } footer: {
+                        Text("The app measures everything above this section. These rules are still yours to meet.")
+                            .font(.caption)
+                    }
+                }
+
                 Section {
                     ForEach(Array(spec.sources.enumerated()), id: \.offset) { _, source in
                         if let url = URL(string: source.url), source.url != "about:blank" {

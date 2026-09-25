@@ -237,3 +237,31 @@ minimums. When an authority's own figures disagree, satisfy the constraint that 
 (the minimums) and keep the geometry that is physical (the printed aspect).
 **Test:** `UKPassportSpecTests` asserts the pixel aspect equals the millimetre aspect, that the
 minimums are still met, and that the naive 600x750 reading really would have been wrong.
+
+## 27. A rule you cannot check must be written down, not dropped
+Adding four more documents surfaced rules the app has no way to measure: Australia's 200 gsm
+dye-sublimation paper, the UK's "taken in the last month", Canada's "taken in person by a
+commercial photographer", China's head WIDTH of 15-22 mm, and glasses everywhere. Left alone,
+each of those would have vanished — not in the checks, not on screen — and a green verdict would
+have implied full compliance.
+**Rule:** `status.notEnforced` lists them, the requirements sheet shows them under "What we can't
+check", and a test asserts every document declares at least one. Any document stating a glasses
+or ears rule must admit it is unchecked, because neither is ever measured.
+**Test:** `AllDocumentsTests.everyDocumentDeclaresItsGaps`.
+
+## 28. Canada forbids exactly what this app does
+canada.ca requires "an original photo that isn't altered or edited in any way" and rules out
+"photo editing software, filters, and AI tools". This app replaces the background, which is an
+edit. The UK and Australia say similar things less absolutely.
+**Rule:** say so plainly in `background.editingRisk` and in `notEnforced`, rather than shipping a
+green tick that the issuing authority would reject on sight. The app is genuinely useful for
+checking framing before paying a studio; it is not a substitute for one in Canada.
+
+## 29. A size range is not a size
+Australia states 35-40 mm wide by 45-50 mm high — a range, where the schema has a fixed
+`sizeMM`. Extending the schema would have been the obvious move and the wrong one: the app must
+output ONE size regardless, and the head band of 32-36 mm is fixed whatever the photo size, so
+the smallest legal size frames the head most tightly and satisfies every larger one.
+**Rule:** output 35 x 45 mm, the smallest size in Australia's range and the standard booth size,
+and record in the spec's notes that the range exists and why this size was chosen. Reach for a
+schema change only when a country needs a rule the schema genuinely cannot express.

@@ -1,0 +1,66 @@
+{
+  "$schema": "./document-spec.schema.json",
+  "schemaVersion": 1,
+  "id": "au-passport",
+  "country": { "code": "AU", "name": "Australia" },
+  "document": { "type": "passport", "displayName": "Passport", "channel": "Australian Passport Office" },
+  "status": {
+    "lastVerified": "2026-09-25",
+    "confidence": "high",
+    "notes": [
+      "Read directly from the Australian Passport Office's own guidelines page.",
+      "Australia states a photo SIZE RANGE, not a fixed size: 35-40 mm wide and 45-50 mm high. This spec outputs 35 x 45 mm, the smallest size in that range and the standard photo-booth size, which is legal everywhere in the range. The head band of 32-36 mm is fixed regardless of photo size, so a 35 x 45 photo frames the head most tightly - 71% to 80% of the height.",
+      "Glasses are NOT allowed. The APO is explicit: 'You must not wear glasses in a passport photo unless you can't remove them for medical reasons. Vision impairment alone is not an acceptable reason.'",
+      "Background may be plain white OR light grey. White is used here; both are stated as acceptable.",
+      "Australia requires TWO printed photos and gives no digital pixel size, because the application is print-based. The pixel sizes here are simply 300 to 600 dpi at 35 x 45 mm.",
+      "Lighting and sharpness thresholds are this app's own calibration, shared across specs. The APO requires uniform lighting and no shadows or reflections but states no numbers."
+    ],
+    "notEnforced": [
+      "Printed on heavy-weight glossy paper, minimum 200 gsm, produced by dye sublimation rather than an inkjet printer.",
+      "Photo less than 6 months old.",
+      "No retouching, such as removing moles, wrinkles or scars.",
+      "Glasses must be absent unless worn for medical reasons - the app cannot detect glasses.",
+      "Religious head coverings must be plain and without patterns.",
+      "Hearing aids are allowed; wireless earbuds are not."
+    ]
+  },
+  "photo": {
+    "sizeMM": { "width": 35, "height": 45 },
+    "digital": {
+      "sizePxRange": { "min": { "width": 413, "height": 531 }, "max": { "width": 827, "height": 1063 } },
+      "format": "jpeg"
+    },
+    "print": { "dpi": 300, "copiesRequired": 2, "paperFinish": "glossy" }
+  },
+  "geometry": {
+    "headHeight": {
+      "measure": "chinToCrown",
+      "targetMM": 34.0,
+      "passMM": { "min": 32.0, "max": 36.0 },
+      "note": "APO: 'The height of your face, from your chin to your crown, must be 32-36 mm.' Target is mid-band."
+    },
+    "topMargin": { "targetMM": 3.0, "passMM": { "min": 1.5, "max": 7.0 } },
+    "eyeLine": { "fromBottomFraction": { "min": 0.50, "max": 0.60 } },
+    "horizontalOffsetFraction": { "failAbove": 0.02 },
+    "shouldersVisibleFraction": { "failBelow": 0.55 }
+  },
+  "pose": {
+    "rollDeg": { "inputFailAbove": 10, "outputFailAbove": 2 },
+    "yawDeg": { "warnAbove": 5, "failAbove": 8 },
+    "pitchDeg": { "warnAbove": 5, "failAbove": 8 }
+  },
+  "appearance": { "eyesOpen": true, "mouthClosed": true, "glassesAllowed": false, "expression": "neutral", "earsVisible": false },
+  "lighting": { "cheekImbalance": { "warnAbove": 0.08, "failAbove": 0.12 } },
+  "background": {
+    "colorHex": "#FFFFFF",
+    "pureFraction": { "failBelow": 0.95 },
+    "minChannelValue": 245,
+    "editingRisk": "We replaced the background. The Australian Passport Office does not accept retouched photos, so a photo taken against a plain white or light grey wall is safer."
+  },
+  "input": { "allowUpscaling": false, "sharpness": { "failBelow": 100 } },
+  "sources": [
+    { "title": "Australian Passport Office: Passport photos", "authority": "official",
+      "url": "https://www.passports.gov.au/PhotoGuidelines",
+      "says": "35-40 mm wide, 45-50 mm high; the height of your face, from your chin to your crown, must be 32-36 mm; less than 6 months old; printed on heavy-weight, glossy paper (minimum 200 gsm) using dye sublimation; a plain white or light grey background that contrasts with your face; uniform lighting; face centred and looking straight at the camera; no retouching; no shadows or reflections; head not tilted; eyes open and a neutral expression; you must not wear glasses unless you can't remove them for medical reasons; 2 photos required" }
+  ]
+}

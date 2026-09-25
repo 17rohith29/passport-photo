@@ -2,8 +2,15 @@
   "$schema": "./document-spec.schema.json",
   "schemaVersion": 1,
   "id": "gb-passport",
-  "country": { "code": "GB", "name": "United Kingdom" },
-  "document": { "type": "passport", "displayName": "Passport", "channel": "HM Passport Office" },
+  "country": {
+    "code": "GB",
+    "name": "United Kingdom"
+  },
+  "document": {
+    "type": "passport",
+    "displayName": "Passport",
+    "channel": "HM Passport Office"
+  },
   "status": {
     "lastVerified": "2026-09-21",
     "confidence": "high",
@@ -14,49 +21,121 @@
       "Glasses are discouraged rather than banned: 'Do not wear glasses in your photo unless you have to do so.' The app cannot detect glasses, so this is shown to the user rather than enforced.",
       "UK photos must be taken in the LAST MONTH, stricter than the six months the US and Schengen allow. The app cannot check when a photo was taken.",
       "Lighting and sharpness thresholds are this app's own calibration, shared with the other specs. GOV.UK requires a photo with no shadows on the face or behind it but states no numbers."
+    ],
+    "notEnforced": [
+      "Taken in the last month - stricter than the 6 months most other documents allow, and the app cannot tell when a photo was taken.",
+      "Unaltered by computer software. This app replaces the background, which is an alteration.",
+      "Do not wear glasses unless you have to; no sunglasses or tinted glasses - the app cannot detect glasses.",
+      "No head covering unless worn for religious or medical reasons.",
+      "Printed in colour on plain white photographic paper with no border, to a professional standard.",
+      "No creases or tears on the print."
     ]
   },
   "photo": {
-    "sizeMM": { "width": 35, "height": 45 },
-    "digital": {
-      "sizePx": { "width": 700, "height": 900 },
-      "format": "jpeg",
-      "fileSizeKB": { "min": 50, "max": 10240 }
+    "sizeMM": {
+      "width": 35,
+      "height": 45
     },
-    "print": { "dpi": 300, "copiesRequired": 2, "paperFinish": "any" }
+    "digital": {
+      "sizePx": {
+        "width": 700,
+        "height": 900
+      },
+      "format": "jpeg",
+      "fileSizeKB": {
+        "min": 50,
+        "max": 10240
+      }
+    },
+    "print": {
+      "dpi": 300,
+      "copiesRequired": 2,
+      "paperFinish": "any"
+    }
   },
   "geometry": {
     "headHeight": {
       "measure": "chinToCrown",
       "targetMM": 31.5,
-      "passMM": { "min": 29.0, "max": 34.0 },
+      "passMM": {
+        "min": 29.0,
+        "max": 34.0
+      },
       "note": "GOV.UK: 'The image of you - from the crown of your head to your chin - must be between 29mm and 34mm high.' Target is the middle of that band."
     },
-    "topMargin": { "targetMM": 4.0, "passMM": { "min": 1.5, "max": 8.0 } },
-    "eyeLine": { "fromBottomFraction": { "min": 0.50, "max": 0.60 } },
-    "horizontalOffsetFraction": { "failAbove": 0.02 },
-    "shouldersVisibleFraction": { "failBelow": 0.55 }
+    "topMargin": {
+      "targetMM": 4.0,
+      "passMM": {
+        "min": 1.5,
+        "max": 8.0
+      }
+    },
+    "eyeLine": {
+      "fromBottomFraction": {
+        "min": 0.5,
+        "max": 0.6
+      }
+    },
+    "horizontalOffsetFraction": {
+      "failAbove": 0.02
+    },
+    "shouldersVisibleFraction": {
+      "failBelow": 0.55
+    }
   },
   "pose": {
-    "rollDeg": { "inputFailAbove": 10, "outputFailAbove": 2 },
-    "yawDeg": { "warnAbove": 5, "failAbove": 8 },
-    "pitchDeg": { "warnAbove": 5, "failAbove": 8 }
+    "rollDeg": {
+      "inputFailAbove": 10,
+      "outputFailAbove": 2
+    },
+    "yawDeg": {
+      "warnAbove": 5,
+      "failAbove": 8
+    },
+    "pitchDeg": {
+      "warnAbove": 5,
+      "failAbove": 8
+    }
   },
-  "appearance": { "eyesOpen": true, "mouthClosed": true, "glassesAllowed": false, "expression": "neutral", "earsVisible": false },
-  "lighting": { "cheekImbalance": { "warnAbove": 0.08, "failAbove": 0.12 } },
+  "appearance": {
+    "eyesOpen": true,
+    "mouthClosed": true,
+    "glassesAllowed": false,
+    "expression": "neutral",
+    "earsVisible": false
+  },
+  "lighting": {
+    "cheekImbalance": {
+      "warnAbove": 0.08,
+      "failAbove": 0.12
+    }
+  },
   "background": {
     "colorHex": "#F0F0F0",
-    "pureFraction": { "failBelow": 0.95 },
+    "pureFraction": {
+      "failBelow": 0.95
+    },
     "minChannelValue": 235,
     "editingRisk": "We replaced the background with a neutral light grey. GOV.UK requires a photo unaltered by computer software, so a photo taken against a plain cream or light grey wall is safer."
   },
-  "input": { "allowUpscaling": false, "sharpness": { "failBelow": 100 } },
+  "input": {
+    "allowUpscaling": false,
+    "sharpness": {
+      "failBelow": 100
+    }
+  },
   "sources": [
-    { "title": "GOV.UK: Get a passport photo - printed photos", "authority": "official",
+    {
+      "title": "GOV.UK: Get a passport photo - printed photos",
+      "authority": "official",
       "url": "https://www.gov.uk/photos-for-passports/photo-requirements",
-      "says": "measure 45 millimetres (mm) high by 35mm wide (the standard size used in photo booths in the UK); the image of you - from the crown of your head to your chin - must be between 29mm and 34mm high; taken against a plain cream or light grey background; in colour on plain white photographic paper with no border; clear and in focus; unaltered by computer software" },
-    { "title": "GOV.UK: Get a passport photo - digital photos", "authority": "official",
+      "says": "measure 45 millimetres (mm) high by 35mm wide (the standard size used in photo booths in the UK); the image of you - from the crown of your head to your chin - must be between 29mm and 34mm high; taken against a plain cream or light grey background; in colour on plain white photographic paper with no border; clear and in focus; unaltered by computer software"
+    },
+    {
+      "title": "GOV.UK: Get a passport photo - digital photos",
+      "authority": "official",
       "url": "https://www.gov.uk/photos-for-passports",
-      "says": "taken in the last month; at least 600 pixels wide and 750 pixels tall; at least 50KB and no more than 10MB; clear and in focus; in colour; unaltered by computer software; plain light-coloured background; facing forwards and looking straight at the camera; plain expression and mouth closed; eyes open and visible; no head covering unless religious or medical; do not wear glasses unless you have to" }
+      "says": "taken in the last month; at least 600 pixels wide and 750 pixels tall; at least 50KB and no more than 10MB; clear and in focus; in colour; unaltered by computer software; plain light-coloured background; facing forwards and looking straight at the camera; plain expression and mouth closed; eyes open and visible; no head covering unless religious or medical; do not wear glasses unless you have to"
+    }
   ]
 }

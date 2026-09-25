@@ -1,0 +1,67 @@
+{
+  "$schema": "./document-spec.schema.json",
+  "schemaVersion": 1,
+  "id": "ru-visa",
+  "country": { "code": "RU", "name": "Russia" },
+  "document": { "type": "visa", "displayName": "Visa", "channel": "Consular Department, Ministry of Foreign Affairs" },
+  "status": {
+    "lastVerified": "2026-09-25",
+    "confidence": "low",
+    "notes": [
+      "CONFIDENCE IS LOW AND THE REASON MATTERS. The qualitative rules below were read directly from the Consulate General in Warsaw's photo page: a light white or off-white background, not more than 6 months old, full face, non-smiling, and no sunglasses or head covering except for religious or ethnic reasons. That page states NO dimensions.",
+      "The 35 x 45 mm size and the 70-80% face proportion are attributed to the Consulate General in New York, whose page could NOT be loaded to confirm them - it returned an empty document. They are consistent with the ICAO standard Russia follows and with every other 35 x 45 document here, but they were not read first-hand. Check them against your own consulate before relying on this spec.",
+      "Russian consulates differ from one another, and the consulate handling your application is the authority. Treat this spec as a starting point rather than a rule.",
+      "No digital pixel size is stated, so the sizes here are 300 to 600 dpi at 35 x 45 mm, keeping the 7:9 aspect exactly."
+    ],
+    "notEnforced": [
+      "Photo not more than 6 months old.",
+      "Printed on normal photographic paper (camera print).",
+      "No sunglasses, hat or cap, unless worn for religious or ethnic reasons - the app cannot detect these.",
+      "Non-smiling: the app checks that the mouth is closed but cannot judge a smile.",
+      "The photograph must be stuck onto the visa application form.",
+      "THE DIMENSIONS THEMSELVES are not first-hand verified - see the notes above."
+    ]
+  },
+  "photo": {
+    "sizeMM": { "width": 35, "height": 45 },
+    "digital": {
+      "sizePxRange": { "min": { "width": 413, "height": 531 }, "max": { "width": 700, "height": 900 } },
+      "format": "jpeg"
+    },
+    "print": { "dpi": 300, "copiesRequired": 1, "paperFinish": "any" }
+  },
+  "geometry": {
+    "headHeight": {
+      "measure": "chinToCrown",
+      "targetMM": 33.75,
+      "passFraction": { "min": 0.70, "max": 0.80 },
+      "note": "Stated as a proportion - the face must take up 70-80% of the photo - which on a 45 mm photo is 31.5-36.0 mm. NOT first-hand verified; see status.notes."
+    },
+    "topMargin": { "targetMM": 3.0, "passMM": { "min": 1.0, "max": 6.0 } },
+    "eyeLine": { "fromBottomFraction": { "min": 0.50, "max": 0.60 } },
+    "horizontalOffsetFraction": { "failAbove": 0.02 },
+    "shouldersVisibleFraction": { "failBelow": 0.55 }
+  },
+  "pose": {
+    "rollDeg": { "inputFailAbove": 10, "outputFailAbove": 2 },
+    "yawDeg": { "warnAbove": 5, "failAbove": 8 },
+    "pitchDeg": { "warnAbove": 5, "failAbove": 8 }
+  },
+  "appearance": { "eyesOpen": true, "mouthClosed": true, "glassesAllowed": false, "expression": "neutral", "earsVisible": false },
+  "lighting": { "cheekImbalance": { "warnAbove": 0.08, "failAbove": 0.12 } },
+  "background": {
+    "colorHex": "#F7F7F7",
+    "pureFraction": { "failBelow": 0.95 },
+    "minChannelValue": 235,
+    "editingRisk": "We replaced the background with an off-white. The consulate requires a light white or off-white background; a photo taken against such a wall is safer."
+  },
+  "input": { "allowUpscaling": false, "sharpness": { "failBelow": 100 } },
+  "sources": [
+    { "title": "Consulate General of the Russian Federation in Warsaw: Photo specification", "authority": "official",
+      "url": "https://warsaw.kdmid.ru/en/info/photo-specification/",
+      "says": "one recent colour photo (not more than 6 months old); taken against a light background (white or off-white) so that features are distinguishable and contrast against the background; clear quality and with the face in focus; printed on normal photographic paper (camera print); full face, non-smiling, without sunglasses, a hat/cap or other head covering unless worn because of religious belief or ethnic background. States no dimensions." },
+    { "title": "Consulate General of the Russian Federation in New York: Russian visa photo specifications", "authority": "official",
+      "url": "https://newyork.mid.ru/web/newyork_en/russian-visa-photo-specifications",
+      "says": "Reported to state 35x45 mm with the face taking up 70-80% of the photo, a plain light-coloured background, no more than six months old, full face with neutral expression and mouth closed. NOT VERIFIED FIRST-HAND: the page returned an empty document when fetched." }
+  ]
+}
