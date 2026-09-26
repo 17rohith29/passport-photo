@@ -265,3 +265,36 @@ the smallest legal size frames the head most tightly and satisfies every larger 
 **Rule:** output 35 x 45 mm, the smallest size in Australia's range and the standard booth size,
 and record in the spec's notes that the range exists and why this size was chosen. Reach for a
 schema change only when a country needs a rule the schema genuinely cannot express.
+
+## 30. A check that is skipped reads exactly like a check that passed
+The output verifier ran `headHeight` and `topMargin` inside `if let crown = CrownFinder.find(...)`.
+When segmentation threw, or the crown could not be found in the finished file, those checks were
+simply absent from the array — and `Verdict.from` saw no failures and said "meets requirements".
+The most important rule in the app could vanish silently, and the measurement overlay still drew
+the planner's numbers on top, so it looked measured.
+**Rule:** when a check cannot be performed, append a failing result saying so. Never let the
+absence of a check be indistinguishable from its success. This is LESSONS 18's failure shape one
+layer up: there, a spec form that was not read; here, a check that was not run.
+**Test:** `ComplianceChecker.unmeasuredHeadCheck`; the whole fixture set still passes unchanged,
+which is what proves it does not fire on photos that work.
+
+## 31. DPI metadata is an instruction to a printer, not a label
+The digital JPEG was stamped with `photo.print.dpi` (300). A 630x810 px file at 35x45 mm is
+actually 457 ppi, so any lab or print dialog honouring the embedded value would have produced a
+53x69 mm photo — 52% too large — while the app's own advice told the user the file was already
+the right size.
+**Rule:** the digital file carries `SpecGeometry.digitalDPI` (`pxPerMM * 25.4`), derived the same
+way as every other geometry number. `photo.print.dpi` describes the print tiles and nothing else.
+**Test:** `ExportMetadataTests` reads `kCGImagePropertyDPIWidth` back out of the encoded bytes and
+checks the file would print at the millimetres the spec states.
+
+## 32. Finite and positive is not a bound
+`checkPositive` accepted 1e30. It is finite, it is positive, and `Int(1e30)` traps on overflow
+just as hard as `Int(nan)` does — reachable from a `specs/*.json` that passes `validate()`, through
+print-tile sizes, buffer lengths and the printing advice. The same gap sat in `CrownFinder`,
+`ChinRefiner` and `GrayImage.cropped`, which all checked `isFinite` and then converted to `Int`.
+**Rule:** anything that becomes an `Int`, an index or an allocation needs a magnitude bound, not
+just a finiteness check. LESSONS 24 said "finite and in range"; only the first half was implemented.
+**Rule:** a spec must also not be able to contradict itself into rejecting every photo — a
+`colorHex` darker than its own `minChannelValue` fails every correctly rendered background and then
+blames the user for it. `validate()` rejects that pairing.
