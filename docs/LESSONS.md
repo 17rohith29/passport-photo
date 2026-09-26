@@ -348,3 +348,27 @@ undersized file therefore told the user processing would handle something no cod
 can do. Not reachable with today's specs, which is why it survived.
 **Rule:** `.automatic` means a stage actually fixes it. If no stage does, it is `.retakeRequired`
 and the user gets told what to do instead.
+
+## 37. The wall estimate is computed from the refined matte, so every matte change re-tunes colour everywhere
+The owner reported hair being handled badly. Measured on their output (827x1063, #F0F0F0): **641
+backdrop-coloured pixels punched INTO the subject**, concentrated at rows 80-84 — the crown. The
+cause is `cleanRim`, which clears any rim pixel that is bright and low-saturation, and sets alpha
+to exactly 0. Hair sheen is bright and low-saturation, so every highlight on a dark strand is
+read as wall.
+
+The obvious repair — put back small enclosed pockets that cannot be walked out to the border —
+**was tried and reverted, twice**. First restoring any pocket, then only fully opaque ones, then
+only those outside the face region entirely: all three put `faceIntegrity` at **15.33%** on
+IMG_0009 and **0.47%** on IMG_0012, which is the same number LESSONS 21 records for the last
+attempt at this.
+
+The reason is not the repair. `Renderer.estimateBackgroundColour` samples the source wherever
+`matte < 0.05`, so changing which pixels are transparent changes the estimated wall colour, which
+feeds `unmix` for **every** pixel including the face. A repair confined to hair still moved the
+face, because the coupling is global. Hole counts were byte-identical across the attempts while
+faceIntegrity swung 15 points — which is how this was finally diagnosed.
+**Rule:** measure `faceIntegrity` on IMG_0009 *and* IMG_0012 for any matte change, not just
+IMG_0012 — IMG_0009 is 30x more sensitive.
+**Rule:** a real fix has to break the coupling first — estimate the wall from the *unrefined*
+matte, or from a region fixed before rim cleanup runs — before touching `cleanRim` at all.
+**Status: open.** `HairHolesCalibration` pins the current level so a real fix can be measured.

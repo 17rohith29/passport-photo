@@ -281,11 +281,21 @@ public struct ComplianceChecker: Sendable {
     ) -> CheckResult {
         let fromBottom = (Double(height) - Double(face.eyeMidpoint.y)) / Double(height)
         let band = CropPlanner.eyeLineBand(spec: spec, photoHeightMM: spec.photo.sizeMM.height)
-        let status = ThresholdEvaluator.evaluateRange(fromBottom, band)
+        // No authority in the set publishes an eye-line position: GOV.UK, canada.ca, the EU
+        // Commission guidance and the Warsaw consulate page all state none, and the US spec says
+        // so outright. The bands are ours, derived to place a head sensibly - useful guidance,
+        // but not a rule anyone can be failed against. A fail here rejected photos the authority
+        // would accept, and for India the band is not even reachable for every face given the
+        // top-margin band, which made it an unfixable fail.
+        let measured = ThresholdEvaluator.evaluateRange(fromBottom, band)
+        let status: CheckStatus = measured == .fail ? .warn : measured
         return CheckResult(
             id: .eyeLine, status: status,
             measured: String(format: "%.1f%% up from the bottom", 100 * fromBottom),
-            requirement: band.map { String(format: "%.0f-%.0f%%", 100 * $0.min, 100 * $0.max) } ?? "any",
+            requirement: band.map { String(format: "%.0f-%.0f%% (our guide, not a stated rule)", 100 * $0.min, 100 * $0.max) } ?? "any",
+            userMessage: status == .warn
+                ? "The eyes sit outside where we aim to place them. No authority here publishes an eye-line rule, so this is guidance rather than a requirement."
+                : nil,
             fixability: .automatic
         )
     }
