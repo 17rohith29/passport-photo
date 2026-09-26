@@ -9,6 +9,8 @@ import SwiftUI
 struct SavedView: View {
     let spec: DocumentSpec
     let outcome: SaveOutcome
+    /// True when the background was kept, so there is no edit to warn about.
+    var isUnedited = false
     /// Closes the whole flow and returns to Home.
     let onFinish: () -> Void
 
@@ -31,7 +33,9 @@ struct SavedView: View {
                     // Above the steps, not below them: five confident instructions to print,
                     // cut and submit, followed by "actually they will reject this", is how
                     // someone mails a non-compliant photo to an authority.
-                    if let risk = spec.background?.editingRisk { editingWarning(risk) }
+                    if !isUnedited, let risk = spec.background?.editingRisk {
+                        editingWarning(risk)
+                    }
                     nextSteps
                     if !responsibilities.isEmpty { stillUpToYou }
                     Text("This app checks what it can measure. No app can promise an authority will accept a photo.")

@@ -24,7 +24,8 @@ public struct ComplianceChecker: Sendable {
     }
 
     public func check(
-        output: CGImage, jpegSizeKB: Double, spec: DocumentSpec
+        output: CGImage, jpegSizeKB: Double, spec: DocumentSpec,
+        mode: BackgroundMode = .replace
     ) async -> [CheckResult] {
         var checks: [CheckResult] = []
         guard let geometry = SpecGeometry(spec: spec) else { return checks }
@@ -36,7 +37,9 @@ public struct ComplianceChecker: Sendable {
 
         guard let pixels = ImageConversion.pixelImage(from: output) else { return checks }
         let background = RGB(hex: spec.background?.colorHex ?? "#FFFFFF") ?? .white
-        checks.append(contentsOf: backgroundChecks(pixels, spec: spec, background: background))
+        checks.append(contentsOf: backgroundChecks(
+            pixels, spec: spec, background: background, mode: mode
+        ))
 
         guard let face = try? await analyzer.analyze(output) else {
             checks.append(CheckResult(
@@ -116,7 +119,11 @@ public struct ComplianceChecker: Sendable {
         )
     }
 
-    func backgroundChecks(_ pixels: PixelImage, spec: DocumentSpec, background: RGB) -> [CheckResult] {
+    func backgroundChecks(
+        _ pixels: PixelImage, spec: DocumentSpec, background: RGB,
+        mode: BackgroundMode = .replace
+    ) -> [CheckResult] {
+        let country = spec.country.name
         guard let spec = spec.background else { return [] }
         let minimum = spec.minChannelValue ?? 245
         let (br, bg, bb) = background.bytes
@@ -142,13 +149,38 @@ public struct ComplianceChecker: Sendable {
         // two of three accepted photos kept a rectangular slab of the original background and
         // still scored 99% pure with faceIntegrity passing (LESSONS 8 again). What gives those
         // away is that the space beside the head is not background.
-        let margins = sideMarginPurity(pixels, background: background, minimum: UInt8(minimum))
+        // `sideMarginPurity` asks whether the space beside the head is our painted colour. That
+        // is a cut-out integrity signal (LESSONS 20) and has no meaning when nothing was
+        // composited - an unedited photo never contains our colour at all.
+        let margins = mode == .replace
+            ? sideMarginPurity(pixels, background: background, minimum: UInt8(minimum))
+            : 1
 
         let status = ThresholdEvaluator.evaluateMinimum(fraction, spec.pureFraction)
         let channelOK = darkest >= minimum
         let marginsOK = margins >= 0.9
         let ok = status == .pass && channelOK && marginsOK
         let failed = status == .fail || !channelOK || !marginsOK
+
+        // Without compositing there is no "pure" fraction to speak of: a real wall is never one
+        // exact value, so the honest question is whether the wall itself is light enough.
+        if mode == .keep {
+            let wallOK = darkest >= minimum && total > 0
+            return [CheckResult(
+                id: .background,
+                status: wallOK ? .pass : .fail,
+                measured: total > 0
+                    ? "your own wall, darkest channel \(darkest)"
+                    : "your own wall, too dark to read as a background",
+                requirement: "a plain wall with no channel under \(minimum)",
+                technical: String(format: "%.1f%% at the exact colour, region %d px", 100 * fraction, total),
+                userMessage: wallOK ? nil
+                    : "Your own background was kept, because \(country) does not accept an edited photo — but the wall behind you is not light enough to meet the requirement. Retake against a plain, bright wall.",
+                // Nothing in processing can fix this: the alternative is an edit the authority
+                // has ruled out, which the user is offered separately.
+                fixability: .retakeRequired
+            )]
+        }
 
         return [CheckResult(
             id: .background,

@@ -19,6 +19,25 @@ public struct RenderedOutput: Sendable {
     public var chinFraction: Double
 }
 
+/// What to do with the background.
+public enum BackgroundMode: String, Sendable, CaseIterable {
+    /// Cut the subject out and put them on the spec's colour. The result looks right, and
+    /// several authorities rule it out precisely because it is an edit.
+    case replace
+    /// Crop, level and scale only. Nothing is composited, so the photo is unedited and the
+    /// user's own wall has to satisfy the spec on its own.
+    case keep
+
+    /// What we do unless the user says otherwise.
+    ///
+    /// Replace, even where the authority forbids an edit. Measured on real photos, an actual
+    /// wall reads 173-211 on its darkest channel where the specs demand 245 or more, so
+    /// defaulting to `keep` would reject almost everyone. The app offers `keep` explicitly for
+    /// the documents that forbid editing, says plainly why it matters, and — when the wall does
+    /// not pass — offers the edit as the way out.
+    public static func `default`(for spec: DocumentSpec) -> BackgroundMode { .replace }
+}
+
 public struct PipelineResult: Sendable {
     public var verdict: Verdict
     public var inputChecks: [CheckResult]
@@ -31,6 +50,12 @@ public struct PipelineResult: Sendable {
     /// True when the run failed because of what this device can do, not the photo. The UI must
     /// not tell someone to pick a different photo when no photo would work.
     public var isDeviceLimitation: Bool = false
+    /// Whether the background was replaced. The UI must not warn about an edit that never
+    /// happened, and must not stay silent about one that did.
+    public var backgroundMode: BackgroundMode = .replace
+
+    /// True when nothing was altered beyond cropping, levelling and scaling.
+    public var isUnedited: Bool { backgroundMode == .keep }
 
     public var allChecks: [CheckResult] { inputChecks + outputChecks }
 
@@ -71,10 +96,14 @@ public actor PassportPipeline {
 
     public func run(
         _ image: CGImage, spec: DocumentSpec,
+        mode: BackgroundMode? = nil,
         onStage: (@Sendable (PipelineStage) -> Void)? = nil
     ) async -> PipelineResult {
         do {
-            return try await execute(image, spec: spec, onStage: onStage)
+            return try await execute(
+                image, spec: spec,
+                mode: mode ?? BackgroundMode.default(for: spec), onStage: onStage
+            )
         } catch {
             return PipelineResult(
                 verdict: .cannotUse, inputChecks: [], outputChecks: [], output: nil,
@@ -147,6 +176,7 @@ public actor PassportPipeline {
 
     private func execute(
         _ image: CGImage, spec: DocumentSpec,
+        mode: BackgroundMode,
         onStage: (@Sendable (PipelineStage) -> Void)?
     ) async throws -> PipelineResult {
         // Cancellation is checked at every stage boundary. Without these, `cancel()` only
@@ -178,7 +208,8 @@ public actor PassportPipeline {
 
         if inputChecks.contains(where: { $0.status == .fail }) {
             return PipelineResult(
-                verdict: .cannotUse, inputChecks: inputChecks, outputChecks: [], output: nil
+                verdict: .cannotUse, inputChecks: inputChecks, outputChecks: [], output: nil,
+                backgroundMode: mode
             )
         }
 
@@ -228,7 +259,8 @@ public actor PassportPipeline {
                 fixability: .retakeRequired
             ))
             return PipelineResult(
-                verdict: .cannotUse, inputChecks: inputChecks, outputChecks: [], output: nil
+                verdict: .cannotUse, inputChecks: inputChecks, outputChecks: [], output: nil,
+                backgroundMode: mode
             )
         }
 
@@ -256,7 +288,8 @@ public actor PassportPipeline {
                 fixability: .retakeRequired
             ))
             return PipelineResult(
-                verdict: .cannotUse, inputChecks: inputChecks, outputChecks: [], output: nil
+                verdict: .cannotUse, inputChecks: inputChecks, outputChecks: [], output: nil,
+                backgroundMode: mode
             )
         }
 
@@ -264,7 +297,8 @@ public actor PassportPipeline {
         let background = RGB(hex: spec.background?.colorHex ?? "#FFFFFF") ?? .white
         guard let digital = Renderer.render(
             source: levelledPixels, matte: matte, matteScale: workScale, plan: plan,
-            background: background, sharpen: tuning.sharpenDigital, tuning: tuning
+            background: background, sharpen: tuning.sharpenDigital, tuning: tuning,
+            replaceBackground: mode == .replace
         ), let digitalImage = ImageConversion.cgImage(from: digital) else {
             throw PipelineError.renderFailed
         }
@@ -287,7 +321,8 @@ public actor PassportPipeline {
         )
         if let tile = Renderer.render(
             source: levelledPixels, matte: matte, matteScale: workScale, plan: tilePlan,
-            background: background, sharpen: tuning.sharpenPrint, tuning: tuning
+            background: background, sharpen: tuning.sharpenPrint, tuning: tuning,
+            replaceBackground: mode == .replace
         ), let sheet = PrintSheetComposer.compose(tile: tile, spec: spec),
            let sheetImage = ImageConversion.cgImage(from: sheet.image) {
             printSheetImage = sheetImage
@@ -299,7 +334,7 @@ public actor PassportPipeline {
         onStage?(.verifying)
         let checker = ComplianceChecker(analyzer: analyzer, segmenter: segmenter, tuning: tuning)
         let outputChecks = await checker.check(
-            output: digitalImage, jpegSizeKB: jpeg.sizeKB, spec: spec
+            output: digitalImage, jpegSizeKB: jpeg.sizeKB, spec: spec, mode: mode
         )
 
         let output = RenderedOutput(
@@ -312,7 +347,8 @@ public actor PassportPipeline {
 
         return PipelineResult(
             verdict: Verdict.from(inputChecks + outputChecks),
-            inputChecks: inputChecks, outputChecks: outputChecks, output: output
+            inputChecks: inputChecks, outputChecks: outputChecks, output: output,
+            backgroundMode: mode
         )
     }
 }

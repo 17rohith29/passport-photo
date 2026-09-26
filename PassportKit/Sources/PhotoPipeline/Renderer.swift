@@ -44,7 +44,8 @@ public enum Renderer {
     /// full-size buffer.
     public static func render(
         source: PixelImage, matte: AlphaMatte, matteScale: Double = 1, plan: CropPlan,
-        background: RGB, sharpen: [SharpenPass], tuning: Tuning = .default
+        background: RGB, sharpen: [SharpenPass], tuning: Tuning = .default,
+        replaceBackground: Bool = true
     ) -> PixelImage? {
         let outWidth = Int(plan.outputSize.width.rounded())
         let outHeight = Int(plan.outputSize.height.rounded())
@@ -77,7 +78,12 @@ public enum Renderer {
                     alpha[index] = 0
                     continue
                 }
-                let a = min(max(sampleMatte(matte, scale: matteScale, x: sx, y: sy), 0), 1)
+                // Keeping the user's own background: the photo is cropped, levelled and scaled
+                // but never composited, so nothing about it is edited. Canada, the US, the UK
+                // and Australia all rule out an edited photo outright.
+                let a = replaceBackground
+                    ? min(max(sampleMatte(matte, scale: matteScale, x: sx, y: sy), 0), 1)
+                    : 1
                 let p = source.offset(x: sx, y: sy)
                 var colour = (
                     Float(source.pixels[p]) / 255,

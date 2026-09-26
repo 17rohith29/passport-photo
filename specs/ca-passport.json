@@ -55,7 +55,8 @@
     "colorHex": "#FFFFFF",
     "pureFraction": { "failBelow": 0.95 },
     "minChannelValue": 245,
-    "editingRisk": "Canada requires an UNEDITED photo and rules out editing software. We replaced the background, so this photo does not meet that rule. Use it to check your framing, then have a photo taken by a commercial studio."
+    "editingRisk": "Canada requires an UNEDITED photo and rules out editing software. We replaced the background, so this photo does not meet that rule. Use it to check your framing, then have a photo taken by a commercial studio.",
+    "editingPolicy": "forbidden"
   },
   "input": { "allowUpscaling": false, "sharpness": { "failBelow": 100 } },
   "sources": [

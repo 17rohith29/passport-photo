@@ -386,3 +386,23 @@ Neither change works without the other — step 2 alone put IMG_0009 at 0.66%, o
 **Rule:** when a local change moves a distant number, look for a global estimator reading the
 thing you changed, before tuning thresholds. Three attempts were spent tuning what was never a
 threshold problem.
+
+## 38. The background checks were written for a background we painted
+Four authorities rule out an edited photo outright — Canada ("isn't altered or edited in any
+way"), the US, GOV.UK and Australia — and the app replaces the background on every run. So a
+`keep` mode was added: crop, level and scale, composite nothing.
+
+The first run of it failed every strict document, and the reason was instructive. The background
+check counts pixels **exactly equal** to the spec colour. That is a test for "did we paint this",
+not "is this wall acceptable" — a real wall is never one exact value, so it scored 0.0% pure.
+`sideMarginPurity` has the same problem: it is a cut-out integrity signal (LESSONS 20) and means
+nothing when nothing was cut out.
+**Rule:** a check written against synthetic output is not a check of the real thing. In `keep`
+mode the wall is judged on its own terms — light enough, by its darkest channel — and the failure
+message talks about the wall rather than blaming separation that never happened.
+
+**Why `replace` is still the default.** Measured on the fixtures, a real wall reads **173-211** on
+its darkest channel where these specs demand **245**. Defaulting to `keep` would reject nearly
+everyone, including the golden photo. So `keep` is offered explicitly on the documents that
+forbid editing, with the reason stated, and when the wall does not pass, the rejection screen
+offers the edit as the way out. Both paths are honest; neither is chosen for the user.

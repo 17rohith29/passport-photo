@@ -39,7 +39,20 @@ struct ResultView: View {
                 .toggleStyle(.switch)
                 .disabled(variant != .single)
 
-                if let risk = spec.background?.editingRisk {
+                if session.isUnedited {
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "checkmark.seal")
+                            .foregroundStyle(.green)
+                            .accessibilityHidden(true)
+                        Text("Your own background was kept. This photo was cropped, levelled and resized, and nothing else was changed — which is what \(spec.country.name) requires.")
+                            .font(.footnote)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.green.opacity(0.10), in: RoundedRectangle(cornerRadius: 14))
+                    .accessibilityElement(children: .combine)
+                } else if let risk = spec.background?.editingRisk {
                     HStack(alignment: .top, spacing: 10) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
@@ -90,7 +103,7 @@ struct ResultView: View {
             }
         }
         .sheet(item: $savedOutcome) { outcome in
-            SavedView(spec: spec, outcome: outcome) {
+            SavedView(spec: spec, outcome: outcome, isUnedited: session.isUnedited) {
                 savedOutcome = nil
                 session.reset()
                 saver.reset()

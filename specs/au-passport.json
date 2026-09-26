@@ -55,7 +55,8 @@
     "colorHex": "#FFFFFF",
     "pureFraction": { "failBelow": 0.95 },
     "minChannelValue": 245,
-    "editingRisk": "We replaced the background. The Australian Passport Office does not accept retouched photos, so a photo taken against a plain white or light grey wall is safer."
+    "editingRisk": "We replaced the background. The Australian Passport Office does not accept retouched photos, so a photo taken against a plain white or light grey wall is safer.",
+    "editingPolicy": "forbidden"
   },
   "input": { "allowUpscaling": false, "sharpness": { "failBelow": 100 } },
   "sources": [

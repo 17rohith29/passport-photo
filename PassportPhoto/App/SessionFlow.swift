@@ -190,6 +190,35 @@ struct RejectionView: View {
                 }
 
                 // No point offering another photo when no photo would work here.
+                // Keeping the user's own wall is what failed, so offer the edit rather than
+                // leaving them with only "choose another photo". The country's own warning is
+                // attached, because for these documents the edit is the risky option.
+                if session.backgroundMode == .keep,
+                   session.failures.contains(where: { $0.id == .background }) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("We kept your own background because \(spec.country.name) does not accept an edited photo. It doesn't meet the requirement on its own.")
+                            .font(.subheadline)
+                        if let risk = spec.background?.editingRisk {
+                            Text(risk)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Button {
+                            session.reprocess(mode: .replace)
+                        } label: {
+                            Text("Replace the background anyway")
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 6)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
+                }
+
                 // Nothing else to try when no photo would work here: the toolbar's Close is
                 // the only action, so a second button offering the same destination is noise.
                 if !session.isDeviceLimitation {

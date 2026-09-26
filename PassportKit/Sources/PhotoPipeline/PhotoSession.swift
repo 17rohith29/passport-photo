@@ -71,20 +71,48 @@ public final class PhotoSession {
     public var warnings: [CheckResult] { result?.warnings ?? [] }
     public var output: RenderedOutput? { result?.output }
 
-    public func process(data: Data, spec: DocumentSpec) {
+    /// Kept so the run can be repeated in the other background mode without re-importing.
+    private var lastData: Data?
+    private var lastSpec: DocumentSpec?
+
+    public func process(data: Data, spec: DocumentSpec, mode: BackgroundMode? = nil) {
         cancel()
         reset()
-        task = Task { await self.run(data: data, spec: spec) }
+        lastData = data
+        lastSpec = spec
+        let resolved = mode ?? BackgroundMode.default(for: spec)
+        task = Task { await self.run(data: data, spec: spec, mode: resolved) }
     }
 
     /// Same work, awaitable. Tests use this; the app uses `process`.
-    public func processAndWait(data: Data, spec: DocumentSpec) async {
+    public func processAndWait(
+        data: Data, spec: DocumentSpec, mode: BackgroundMode? = nil
+    ) async {
         cancel()
         reset()
-        await run(data: data, spec: spec)
+        lastData = data
+        lastSpec = spec
+        await run(data: data, spec: spec, mode: mode ?? BackgroundMode.default(for: spec))
     }
 
-    private func run(data: Data, spec: DocumentSpec) async {
+    /// Re-runs the photo already imported, in the other background mode. Used when keeping the
+    /// user's own wall did not pass and they choose to replace it anyway.
+    public func reprocess(mode: BackgroundMode) {
+        guard let data = lastData, let spec = lastSpec else { return }
+        let keptData = data
+        let keptSpec = spec
+        cancel()
+        reset()
+        lastData = keptData
+        lastSpec = keptSpec
+        task = Task { await self.run(data: keptData, spec: keptSpec, mode: mode) }
+    }
+
+    /// The mode the current result was produced in.
+    public var backgroundMode: BackgroundMode { result?.backgroundMode ?? .replace }
+    public var isUnedited: Bool { result?.isUnedited ?? false }
+
+    private func run(data: Data, spec: DocumentSpec, mode: BackgroundMode) async {
         runToken &+= 1
         let token = runToken
         let report: @Sendable (PipelineStage) -> Void = { [weak self] stage in
@@ -105,7 +133,7 @@ public final class PhotoSession {
             sourceImage = image
             completed.insert(.reading)
 
-            var outcome = await pipeline.run(image, spec: spec, onStage: report)
+            var outcome = await pipeline.run(image, spec: spec, mode: mode, onStage: report)
             guard !Task.isCancelled else { return }
 
             // The decode cap shrinks the frame, which shrinks the head with it. A photo whose
@@ -128,7 +156,9 @@ public final class PhotoSession {
                     // slowest pass the app ever does - indistinguishable from a hang.
                     completed = [.reading]
                     phase = .working(.checking)
-                    let retry = await pipeline.run(fullImage, spec: spec, onStage: report)
+                    let retry = await pipeline.run(
+                        fullImage, spec: spec, mode: mode, onStage: report
+                    )
                     if retry.output != nil {
                         sourceImage = fullImage
                         outcome = retry
@@ -164,5 +194,9 @@ public final class PhotoSession {
         sourceImage = nil
         loadError = nil
         phase = .idle
+        // A 24 MP import is tens of megabytes; it is kept only so the run can be repeated in
+        // the other background mode, and `reprocess` restores it around its own reset.
+        lastData = nil
+        lastSpec = nil
     }
 }

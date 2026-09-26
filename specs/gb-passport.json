@@ -116,7 +116,8 @@
       "failBelow": 0.95
     },
     "minChannelValue": 235,
-    "editingRisk": "We replaced the background with a neutral light grey. GOV.UK requires a photo unaltered by computer software, so a photo taken against a plain cream or light grey wall is safer."
+    "editingRisk": "We replaced the background with a neutral light grey. GOV.UK requires a photo unaltered by computer software, so a photo taken against a plain cream or light grey wall is safer.",
+    "editingPolicy": "forbidden"
   },
   "input": {
     "allowUpscaling": false,

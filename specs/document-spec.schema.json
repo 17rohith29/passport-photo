@@ -133,7 +133,11 @@
         "colorHex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
         "pureFraction": { "$ref": "#/$defs/threshold" },
         "minChannelValue": { "type": "integer", "minimum": 0, "maximum": 255 },
-        "editingRisk": { "type": "string", "description": "Shown to the user when the background had to be replaced" }
+        "editingRisk": { "type": "string", "description": "Shown to the user when the background had to be replaced" },
+        "editingPolicy": {
+          "enum": ["forbidden", "discouraged"],
+          "description": "Whether the authority rules out an edited photo outright ('forbidden') or merely prefers an unedited one ('discouraged', the default). 'forbidden' makes the app default to keeping the user's own background instead of replacing it."
+        }
       }
     },
     "input": {

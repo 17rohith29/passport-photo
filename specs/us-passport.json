@@ -122,7 +122,8 @@
       "failBelow": 0.95
     },
     "minChannelValue": 245,
-    "editingRisk": "We replaced the background. The State Department requires an unedited photo, so retake against a plain white wall if you can."
+    "editingRisk": "We replaced the background. The State Department requires an unedited photo, so retake against a plain white wall if you can.",
+    "editingPolicy": "forbidden"
   },
   "input": {
     "allowUpscaling": false,

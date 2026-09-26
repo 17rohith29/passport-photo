@@ -22,6 +22,7 @@ struct HomeView: View {
     /// Set when the rejection screen asks for another photo, acted on once the cover has gone.
     @State private var wantsPicker = false
     @AppStorage("selectedDocumentID") private var storedDocumentID = ""
+    @AppStorage("keepBackground") private var keepBackground = false
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
@@ -59,6 +60,11 @@ struct HomeView: View {
     /// True when we are showing a document the user never chose.
     private var isGuessedDocument: Bool {
         selectedSpec == nil && !catalog.specs.contains { $0.id == storedDocumentID }
+    }
+
+    /// The user's choice, but only where it is offered.
+    private func mode(for spec: DocumentSpec) -> BackgroundMode {
+        spec.forbidsEditing && keepBackground ? .keep : .replace
     }
 
     private func select(_ spec: DocumentSpec) {
@@ -123,6 +129,24 @@ struct HomeView: View {
                     .controlSize(.large)
                 }
 
+                // Only shown where it matters: these authorities rule out an edited photo, so
+                // the choice is a real one rather than a setting nobody should have to think
+                // about.
+                if spec.forbidsEditing {
+                    Toggle(isOn: $keepBackground) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Keep my own background")
+                                .font(.subheadline.weight(.medium))
+                            Text("\(spec.country.name) does not accept an edited photo. We will crop and resize only — so the wall behind you has to be plain and bright on its own.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding()
+                    .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
+                }
+
                 TipsSection()
 
                 Text("No account, no internet, no uploads.")
@@ -149,7 +173,7 @@ struct HomeView: View {
         .fullScreenCover(isPresented: $showingCamera, onDismiss: {
             if let data = pendingCapture {
                 pendingCapture = nil
-                session.process(data: data, spec: spec)
+                session.process(data: data, spec: spec, mode: mode(for: spec))
             }
         }) {
             CaptureView(spec: spec) { data in pendingCapture = data }
@@ -170,7 +194,7 @@ struct HomeView: View {
             guard let item else { return }
             Task {
                 if let data = try? await item.loadTransferable(type: Data.self) {
-                    session.process(data: data, spec: spec)
+                    session.process(data: data, spec: spec, mode: mode(for: spec))
                 }
                 pickerItem = nil
             }
@@ -180,7 +204,7 @@ struct HomeView: View {
             let scoped = url.startAccessingSecurityScopedResource()
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
             if let data = try? Data(contentsOf: url) {
-                session.process(data: data, spec: spec)
+                session.process(data: data, spec: spec, mode: mode(for: spec))
             }
         }
         .task {
@@ -195,7 +219,7 @@ struct HomeView: View {
             if DebugAutoRun.opensPicker { showingPicker = true }
             if DebugAutoRun.opensCamera { showingCamera = true }
             if let data = DebugAutoRun.photoData() {
-                session.process(data: data, spec: spec)
+                session.process(data: data, spec: spec, mode: mode(for: spec))
             }
         }
     }

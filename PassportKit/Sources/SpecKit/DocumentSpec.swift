@@ -138,10 +138,21 @@ public struct Lighting: Codable, Sendable, Equatable {
 }
 
 public struct Background: Codable, Sendable, Equatable {
+    /// Whether the authority rules out an edited photo outright, or merely prefers one that is
+    /// not edited. `forbidden` makes the app keep the user's own background by default.
+    public enum EditingPolicy: String, Codable, Sendable { case forbidden, discouraged }
+
     public var colorHex: String
     public var pureFraction: Threshold?
     public var minChannelValue: Int?
     public var editingRisk: String?
+    public var editingPolicy: EditingPolicy?
+}
+
+extension DocumentSpec {
+    /// True when this authority rules out an edited photo, so replacing the background would
+    /// disqualify it however good the result looks.
+    public var forbidsEditing: Bool { background?.editingPolicy == .forbidden }
 }
 
 public struct Input: Codable, Sendable, Equatable {
