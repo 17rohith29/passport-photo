@@ -58,10 +58,9 @@ struct HairHolesCalibration {
         return Double(holes) / Double(w * h)
     }
 
-    /// Pins the current level. The owner reported backdrop-coloured specks punched into the
-    /// crown of a head of dark, shiny hair; on their own fixtures the same defect measures small
-    /// but non-zero. An attempted repair is recorded in LESSONS 37 — it regressed faceIntegrity
-    /// badly, so the defect is still open and this test is what a real fix must move.
+    /// Pins the level after the LESSONS 37 fix: worst measured 0.0157%, down from 0.0239%.
+    /// Rim cleanup now requires a pixel to sit in a backdrop REGION before clearing it, so a
+    /// highlight on a strand of hair is no longer mistaken for wall.
     @Test("punched holes stay at or below the level we have measured")
     func holesDoNotGetWorse() async throws {
         let dir = try #require(RepoPaths.fixtures).appendingPathComponent("photos")
@@ -88,8 +87,7 @@ struct HairHolesCalibration {
                          holes * 100, integrity))
         }
         print(String(format: "WORST %.4f%%", worst * 100))
-        // Generous headroom over the measured 0.024%: this is a floor against regression, not a
-        // claim that the current level is good.
-        #expect(worst < 0.001, "punched holes got worse: \(worst * 100)%")
+        // Headroom over the measured 0.0157%, tight enough to catch a real regression.
+        #expect(worst < 0.0004, "punched holes got worse: \(worst * 100)%")
     }
 }

@@ -192,14 +192,66 @@ public enum MatteRefiner {
                 let r = Float(image.pixels[p]) / 255
                 let g = Float(image.pixels[p + 1]) / 255
                 let b = Float(image.pixels[p + 2]) / 255
-                let value = max(r, max(g, b))
-                let minimum = min(r, min(g, b))
-                let saturation = value > 0 ? (value - minimum) / value : 0
-                if saturation < tuning.rimMaxSaturation && value > tuning.rimMinValue {
+                guard looksLikeBackdrop(image, index: i, tuning: tuning) else { continue }
+                // Near the face, behave exactly as before: rim cleanup around skin is tuned and
+                // LESSONS 21 records what happens when it is disturbed. The coherence rule below
+                // applies only where the defect is - hair, above the brows or beyond the sides
+                // of the face - so face behaviour cannot change.
+                guard isHairRegion(x: x, y: y, face: face) else {
+                    matte.values[i] = 0
+                    continue
+                }
+                // Backdrop is a REGION, not a stray pixel. A highlight on a strand of hair is
+                // bright and low-saturation too, but it sits among dark neighbours, while wall
+                // is surrounded by more wall. Without this, every sheen on dark hair was cleared
+                // and the crown came out speckled with backdrop colour (LESSONS 37).
+                var backdropNeighbours = 0
+                var sampled = 0
+                let reach = tuning.rimCoherenceReach
+                for dy in [-reach, 0, reach] {
+                    for dx in [-reach, 0, reach] where dx != 0 || dy != 0 {
+                        let nx = x + dx, ny = y + dy
+                        guard nx >= 0, nx < matte.width, ny >= 0, ny < matte.height else { continue }
+                        sampled += 1
+                        if looksLikeBackdrop(image, index: ny * matte.width + nx, tuning: tuning) {
+                            backdropNeighbours += 1
+                        }
+                    }
+                }
+                guard sampled > 0 else { continue }
+                let agreement = Double(backdropNeighbours) / Double(sampled)
+                if agreement >= tuning.rimCoherenceFraction {
                     matte.values[i] = 0
                 }
             }
         }
+    }
+
+    /// Hair rather than face: above the brow line, or clear of the sides of the face contour.
+    static func isHairRegion(x: Int, y: Int, face: FaceMeasurements) -> Bool {
+        let browY = Double(face.browY)
+        let minX = Double(face.contourMinX), maxX = Double(face.contourMaxX)
+        let faceWidth = Double(face.faceWidth)
+        guard browY.isFinite, abs(browY) < 1e6, minX.isFinite, maxX.isFinite,
+              abs(minX) < 1e6, abs(maxX) < 1e6, faceWidth.isFinite, faceWidth > 1
+        else { return false }
+        let margin = 0.08 * faceWidth
+        return Double(y) < browY || Double(x) < minX - margin || Double(x) > maxX + margin
+    }
+
+    /// The colour test rim cleanup uses: bright and close to grey. Unchanged from LESSONS 7 -
+    /// deliberately NOT a distance to this photo's wall colour, which LESSONS 21 records as
+    /// having wiped a face twice.
+    static func looksLikeBackdrop(_ image: PixelImage, index: Int, tuning: Tuning) -> Bool {
+        let p = index * 4
+        guard p + 2 < image.pixels.count else { return false }
+        let r = Float(image.pixels[p]) / 255
+        let g = Float(image.pixels[p + 1]) / 255
+        let b = Float(image.pixels[p + 2]) / 255
+        let value = max(r, max(g, b))
+        let minimum = min(r, min(g, b))
+        let saturation = value > 0 ? (value - minimum) / value : 0
+        return saturation < tuning.rimMaxSaturation && value > tuning.rimMinValue
     }
 
     static func blur(_ image: GrayImage, radius: Int) -> GrayImage {

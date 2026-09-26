@@ -151,9 +151,65 @@ public enum Renderer {
         return min(max((observed - (1 - alpha) * background) / alpha, 0), 1)
     }
 
-    /// Mean colour of pixels the matte calls background, inside the crop. That is the real wall,
-    /// which is what has to be unmixed out of the edges.
+    /// The real wall, which is what has to be unmixed out of the edges.
+    ///
+    /// Taken from the top corners of the crop, which are wall in any valid passport framing:
+    /// the head is centred, with margin above the crown. This deliberately does NOT consult the
+    /// matte. Sampling "wherever alpha is low" coupled the wall estimate - and so `unmix`, for
+    /// every pixel including the face - to whatever rim cleanup had just done, so any change to
+    /// the matte silently re-tuned colour across the whole photo (LESSONS 37).
+    ///
+    /// The median, not the mean: a strand reaching into a corner shifts a mean, not a median.
     static func estimateBackgroundColour(
+        source: PixelImage, matte: AlphaMatte, matteScale: Double, rect: CGRect
+    ) -> RGB {
+        let x0 = max(0, Int(rect.minX)), x1 = min(source.width - 1, Int(rect.maxX))
+        let y0 = max(0, Int(rect.minY)), y1 = min(source.height - 1, Int(rect.maxY))
+        guard x1 > x0, y1 > y0 else { return .white }
+
+        let boxWidth: Int = max(1, (x1 - x0) / 5)
+        let boxHeight: Int = max(1, (y1 - y0) / 4)
+        let step: Int = max(1, boxWidth / 40)
+        let bandBottom: Int = min(y1, y0 + boxHeight)
+
+        var reds: [UInt8] = []
+        var greens: [UInt8] = []
+        var blues: [UInt8] = []
+
+        func sampleBox(from startX: Int, to endX: Int) {
+            guard endX >= startX else { return }
+            var y: Int = y0
+            while y <= bandBottom {
+                var x: Int = startX
+                while x <= endX {
+                    let offset: Int = source.offset(x: x, y: y)
+                    if offset + 2 < source.pixels.count {
+                        reds.append(source.pixels[offset])
+                        greens.append(source.pixels[offset + 1])
+                        blues.append(source.pixels[offset + 2])
+                    }
+                    x += step
+                }
+                y += step
+            }
+        }
+        sampleBox(from: x0, to: min(x1, x0 + boxWidth))
+        sampleBox(from: max(x0, x1 - boxWidth), to: x1)
+
+        guard reds.count >= 16 else {
+            return matteBackgroundColour(
+                source: source, matte: matte, matteScale: matteScale, rect: rect
+            )
+        }
+        func median(_ values: [UInt8]) -> Float {
+            let sorted = values.sorted()
+            return Float(sorted[sorted.count / 2]) / 255
+        }
+        return RGB(r: median(reds), g: median(greens), b: median(blues))
+    }
+
+    /// Fallback for a crop whose corners fall outside the source, so there is nothing to sample.
+    static func matteBackgroundColour(
         source: PixelImage, matte: AlphaMatte, matteScale: Double, rect: CGRect
     ) -> RGB {
         var r: Double = 0, g: Double = 0, b: Double = 0, count: Double = 0

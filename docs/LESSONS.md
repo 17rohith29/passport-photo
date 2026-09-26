@@ -371,4 +371,18 @@ faceIntegrity swung 15 points — which is how this was finally diagnosed.
 IMG_0012 — IMG_0009 is 30x more sensitive.
 **Rule:** a real fix has to break the coupling first — estimate the wall from the *unrefined*
 matte, or from a region fixed before rim cleanup runs — before touching `cleanRim` at all.
-**Status: open.** `HairHolesCalibration` pins the current level so a real fix can be measured.
+**Fixed, and the diagnosis was the fix.** Two changes, in this order:
+1. `estimateBackgroundColour` now takes the wall from the top corners of the crop — wall in any
+   valid passport framing — by median, and never consults the matte. That breaks the coupling.
+   It is also simply better: rim pixels carry subject bleed, so letting them define the wall
+   biased the estimate towards the hair it was supposed to be unmixing out.
+2. `cleanRim` now requires a pixel to sit in a backdrop *region* before clearing it: most of its
+   neighbours must look like backdrop too. Wall is a region; a highlight on a strand is not.
+   This is a neighbourhood test, not the colour-distance test LESSONS 21 forbids.
+
+With the coupling broken, step 2 costs nothing: `faceIntegrity` is **0.00%** on every fixture,
+and punched holes fall from 0.0239% to **0.0157%** worst case (IMG_0013 improves ten-fold).
+Neither change works without the other — step 2 alone put IMG_0009 at 0.66%, over the 0.5% limit.
+**Rule:** when a local change moves a distant number, look for a global estimator reading the
+thing you changed, before tuning thresholds. Three attempts were spent tuning what was never a
+threshold problem.

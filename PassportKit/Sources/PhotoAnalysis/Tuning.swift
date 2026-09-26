@@ -48,6 +48,11 @@ public struct Tuning: Sendable, Equatable {
     /// Rim cleanup only touches low-saturation bright pixels inside the band. LESSONS 7.
     public var rimMaxSaturation: Float = 0.18
     public var rimMinValue: Float = 0.42
+    /// How far out rim cleanup looks to confirm a pixel sits in a backdrop REGION rather than
+    /// being an isolated highlight on a strand of hair.
+    public var rimCoherenceReach: Int = 2
+    /// Fraction of those neighbours that must also look like backdrop.
+    public var rimCoherenceFraction: Double = 0.75
 
     /// Alpha below this is background, above is subject. Used before edge work.
     public var matteFloor: Float = 0.12
