@@ -166,16 +166,21 @@ public struct ComplianceChecker: Sendable {
         // exact value, so the honest question is whether the wall itself is light enough.
         if mode == .keep {
             let wallOK = darkest >= minimum && total > 0
+            let brightness = Int((Double(darkest) / 255 * 100).rounded())
+            let needed = Int((Double(minimum) / 255 * 100).rounded())
             return [CheckResult(
                 id: .background,
                 status: wallOK ? .pass : .fail,
                 measured: total > 0
-                    ? "your own wall, darkest channel \(darkest)"
-                    : "your own wall, too dark to read as a background",
-                requirement: "a plain wall with no channel under \(minimum)",
-                technical: String(format: "%.1f%% at the exact colour, region %d px", 100 * fraction, total),
+                    ? "your wall reads \(brightness)% brightness at its darkest"
+                    : "your wall is too dark to read as a background at all",
+                requirement: "at least \(needed)% — effectively white",
+                technical: String(
+                    format: "darkest channel %d of %d, %.1f%% at the exact colour, region %d px",
+                    darkest, minimum, 100 * fraction, total
+                ),
                 userMessage: wallOK ? nil
-                    : "Your own background was kept, because \(country) does not accept an edited photo — but the wall behind you is not light enough to meet the requirement. Retake against a plain, bright wall.",
+                    : "Your own background was kept, so your wall has to pass on its own — and yours is too dark. \(country) needs a wall that is almost pure white, not just light, which most painted walls are not. A white sheet, or a white door in bright even light, is the usual way.",
                 // Nothing in processing can fix this: the alternative is an edit the authority
                 // has ruled out, which the user is offered separately.
                 fixability: .retakeRequired

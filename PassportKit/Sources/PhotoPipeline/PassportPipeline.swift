@@ -297,8 +297,9 @@ public actor PassportPipeline {
         let background = RGB(hex: spec.background?.colorHex ?? "#FFFFFF") ?? .white
         guard let digital = Renderer.render(
             source: levelledPixels, matte: matte, matteScale: workScale, plan: plan,
-            background: background, sharpen: tuning.sharpenDigital, tuning: tuning,
-            replaceBackground: mode == .replace
+            background: background,
+            sharpen: mode == .replace ? tuning.sharpenDigital : [],
+            tuning: tuning, replaceBackground: mode == .replace
         ), let digitalImage = ImageConversion.cgImage(from: digital) else {
             throw PipelineError.renderFailed
         }
@@ -321,8 +322,9 @@ public actor PassportPipeline {
         )
         if let tile = Renderer.render(
             source: levelledPixels, matte: matte, matteScale: workScale, plan: tilePlan,
-            background: background, sharpen: tuning.sharpenPrint, tuning: tuning,
-            replaceBackground: mode == .replace
+            background: background,
+            sharpen: mode == .replace ? tuning.sharpenPrint : [],
+            tuning: tuning, replaceBackground: mode == .replace
         ), let sheet = PrintSheetComposer.compose(tile: tile, spec: spec),
            let sheetImage = ImageConversion.cgImage(from: sheet.image) {
             printSheetImage = sheetImage

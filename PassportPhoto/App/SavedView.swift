@@ -22,7 +22,7 @@ struct SavedView: View {
     }
 
     private var responsibilities: [String] {
-        PrintGuidance.remainingResponsibilities(for: spec)
+        PrintGuidance.remainingResponsibilities(for: spec, mode: isUnedited ? .keep : .replace)
     }
 
     var body: some View {

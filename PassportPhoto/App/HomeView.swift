@@ -99,6 +99,24 @@ struct HomeView: View {
                     onShowRequirements: { showingRequirements = true }
                 )
 
+                // Above the import buttons: for these four documents this is the most
+                // consequential choice on the screen, and it used to sit below the button people
+                // tap - two screens down at accessibility sizes.
+                if spec.forbidsEditing {
+                    Toggle(isOn: $keepBackground) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Keep my own background")
+                                .font(.subheadline.weight(.medium))
+                            Text("\(spec.country.name) does not accept a photo edited with software, and replacing the background counts as an edit. On: we only crop, straighten and resize — but your own wall then has to be almost pure white, which most walls are not. Off: we replace it, which looks right but breaks that rule.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding()
+                    .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
+                }
+
                 VStack(spacing: 12) {
                     PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
                         Label("Choose Photo", systemImage: "photo.on.rectangle")
@@ -129,24 +147,6 @@ struct HomeView: View {
                     .controlSize(.large)
                 }
 
-                // Only shown where it matters: these authorities rule out an edited photo, so
-                // the choice is a real one rather than a setting nobody should have to think
-                // about.
-                if spec.forbidsEditing {
-                    Toggle(isOn: $keepBackground) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Keep my own background")
-                                .font(.subheadline.weight(.medium))
-                            Text("\(spec.country.name) does not accept an edited photo. We will crop and resize only — so the wall behind you has to be plain and bright on its own.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    .padding()
-                    .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
-                }
-
                 TipsSection()
 
                 Text("No account, no internet, no uploads.")
@@ -158,7 +158,7 @@ struct HomeView: View {
             .padding()
         }
         .sheet(isPresented: $showingRequirements) {
-            RequirementsSheet(spec: spec)
+            RequirementsSheet(spec: spec, isUnedited: mode(for: spec) == .keep)
         }
         .sheet(item: $debugSaved) { outcome in
             SavedView(spec: spec, outcome: outcome) { debugSaved = nil }

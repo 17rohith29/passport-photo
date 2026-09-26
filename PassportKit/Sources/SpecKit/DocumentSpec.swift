@@ -139,7 +139,8 @@ public struct Lighting: Codable, Sendable, Equatable {
 
 public struct Background: Codable, Sendable, Equatable {
     /// Whether the authority rules out an edited photo outright, or merely prefers one that is
-    /// not edited. `forbidden` makes the app keep the user's own background by default.
+    /// not edited. `forbidden` is what makes the app OFFER to keep the user's own background;
+    /// it is not the default, because real walls rarely pass on their own (LESSONS 38).
     public enum EditingPolicy: String, Codable, Sendable { case forbidden, discouraged }
 
     public var colorHex: String

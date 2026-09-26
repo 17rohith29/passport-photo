@@ -26,7 +26,7 @@ public enum InputGate {
             requirement: "colour",
             technical: String(format: "face saturation %.3f, needs %.3f", saturation, minFaceSaturation),
             userMessage: ok ? nil
-                : "This photo is black and white. Every authority here requires a colour photo."
+                : "This photo is black and white, and every passport and visa photo has to be in colour. If you added a black-and-white filter, open the photo in Photos and revert it, or use the original."
         )
     }
 

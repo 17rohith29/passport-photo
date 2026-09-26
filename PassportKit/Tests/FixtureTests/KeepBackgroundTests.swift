@@ -57,12 +57,18 @@ struct KeepBackgroundTests {
         let spec = try Self.spec("us-passport")
         let result = await PassportPipeline().run(try Self.source(), spec: spec, mode: .keep)
         let background = try #require(result.allChecks.first { $0.id == .background })
-        #expect(background.measured.contains("your own wall"))
+        // Talks about the wall, in units a person owns - not "darkest channel 173".
+        #expect(background.measured.localizedCaseInsensitiveContains("wall"))
+        #expect(!background.measured.localizedCaseInsensitiveContains("channel"))
+        #expect(background.requirement.localizedCaseInsensitiveContains("white"))
         if background.status == .fail {
             let message = try #require(background.userMessage)
-            #expect(message.contains("wall behind you"))
-            #expect(!message.contains("separate you"))
+            #expect(message.localizedCaseInsensitiveContains("wall"))
+            // The old message blamed a separation that never runs in this mode.
+            #expect(!message.localizedCaseInsensitiveContains("separate you"))
             #expect(background.fixability == .retakeRequired)
+            // The raw figures stay available for the full checks list.
+            #expect(background.technical?.contains("darkest channel") == true)
         }
     }
 
@@ -142,5 +148,67 @@ struct KeepBackgroundTests {
         // one is mostly that value.
         let fraction = Double(painted) / Double(pixels.width * pixels.height)
         #expect(fraction < 0.02, "\(fraction * 100)% of the kept photo is our exact colour")
+    }
+}
+
+/// The promise the unedited path makes on screen — "cropped, straightened and resized, not
+/// sharpened or retouched" — has to be literally true, or it is the over-promise the project
+/// forbids. Sharpening is exactly the "digital manipulation of the facial image" the US and
+/// GOV.UK name.
+extension KeepBackgroundTests {
+
+    @Test("a kept photo is not sharpened")
+    func keptPhotoIsNotSharpened() async throws {
+        let spec = try Self.spec("gb-passport")
+        let image = try Self.source()
+        let pipeline = PassportPipeline()
+
+        let kept = try #require(await pipeline.run(image, spec: spec, mode: .keep).output?.digital)
+        let replaced = try #require(
+            await pipeline.run(image, spec: spec, mode: .replace).output?.digital
+        )
+        let keptPixels = try #require(ImageConversion.pixelImage(from: kept))
+        let replacedPixels = try #require(ImageConversion.pixelImage(from: replaced))
+
+        // Unsharp masking raises local contrast, so a sharpened image has more edge energy.
+        func edgeEnergy(_ image: PixelImage) -> Double {
+            let luminance = ImageConversion.luminance(of: image)
+            var total = 0.0
+            var count = 0.0
+            for y in stride(from: 1, to: image.height - 1, by: 2) {
+                for x in stride(from: 1, to: image.width - 1, by: 2) {
+                    let dx = Double(luminance[x + 1, y] - luminance[x - 1, y])
+                    let dy = Double(luminance[x, y + 1] - luminance[x, y - 1])
+                    total += (dx * dx + dy * dy).squareRoot()
+                    count += 1
+                }
+            }
+            return count > 0 ? total / count : 0
+        }
+
+        let keptEnergy = edgeEnergy(keptPixels)
+        let replacedEnergy = edgeEnergy(replacedPixels)
+        #expect(
+            keptEnergy < replacedEnergy,
+            "kept \(keptEnergy) is not softer than sharpened \(replacedEnergy)"
+        )
+    }
+
+    /// The things-we-can't-check list must not assert the opposite of what just happened.
+    @Test("the kept path never claims the background was replaced")
+    func keptPathDoesNotClaimAReplacement() throws {
+        for id in ["ca-passport", "us-passport", "gb-passport", "au-passport"] {
+            let spec = try Self.spec(id)
+            let kept = PrintGuidance.remainingResponsibilities(for: spec, mode: .keep)
+            for item in kept {
+                #expect(
+                    !item.localizedCaseInsensitiveContains("this app replaces"),
+                    "\(id) still tells the user we replaced the background: \(item)"
+                )
+            }
+            // And the replace path must still say it.
+            let replaced = PrintGuidance.remainingResponsibilities(for: spec, mode: .replace)
+            #expect(replaced.count >= kept.count - 1, "\(id)")
+        }
     }
 }

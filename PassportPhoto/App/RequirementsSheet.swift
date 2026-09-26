@@ -5,6 +5,8 @@ import SwiftUI
 /// Everything here is read from the spec JSON — no requirement is written in Swift.
 struct RequirementsSheet: View {
     let spec: DocumentSpec
+    /// True when the background will be kept, so the rows about replacing it do not apply.
+    var isUnedited = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -43,7 +45,12 @@ struct RequirementsSheet: View {
 
                 // A green verdict must never be mistaken for full compliance. These are rules the
                 // authority states that the app cannot measure, listed by the spec itself.
-                if let notEnforced = spec.status.notEnforced, !notEnforced.isEmpty {
+                // Mode-aware: with the background kept, the rows saying this app replaces it
+                // are not just irrelevant, they are the opposite of what will happen.
+                let notEnforced = PrintGuidance.remainingResponsibilities(
+                    for: spec, mode: isUnedited ? .keep : .replace
+                )
+                if !notEnforced.isEmpty {
                     Section {
                         ForEach(notEnforced, id: \.self) { item in
                             Label {

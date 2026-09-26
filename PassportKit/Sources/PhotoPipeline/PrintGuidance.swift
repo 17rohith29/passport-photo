@@ -104,8 +104,23 @@ public enum PrintGuidance {
     }
 
     /// The things the user still has to get right, which the app could not check.
-    public static func remainingResponsibilities(for spec: DocumentSpec) -> [String] {
-        spec.status.notEnforced ?? []
+    ///
+    /// `notEnforced` is written for the usual path, where the background is replaced. When it
+    /// was kept, those sentences are simply untrue, and one of them told the user the opposite
+    /// of what the app had just done.
+    public static func remainingResponsibilities(
+        for spec: DocumentSpec, mode: BackgroundMode = .replace
+    ) -> [String] {
+        let stated = spec.status.notEnforced ?? []
+        guard mode == .keep else { return stated }
+        var out = stated.filter { !$0.localizedCaseInsensitiveContains("this app replaces") }
+        if stated.count != out.count {
+            out.append(
+                "Your background was kept, so nothing was replaced — but this photo was still "
+                + "cropped, straightened and resized by software."
+            )
+        }
+        return out
     }
 
     public static func photosPerSheet(spec: DocumentSpec) -> Int {

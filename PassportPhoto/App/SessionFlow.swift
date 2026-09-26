@@ -117,6 +117,7 @@ struct ProcessingView: View {
 }
 
 struct RejectionView: View {
+    @AppStorage("keepBackground") private var keepBackground = false
     let session: PhotoSession
     let spec: DocumentSpec
     var onChooseAnother: () -> Void = {}
@@ -193,25 +194,30 @@ struct RejectionView: View {
                 // Keeping the user's own wall is what failed, so offer the edit rather than
                 // leaving them with only "choose another photo". The country's own warning is
                 // attached, because for these documents the edit is the risky option.
-                if session.backgroundMode == .keep,
-                   session.failures.contains(where: { $0.id == .background }) {
+                if keptWallFailed {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("We kept your own background because \(spec.country.name) does not accept an edited photo. It doesn't meet the requirement on its own.")
+                        Text("We kept your own background because \(spec.country.name) does not accept an edited photo, and your wall is not white enough to pass on its own.")
                             .font(.subheadline)
-                        if let risk = spec.background?.editingRisk {
-                            Text(risk)
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
+                        // NOT spec.editingRisk: that is written in the past tense for the path
+                        // where we replaced the background, and would tell the user we replaced
+                        // a background we had just kept.
+                        Text("Replacing it would meet the measurements, but \(spec.country.name) rules out a photo altered with software — so a replaced background may not be accepted either.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                         Button {
+                            // They have now told us their wall cannot pass. Putting the next
+                            // photo through the same failure would be the app not listening.
+                            keepBackground = false
                             session.reprocess(mode: .replace)
                         } label: {
                             Text("Replace the background anyway")
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 6)
                         }
-                        .buttonStyle(.bordered)
+                        // Prominent here: another photo from the same room has the same wall,
+                        // so this is the button that actually helps.
+                        .buttonStyle(.borderedProminent)
                         .controlSize(.large)
                     }
                     .padding()
@@ -222,31 +228,52 @@ struct RejectionView: View {
                 // Nothing else to try when no photo would work here: the toolbar's Close is
                 // the only action, so a second button offering the same destination is noise.
                 if !session.isDeviceLimitation {
-                    Button {
+                    // The frame goes on the label. Applied to the button it widens the hit frame
+                    // while the capsule hugs its text, which left the one recovery action on the
+                    // worst screen looking demoted.
+                    let label = Text("Choose Another Photo")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                    let action: () -> Void = {
                         session.reset()
                         // The button named an action and performed a dismissal: it dropped the
                         // user on Home to find "Choose Photo" themselves, at the moment they
                         // are most likely to give up.
                         onChooseAnother()
-                    } label: {
-                        // The frame goes on the label. Applied to the button it widens the hit
-                        // frame while the capsule hugs its text, which left the one recovery
-                        // action on the worst screen looking demoted.
-                        Text("Choose Another Photo")
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 6)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .padding(.top)
+                    // When the wall is what failed, another photo from the same room has the
+                    // same wall — so "Replace the background anyway" above is the real recovery
+                    // and gets the prominence.
+                    if keptWallFailed {
+                        Button(action: action) { label }
+                            .buttonStyle(.bordered)
+                            .controlSize(.large)
+                            .padding(.top)
+                    } else {
+                        Button(action: action) { label }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                            .padding(.top)
+                    }
                 }
 
                 if !session.isDeviceLimitation { TipsSection() }
             }
             .padding()
         }
-        .navigationTitle(session.isDeviceLimitation ? "Couldn't analyse this" : "Can't use this photo")
+        .navigationTitle(navigationTitleText)
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var navigationTitleText: String {
+        if session.isDeviceLimitation { return "Couldn't analyse this" }
+        return keptWallFailed ? "One thing to fix" : "Can't use this photo"
+    }
+
+    /// Keeping the user's wall is what failed, and replacing it is the way out.
+    private var keptWallFailed: Bool {
+        session.backgroundMode == .keep
+            && session.failures.contains { $0.id == .background }
     }
 
     private var headline: String {
@@ -263,7 +290,12 @@ struct RejectionView: View {
                 ? "This photo can't be used."
                 : "Something went wrong processing this photo"
         }
+        // The wall failing is not "this photo can't be used" - the photo is fine, the room is
+        // the problem, and saying it twice (nav title and headline) reads as a broken app.
+        if keptWallFailed { return "The wall behind you isn't white enough" }
+
         switch first.id {
+        case .colour: return "This photo is black and white"
         case .lighting: return "Your face is lit unevenly"
         case .resolution: return "You're too far from the camera"
         case .sharpness: return "The photo is blurry"
