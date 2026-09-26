@@ -406,3 +406,33 @@ its darkest channel where these specs demand **245**. Defaulting to `keep` would
 everyone, including the golden photo. So `keep` is offered explicitly on the documents that
 forbid editing, with the reason stated, and when the wall does not pass, the rejection screen
 offers the edit as the way out. Both paths are honest; neither is chosen for the user.
+
+## 39. A check whose threshold filters its own input always passes
+The keep-mode wall check read: is the darkest pixel of the backdrop region at or above
+`minChannelValue`? But `backdropRegion` admits **only** pixels already at or above that value. So
+the test could not fail while the region was non-empty. What it actually asked was "is there any
+bright blob touching a top corner".
+
+Measured on a 1200x1680 Canada output: a uniform 180-grey wall — dead centre of the 173-211 band
+LESSONS 38 measured on the real fixtures — failed correctly with an empty region, and the *same
+wall with a 12x12 bright corner* (144 px out of 2,016,000) passed, reporting "your wall reads
+100% brightness". A window highlight or a lamp on a wall/ceiling junction is enough, and
+LESSONS 33 already records that real walls carry shadow and gradient.
+
+The honest metric existed in the repo the whole time: `RealWallCalibration` takes the **median**
+of the top band, which is where the 173-211 figure came from. The check never adopted it.
+**Rule:** when a check consumes a region selected by the same threshold it then tests, it is a
+tautology. Ask what the metric could possibly report other than a pass.
+**Rule:** prefer the median over an extreme for "what is this surface". A minimum answers "is
+there one good pixel"; a median answers "what is the wall".
+**Test:** `WallCheckTests` runs a 180 wall with 0, 12 and 40 px bright corners and requires all
+three to fail, and requires the reported brightness to track the wall's real tone.
+
+## 40. A mode that promises not to paint must not paint the parts it cannot see
+`Renderer` fills out-of-source pixels with the spec colour, which is right when the background is
+being replaced and wrong when it is being kept. Measured on a 3000x4000 source with the crown
+near the top: **15.12% of the kept output was exactly #FFFFFF**, and because that painted band
+reaches the top corners, it also guaranteed the wall check above passed. A dark wall plus an
+overhanging crop was a silent green verdict on a photo the app had invented a sixth of.
+**Rule:** in `keep` mode a crop that runs past the edge of the photo is a rejection, not a fill.
+There is nothing there to keep, and inventing it is the exact edit the mode exists to avoid.

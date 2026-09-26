@@ -54,7 +54,7 @@ public struct ComplianceChecker: Sendable {
         let luminance = ImageConversion.luminance(of: pixels)
         checks.append(rollCheck(face, spec: spec))
         checks.append(centeringCheck(face, width: pixels.width, spec: spec))
-        checks.append(faceIntegrityCheck(pixels, face: face))
+        checks.append(faceIntegrityCheck(pixels, face: face, mode: mode))
 
         // Head height is the rule that matters most, so failing to measure it has to be loud.
         // Skipping it silently let a photo whose cut-out was mangled report "meets requirements"
@@ -165,19 +165,20 @@ public struct ComplianceChecker: Sendable {
         // Without compositing there is no "pure" fraction to speak of: a real wall is never one
         // exact value, so the honest question is whether the wall itself is light enough.
         if mode == .keep {
-            let wallOK = darkest >= minimum && total > 0
-            let brightness = Int((Double(darkest) / 255 * 100).rounded())
+            // NOT `darkest` over `backdropRegion`: that region only admits pixels already at or
+            // above `minimum`, so "is its darkest pixel above minimum" is a tautology. A 180-grey
+            // wall with one bright corner passed it and reported "100% brightness" (LESSONS 39).
+            let wall = wallBrightness(pixels)
+            let wallOK = wall >= minimum
+            let brightness = Int((Double(wall) / 255 * 100).rounded())
             let needed = Int((Double(minimum) / 255 * 100).rounded())
             return [CheckResult(
                 id: .background,
                 status: wallOK ? .pass : .fail,
-                measured: total > 0
-                    ? "your wall reads \(brightness)% brightness at its darkest"
-                    : "your wall is too dark to read as a background at all",
+                measured: "your wall reads \(brightness)% brightness",
                 requirement: "at least \(needed)% — effectively white",
                 technical: String(
-                    format: "darkest channel %d of %d, %.1f%% at the exact colour, region %d px",
-                    darkest, minimum, 100 * fraction, total
+                    format: "median darkest channel %d of %d over the top band", wall, minimum
                 ),
                 userMessage: wallOK ? nil
                     : "Your own background was kept, so your wall has to pass on its own — and yours is too dark. \(country) needs a wall that is almost pure white, not just light, which most painted walls are not. A white sheet, or a white door in bright even light, is the usual way.",
@@ -229,6 +230,33 @@ public struct ComplianceChecker: Sendable {
 
     /// Light pixels reachable from the top corners. Mirrors the reference pipeline, which takes
     /// the connected white component containing the top-left pixel.
+    /// Typical brightness of the wall, as the median darkest-channel over the top band.
+    ///
+    /// The median is the point: it is what the wall mostly is, so a bright highlight, a lamp
+    /// spill or a window reflection cannot carry an otherwise dark wall. The crown occupies a
+    /// minority of this band in any valid framing, which the fixture measurements confirm.
+    func wallBrightness(_ pixels: PixelImage) -> Int {
+        let band = max(1, pixels.height / 6)
+        var samples: [UInt8] = []
+        var y = 0
+        while y < band {
+            var x = 0
+            while x < pixels.width {
+                let p = pixels.offset(x: x, y: y)
+                if p + 2 < pixels.pixels.count {
+                    samples.append(
+                        min(pixels.pixels[p], min(pixels.pixels[p + 1], pixels.pixels[p + 2]))
+                    )
+                }
+                x += 2
+            }
+            y += 2
+        }
+        guard !samples.isEmpty else { return 0 }
+        samples.sort()
+        return Int(samples[samples.count / 2])
+    }
+
     func backdropRegion(_ pixels: PixelImage, minimum: UInt8) -> [Bool] {
         let width = pixels.width, height = pixels.height
         var light = [Bool](repeating: false, count: width * height)
@@ -339,7 +367,9 @@ public struct ComplianceChecker: Sendable {
 
     /// LESSONS 8: a mask seam let rim cleanup paint a white streak across the eyebrows while
     /// every other metric passed. Nothing inside the face may be turned near-white.
-    func faceIntegrityCheck(_ pixels: PixelImage, face: FaceMeasurements) -> CheckResult {
+    func faceIntegrityCheck(
+        _ pixels: PixelImage, face: FaceMeasurements, mode: BackgroundMode = .replace
+    ) -> CheckResult {
         let minX = Double(face.contourMinX), maxX = Double(face.contourMaxX)
         let centreX = (minX + maxX) / 2
         let radiusX = (maxX - minX) / 2 * 0.75
@@ -381,7 +411,10 @@ public struct ComplianceChecker: Sendable {
             id: .faceIntegrity, status: ok ? .pass : .fail,
             measured: String(format: "%.2f%% of the face is near-white", 100 * fraction),
             requirement: String(format: "under %.1f%%", 100 * tuning.maxFaceWhitened),
-            userMessage: ok ? nil : "Processing damaged the face. Try another photo.",
+            // Nothing is composited in keep mode, so blaming processing would be false.
+            userMessage: ok ? nil : (mode == .replace
+                ? "Processing damaged the face. Try another photo."
+                : "Your face is blown out by the light. Move out of direct sun or flash, and take it again in softer, even light."),
             fixability: .automatic
         )
     }

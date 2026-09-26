@@ -187,11 +187,6 @@ public enum MatteRefiner {
                 guard d <= band + 2, d > -band - 2 else { continue }
                 // Never touch the silhouette core (LESSONS 7/8).
                 guard d < band * 0.5 else { continue }
-                let p = i * 4
-                guard p + 2 < image.pixels.count else { continue }
-                let r = Float(image.pixels[p]) / 255
-                let g = Float(image.pixels[p + 1]) / 255
-                let b = Float(image.pixels[p + 2]) / 255
                 guard looksLikeBackdrop(image, index: i, tuning: tuning) else { continue }
                 // Near the face, behave exactly as before: rim cleanup around skin is tuned and
                 // LESSONS 21 records what happens when it is disturbed. The coherence rule below

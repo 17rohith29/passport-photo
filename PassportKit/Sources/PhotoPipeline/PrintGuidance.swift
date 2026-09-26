@@ -27,7 +27,9 @@ public enum PrintGuidance {
     /// Standard consumer photo paper. Anything a shop prints "4 by 6" onto.
     public static let paperInches = CGSize(width: 4, height: 6)
 
-    public static func steps(for spec: DocumentSpec, variant: Variant) -> [Step] {
+    public static func steps(
+        for spec: DocumentSpec, variant: Variant, mode: BackgroundMode = .replace
+    ) -> [Step] {
         var steps: [Step] = []
         let size = sizeText(spec)
         let copies = spec.photo.print.copiesRequired ?? 1
@@ -90,7 +92,9 @@ public enum PrintGuidance {
         if let channel = spec.document.channel {
             // Never say "submit this" without the caveat when the authority would reject it on
             // sight for having been edited.
-            let edited = spec.background?.editingRisk != nil
+            // Only when we actually replaced it. On the kept path this pointed at a warning
+            // the Saved screen deliberately does not show, about an edit that never happened.
+            let edited = mode == .replace && spec.background?.editingRisk != nil
             steps.append(Step(
                 symbol: "building.columns",
                 title: "Where it goes",

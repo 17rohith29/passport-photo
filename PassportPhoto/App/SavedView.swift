@@ -18,7 +18,9 @@ struct SavedView: View {
     @State private var showingResponsibilities = false
 
     private var steps: [PrintGuidance.Step] {
-        PrintGuidance.steps(for: spec, variant: outcome.variant)
+        PrintGuidance.steps(
+            for: spec, variant: outcome.variant, mode: isUnedited ? .keep : .replace
+        )
     }
 
     private var responsibilities: [String] {

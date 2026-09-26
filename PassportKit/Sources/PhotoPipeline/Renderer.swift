@@ -47,6 +47,17 @@ public enum Renderer {
         background: RGB, sharpen: [SharpenPass], tuning: Tuning = .default,
         replaceBackground: Bool = true
     ) -> PixelImage? {
+        // Everything below becomes an Int, and Int(nan) and Int(1e300) both trap (LESSONS 32).
+        // A validated spec cannot produce these, which is exactly why nothing caught it.
+        guard plan.outputSize.width.isFinite, plan.outputSize.height.isFinite,
+              plan.outputSize.width > 0, plan.outputSize.height > 0,
+              plan.outputSize.width < 1e5, plan.outputSize.height < 1e5,
+              plan.rect.minX.isFinite, plan.rect.minY.isFinite,
+              plan.rect.width.isFinite, plan.rect.height.isFinite,
+              abs(plan.rect.minX) < 1e9, abs(plan.rect.minY) < 1e9,
+              plan.rect.width > 0, plan.rect.height > 0,
+              plan.rect.width < 1e9, plan.rect.height < 1e9 else { return nil }
+
         let outWidth = Int(plan.outputSize.width.rounded())
         let outHeight = Int(plan.outputSize.height.rounded())
         guard outWidth > 0, outHeight > 0 else { return nil }
@@ -169,6 +180,9 @@ public enum Renderer {
     static func estimateBackgroundColour(
         source: PixelImage, matte: AlphaMatte, matteScale: Double, rect: CGRect
     ) -> RGB {
+        guard rect.minX.isFinite, rect.minY.isFinite, rect.maxX.isFinite, rect.maxY.isFinite,
+              abs(rect.minX) < 1e9, abs(rect.minY) < 1e9,
+              abs(rect.maxX) < 1e9, abs(rect.maxY) < 1e9 else { return .white }
         let x0 = max(0, Int(rect.minX)), x1 = min(source.width - 1, Int(rect.maxX))
         let y0 = max(0, Int(rect.minY)), y1 = min(source.height - 1, Int(rect.maxY))
         guard x1 > x0, y1 > y0 else { return .white }

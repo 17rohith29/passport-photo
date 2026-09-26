@@ -272,8 +272,12 @@ struct RejectionView: View {
 
     /// Keeping the user's wall is what failed, and replacing it is the way out.
     private var keptWallFailed: Bool {
+        // Only when the wall is the ONLY thing wrong. Offering "replace the background" against
+        // three other failures leads straight to a second rejection, and announcing "one thing
+        // to fix" above a list of three is worse than saying nothing.
         session.backgroundMode == .keep
-            && session.failures.contains { $0.id == .background }
+            && session.failures.count == 1
+            && session.failures.first?.id == .background
     }
 
     private var headline: String {

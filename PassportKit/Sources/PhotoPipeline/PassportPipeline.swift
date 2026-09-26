@@ -293,6 +293,31 @@ public actor PassportPipeline {
             )
         }
 
+        // Keeping the user's background means painting nothing. A crop that runs past the edge
+        // of the photo can only be filled by inventing pixels, and the renderer fills them with
+        // the spec colour — which in this mode is both a lie and a false pass, because that
+        // painted band reaches the top corners where the wall is judged.
+        if mode == .keep {
+            let rect = plan.rect
+            let overhangs = rect.minX < -0.5 || rect.minY < -0.5
+                || rect.maxX > Double(levelledPixels.width) + 0.5
+                || rect.maxY > Double(levelledPixels.height) + 0.5
+            if overhangs {
+                inputChecks.append(CheckResult(
+                    id: .headroom, status: .fail,
+                    measured: "the crop runs past the edge of your photo",
+                    requirement: "the whole crop inside the photo",
+                    technical: "rect \(rect) in \(levelledPixels.width)x\(levelledPixels.height)",
+                    userMessage: "To keep your own background we can only use what the camera actually captured, and this crop needs more room around your head than the photo has. Stand further back, or leave more space above your head.",
+                    fixability: .retakeRequired
+                ))
+                return PipelineResult(
+                    verdict: .cannotUse, inputChecks: inputChecks, outputChecks: [], output: nil,
+                    backgroundMode: mode
+                )
+            }
+        }
+
         // 5. Render both outputs from the source, never from each other (LESSONS 4).
         let background = RGB(hex: spec.background?.colorHex ?? "#FFFFFF") ?? .white
         guard let digital = Renderer.render(

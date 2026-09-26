@@ -173,9 +173,16 @@ public final class PhotoSession {
             // unusable reach the result screen, under a prominent Save button. The verdict is
             // what decides, not whether a render happened.
             phase = (outcome.output == nil || outcome.verdict == .cannotUse) ? .rejected : .finished
+            // The import is only kept so the run can be repeated in the other background mode,
+            // which is only offered from the rejection screen.
+            if phase == .finished { lastData = nil }
             // The result screen never reads the source, and at the retry cap it is ~147 MB.
             if phase == .finished { sourceImage = nil }
         } catch {
+            // The token guard exists for stage reports two lines up and never reached here: a
+            // corrupt file whose decode throws after the user has already picked another photo
+            // stomped the new run's phase with the old run's error.
+            guard runToken == token, !Task.isCancelled else { return }
             loadError = "\(error)"
             phase = .rejected
         }
