@@ -10,6 +10,7 @@ struct CaptureView: View {
 
     @State private var camera = CameraController()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         NavigationStack {
@@ -55,6 +56,12 @@ struct CaptureView: View {
         }
         .task { await camera.start(spec: spec) }
         .onDisappear { camera.stop() }
+        // Backgrounding, a phone call, or another app taking the camera all stop the session
+        // without telling us. `.task` has already run and does not run again.
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task { await camera.resumeIfNeeded() }
+        }
         .alert(
             "Couldn't take the photo",
             isPresented: Binding(
@@ -128,7 +135,9 @@ struct CaptureView: View {
             HStack(spacing: 28) {
                 Toggle("Auto", isOn: $camera.autoCapture)
                     .toggleStyle(.button)
-                    .tint(.white)
+                    .buttonStyle(.bordered)
+                    .tint(camera.autoCapture ? .white : .clear)
+                    .foregroundStyle(camera.autoCapture ? .black : .white)
                     .accessibilityLabel("Take the photo automatically when everything is right")
 
                 Button(action: { camera.capture() }) {
@@ -150,7 +159,9 @@ struct CaptureView: View {
 
                 Toggle("Voice", isOn: $camera.speaksCues)
                     .toggleStyle(.button)
-                    .tint(.white)
+                    .buttonStyle(.bordered)
+                    .tint(camera.speaksCues ? .white : .clear)
+                    .foregroundStyle(camera.speaksCues ? .black : .white)
                     .accessibilityLabel("Speak the instructions aloud")
             }
             .foregroundStyle(.white)

@@ -35,12 +35,6 @@ struct RequirementsSheet: View {
                     if let appearance = spec.appearance {
                         if appearance.eyesOpen == true { row("Eyes", "Open, looking at the camera") }
                         if appearance.mouthClosed == true { row("Mouth", "Closed") }
-                        if let expression = appearance.expression {
-                            row("Expression", expression == .neutral ? "Neutral" : "Neutral or a slight smile")
-                        }
-                        if let glasses = appearance.glassesAllowed {
-                            row("Glasses", glasses ? "Allowed" : "Not allowed")
-                        }
                     }
                     if let hex = spec.background?.colorHex {
                         row("Background", hex.uppercased() == "#FFFFFF" ? "Plain white" : "Plain light grey (\(hex))")
@@ -64,7 +58,7 @@ struct RequirementsSheet: View {
                     } header: {
                         Text("What we can't check")
                     } footer: {
-                        Text("The app measures everything above this section. These rules are still yours to meet.")
+                        Text("Every row above is measured on your photo. The rules here are not — they are yours to get right.")
                             .font(.caption)
                     }
                 }
@@ -110,12 +104,9 @@ struct RequirementsSheet: View {
     }
 
     private func row(_ title: String, _ value: String) -> some View {
-        HStack {
-            Text(title)
-            Spacer()
-            Text(value).foregroundStyle(.secondary).multilineTextAlignment(.trailing)
-        }
+        LabeledContent(title) { Text(value).multilineTextAlignment(.trailing) }
     }
+
 
     private func authority(_ value: Source.Authority) -> String {
         switch value {

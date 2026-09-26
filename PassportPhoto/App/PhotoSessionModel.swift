@@ -27,6 +27,10 @@ final class PhotoSaver {
 
     /// Add-only Photos access: the app never reads the user's library.
     func saveToPhotos(_ data: Data) {
+        // The menu stays tappable through the save, and a second tap wrote a second asset with
+        // nothing to tell the user - the completion re-assigns the same state, so onChange does
+        // not even fire.
+        guard state != .saving else { return }
         state = .saving
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { [weak self] status in
             guard let self else { return }

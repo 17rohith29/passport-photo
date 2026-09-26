@@ -7,6 +7,8 @@ struct SessionFlow: View {
     let session: PhotoSession
     let saver: PhotoSaver
     let spec: DocumentSpec
+    /// Home owns the photo picker, so "Choose Another Photo" has to ask it to re-present.
+    var onChooseAnother: () -> Void = {}
 
     var body: some View {
         NavigationStack {
@@ -15,7 +17,7 @@ struct SessionFlow: View {
                 case .idle, .working:
                     ProcessingView(session: session)
                 case .rejected:
-                    RejectionView(session: session, spec: spec)
+                    RejectionView(session: session, spec: spec, onChooseAnother: onChooseAnother)
                 case .finished:
                     ResultView(session: session, saver: saver, spec: spec)
                 }
@@ -34,13 +36,20 @@ struct SessionFlow: View {
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(session.isWorking ? "Cancel" : "Done") {
+                    Button(toolbarLabel) {
                         session.reset()
                         saver.reset()
                     }
                 }
             }
         }
+    }
+}
+
+extension SessionFlow {
+    var toolbarLabel: String {
+        if session.isWorking { return "Cancel" }
+        return session.phase == .rejected ? "Close" : "Done"
     }
 }
 
@@ -110,11 +119,28 @@ struct ProcessingView: View {
 struct RejectionView: View {
     let session: PhotoSession
     let spec: DocumentSpec
+    var onChooseAnother: () -> Void = {}
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                if let image = session.sourceImage {
+                // When the photo was rendered but failed its own measurements, showing the
+                // result is more honest than hiding it: "we made this, and here is why it does
+                // not measure up". What we must never do is put a Save button under it.
+                if let rendered = session.output?.digital {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Image(decorative: rendered, scale: 1)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxHeight: 220)
+                            .padding(8)
+                            .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
+                            .frame(maxWidth: .infinity)
+                        Text("This is what we produced. It does not meet the measurements below, so it is not offered for saving.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if let image = session.sourceImage {
                     Image(decorative: image, scale: 1)
                         .resizable()
                         .scaledToFit()
@@ -123,8 +149,17 @@ struct RejectionView: View {
                         .frame(maxWidth: .infinity)
                 }
 
-                Text(headline)
-                    .font(.title2.bold())
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(headline)
+                        .font(.title2.bold())
+                    // The headline names one failure; the list below may hold three. Say how
+                    // many before the user starts scrolling.
+                    if session.failures.count > 1 {
+                        Text("\(session.failures.count) things to fix before you retake.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
 
                 if session.failures.isEmpty, let reason = session.failureReason {
                     VStack(alignment: .leading, spacing: 8) {
@@ -156,7 +191,12 @@ struct RejectionView: View {
 
                 // No point offering another photo when no photo would work here.
                 Button(session.isDeviceLimitation ? "Back" : "Choose Another Photo") {
+                    let another = !session.isDeviceLimitation
                     session.reset()
+                    // The button named an action and performed a dismissal: it dropped the user
+                    // on Home to find "Choose Photo" themselves, at the moment they are most
+                    // likely to give up.
+                    if another { onChooseAnother() }
                 }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)

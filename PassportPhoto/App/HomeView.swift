@@ -12,12 +12,15 @@ struct HomeView: View {
     @State private var showingFileImporter = false
     @State private var showingCamera = false
     @State private var showingPicker = false
+    @State private var showingPhotosPicker = false
     /// Held until the camera sheet has actually gone. Presenting the processing sheet while the
     /// capture sheet is still dismissing makes SwiftUI drop the second presentation, and the
     /// photo silently vanishes.
     @State private var pendingCapture: Data?
     @State private var selectedSpec: DocumentSpec?
     @State private var debugSaved: SaveOutcome?
+    /// Set when the rejection screen asks for another photo, acted on once the cover has gone.
+    @State private var wantsPicker = false
     @AppStorage("selectedDocumentID") private var storedDocumentID = ""
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -42,9 +45,20 @@ struct HomeView: View {
     /// The chosen document: whatever is selected now, else the one remembered from last time,
     /// else the first available.
     private var currentSpec: DocumentSpec? {
-        selectedSpec
-            ?? catalog.specs.first { $0.id == storedDocumentID }
-            ?? catalog.specs.first
+        selectedSpec ?? catalog.specs.first { $0.id == storedDocumentID } ?? localeSpec
+    }
+
+    /// The document determines every number downstream, so guessing it alphabetically - which
+    /// started every new user in the world on Australia - is worse than guessing from where the
+    /// phone says it is. When even that is unknown, nothing is preselected.
+    private var localeSpec: DocumentSpec? {
+        guard let region = Locale.current.region?.identifier else { return nil }
+        return catalog.specs.first { $0.country.code == region }
+    }
+
+    /// True when we are showing a document the user never chose.
+    private var isGuessedDocument: Bool {
+        selectedSpec == nil && !catalog.specs.contains { $0.id == storedDocumentID }
     }
 
     private func select(_ spec: DocumentSpec) {
@@ -59,9 +73,20 @@ struct HomeView: View {
                 // One card per document stopped scaling at eight: the list pushed Choose Photo
                 // below the fold. The selected document is shown and the rest live behind a
                 // searchable picker.
+                VStack(alignment: .leading, spacing: 10) {
+                    // A stranger is being asked to hand over a photo of their face. That this
+                    // never leaves the phone is the strongest thing the app has, and it was
+                    // nowhere in the UI.
+                    Text("Turn a photo you already have into a passport photo that meets the measurements. Everything happens on this iPhone — nothing is uploaded.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 SelectedDocumentCard(
                     spec: spec,
                     otherCount: max(0, catalog.specs.count - 1),
+                    isGuessed: isGuessedDocument,
                     onChange: { showingPicker = true },
                     onShowRequirements: { showingRequirements = true }
                 )
@@ -85,13 +110,24 @@ struct HomeView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.large)
 
-                    Button("Import from Files") { showingFileImporter = true }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
-                        .frame(maxWidth: .infinity)
+                    // The frame has to go on the label, as it does on the two above: applied
+                    // to the button it widens the frame while the capsule hugs its text.
+                    Button { showingFileImporter = true } label: {
+                        Text("Import from Files")
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
                 }
 
                 TipsSection()
+
+                Text("No account, no internet, no uploads.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 4)
             }
             .padding()
         }
@@ -119,9 +155,15 @@ struct HomeView: View {
         .fullScreenCover(isPresented: Binding(
             get: { session.phase != .idle },
             set: { if !$0 { session.reset(); saver.reset() } }
-        )) {
-            SessionFlow(session: session, saver: saver, spec: spec)
+        ), onDismiss: {
+            if wantsPicker {
+                wantsPicker = false
+                showingPhotosPicker = true
+            }
+        }) {
+            SessionFlow(session: session, saver: saver, spec: spec) { wantsPicker = true }
         }
+        .photosPicker(isPresented: $showingPhotosPicker, selection: $pickerItem, matching: .images)
         .onChange(of: pickerItem) { _, item in
             guard let item else { return }
             Task {
@@ -224,6 +266,8 @@ enum DebugAutoRun {
 struct SelectedDocumentCard: View {
     let spec: DocumentSpec
     let otherCount: Int
+    /// True when this is our guess rather than the user's choice, so we say so.
+    var isGuessed = false
     let onChange: () -> Void
     let onShowRequirements: () -> Void
 
@@ -233,21 +277,29 @@ struct SelectedDocumentCard: View {
         VStack(alignment: .leading, spacing: 12) {
             Button(action: onChange) {
                 HStack(spacing: 14) {
-                    if !typeSize.isAccessibilitySize {
-                        Text(DocumentStyle.flag(for: spec.country.code))
-                            .font(.system(size: 34))
-                            .accessibilityHidden(true)
-                    }
+                    Text(DocumentStyle.flag(for: spec.country.code))
+                        .font(.system(size: 34))
+                        .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 3) {
                         Text("\(spec.country.name), \(spec.document.displayName)")
                             .font(.headline)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text(DocumentStyle.summary(for: spec))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
+                        // At accessibility sizes the summary costs four lines and pushes the
+                        // primary action off screen; the flag is one glyph and identifies the
+                        // document instantly, so it is the summary that goes.
+                        if !typeSize.isAccessibilitySize {
+                            Text(DocumentStyle.summary(for: spec))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        if isGuessed {
+                            Text("Our guess — tap to change")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                        }
                     }
                     Spacer(minLength: 8)
                     Image(systemName: "chevron.up.chevron.down")

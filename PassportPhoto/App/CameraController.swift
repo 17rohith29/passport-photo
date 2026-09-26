@@ -31,7 +31,9 @@ final class CameraController: NSObject {
     private(set) var isCapturing = false
     var usingFrontCamera = false
     var autoCapture = true
-    var speaksCues = true
+    /// Off by default: people take passport photos in offices and libraries, and a phone that
+    /// starts talking unasked is worse than one that stays quiet. VoiceOver users get it on.
+    var speaksCues = UIAccessibility.isVoiceOverRunning
 
     let session = AVCaptureSession()
     private let photoOutput = AVCapturePhotoOutput()
@@ -52,7 +54,9 @@ final class CameraController: NSObject {
 
     /// Vision on every frame would heat the phone and drop the preview; five a second is enough
     /// for someone adjusting their position.
-    private let analysisInterval: TimeInterval = 0.2
+    nonisolated private let analysisInterval: TimeInterval = 0.2
+    /// Frame-rate throttle, owned by the capture queue so it can run before any conversion work.
+    nonisolated private let throttle = FrameThrottle()
 
     func start(spec: DocumentSpec) async {
         self.spec = spec
@@ -80,7 +84,10 @@ final class CameraController: NSObject {
     func stop() {
         stopped = true
         isCapturing = false
-        queue.async { [session] in
+        status = .idle
+        queue.async { [session, videoOutput] in
+            // Detach first, or conversions keep running until the async stop lands.
+            videoOutput.setSampleBufferDelegate(nil, queue: nil)
             if session.isRunning { session.stopRunning() }
         }
         speaker.stopSpeaking(at: .immediate)
@@ -89,10 +96,39 @@ final class CameraController: NSObject {
     }
 
     func flipCamera() {
+        guard !isCapturing else { return }
+        let previous = usingFrontCamera
         usingFrontCamera.toggle()
         stabiliser.reset()
         readiness = 0
-        _ = configure()
+        if configure() {
+            status = .running
+            return
+        }
+        // configure() removes the existing input before it knows the new device can be had, so
+        // a failure leaves the session input-less. Put the old camera back rather than stranding
+        // the screen on "No camera" with no way out.
+        usingFrontCamera = previous
+        if configure() {
+            status = .running
+        }
+    }
+
+    /// iOS stops the session when the app is backgrounded, when a call arrives, or when another
+    /// app takes the camera. Nothing put it back: `status` stayed `.running`, so the view kept a
+    /// live shutter over a frozen frame, and tapping it called `capturePhoto` on a stopped
+    /// session - an Objective-C exception Swift cannot catch.
+    func resumeIfNeeded() async {
+        guard !stopped, let spec else { return }
+        let running = await withCheckedContinuation { continuation in
+            queue.async { [session] in continuation.resume(returning: session.isRunning) }
+        }
+        guard !running else { return }
+        status = .idle
+        stabiliser.reset()
+        readiness = 0
+        throttle.reset()
+        await start(spec: spec)
     }
 
     func clearCapture() { capturedData = nil }
@@ -170,7 +206,7 @@ final class CameraController: NSObject {
     }
 
     func capture() {
-        guard status == .running, !isCapturing else { return }
+        guard status == .running, !isCapturing, captureError == nil else { return }
         isCapturing = true
 
         let settings = AVCapturePhotoSettings()
@@ -200,11 +236,9 @@ final class CameraController: NSObject {
     /// Whether this frame should be analysed at all. Checked on the main actor before the
     /// capture queue does any conversion work.
     fileprivate func shouldAnalyse() -> Bool {
-        let now = Date()
-        guard !analysing, now.timeIntervalSince(lastAnalysis) >= analysisInterval, spec != nil
-        else { return false }
+        guard !analysing, spec != nil else { return false }
         analysing = true
-        lastAnalysis = now
+        lastAnalysis = Date()
         return true
     }
 
@@ -239,7 +273,8 @@ final class CameraController: NSObject {
         let fired = stabiliser.update(isReady: result.isReady)
         readiness = stabiliser.progress
         speak(result.primary)
-        if fired, autoCapture, capturedData == nil, !isCapturing {
+        // captureError: the failure alert is up and the user is being asked to decide.
+        if fired, autoCapture, capturedData == nil, !isCapturing, captureError == nil {
             Haptics.success()
             capture()
         }
@@ -268,6 +303,12 @@ extension CameraController: AVCaptureVideoDataOutputSampleBufferDelegate {
         let height = CVPixelBufferGetHeight(buffer)
         guard width > 0, height > 0 else { return }
 
+        // The throttle has to come BEFORE the conversion. It used to sit after it, so a full
+        // frame was rendered by CIContext ~30 times a second and ~25 of those were thrown away
+        // - sustained GPU load, thermal throttling and a stuttering preview, on the one screen
+        // whose job is holding still.
+        guard throttle.allows(interval: analysisInterval) else { return }
+
         // Converted here, on the capture queue, while the buffer is still valid.
         guard let image = ciContext.createCGImage(
             CIImage(cvPixelBuffer: buffer),
@@ -291,5 +332,28 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
         Task { @MainActor [weak self] in
             self?.finishCapture(data, error: error)
         }
+    }
+}
+
+
+/// Rate limiter for the capture queue. Lives outside the main actor so a frame can be discarded
+/// before any conversion work is done on it.
+final class FrameThrottle: @unchecked Sendable {
+    private let lock = NSLock()
+    private var last = Date.distantPast
+
+    func allows(interval: TimeInterval) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        let now = Date()
+        guard now.timeIntervalSince(last) >= interval else { return false }
+        last = now
+        return true
+    }
+
+    func reset() {
+        lock.lock()
+        defer { lock.unlock() }
+        last = .distantPast
     }
 }

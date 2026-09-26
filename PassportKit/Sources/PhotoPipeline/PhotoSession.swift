@@ -33,6 +33,10 @@ public final class PhotoSession {
 
     private let maxPixelSize: Int
     private var task: Task<Void, Never>?
+    /// Identifies the run a stage report belongs to. Cancelling a run does not stop the work
+    /// inside the pipeline, so a cancelled run's reports would otherwise keep arriving and
+    /// drive the NEXT photo's progress screen.
+    private var runToken = 0
 
     public init(
         pipeline: PassportPipeline = PassportPipeline(),
@@ -81,9 +85,11 @@ public final class PhotoSession {
     }
 
     private func run(data: Data, spec: DocumentSpec) async {
+        runToken &+= 1
+        let token = runToken
         let report: @Sendable (PipelineStage) -> Void = { [weak self] stage in
             Task { @MainActor [weak self] in
-                guard let self, self.isWorking else { return }
+                guard let self, self.runToken == token, self.isWorking else { return }
                 if let current = self.currentStage { self.completed.insert(current) }
                 self.phase = .working(stage)
             }
@@ -117,6 +123,11 @@ public final class PhotoSession {
                     try ImageLoader.load(data: data, maxPixelSize: Self.retryMaxPixelSize)
                 }).value {
                     guard !Task.isCancelled else { return }
+                    // The retry re-runs every stage, so the ticks have to go back to the start.
+                    // Leaving them all green showed five checkmarks and no spinner through the
+                    // slowest pass the app ever does - indistinguishable from a hang.
+                    completed = [.reading]
+                    phase = .working(.checking)
                     let retry = await pipeline.run(fullImage, spec: spec, onStage: report)
                     if retry.output != nil {
                         sourceImage = fullImage
@@ -128,7 +139,12 @@ public final class PhotoSession {
 
             completed.formUnion(PipelineStage.allCases)
             result = outcome
-            phase = outcome.output == nil ? .rejected : .finished
+            // Branching on "did we produce pixels" let a photo the app had already judged
+            // unusable reach the result screen, under a prominent Save button. The verdict is
+            // what decides, not whether a render happened.
+            phase = (outcome.output == nil || outcome.verdict == .cannotUse) ? .rejected : .finished
+            // The result screen never reads the source, and at the retry cap it is ~147 MB.
+            if phase == .finished { sourceImage = nil }
         } catch {
             loadError = "\(error)"
             phase = .rejected

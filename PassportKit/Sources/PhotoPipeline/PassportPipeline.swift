@@ -138,6 +138,10 @@ public actor PassportPipeline {
         _ image: CGImage, spec: DocumentSpec,
         onStage: (@Sendable (PipelineStage) -> Void)?
     ) async throws -> PipelineResult {
+        // Cancellation is checked at every stage boundary. Without these, `cancel()` only
+        // discarded the answer while the work ran on - and because the pipeline is an actor
+        // held for the whole session, the next photo queued behind the abandoned run.
+        try Task.checkCancellation()
         onStage?(.checking)
         // 1. Analyse the photo as imported.
         let face = try await analyzer.analyze(image)
@@ -183,6 +187,7 @@ public actor PassportPipeline {
         // Mac absorbs and a phone does not. The reference pipeline downsamples for the same
         // reason (`matte(..., work=2600)`). The matte then stays at this size and the renderer
         // samples it, rather than being upscaled into another full-size buffer.
+        try Task.checkCancellation()
         onStage?(.separating)
         let workScale = ImageLoader.workingScale(for: levelled, longestEdge: tuning.matteWorkingSize)
         let workImage = ImageLoader.resized(levelled, scale: workScale) ?? levelled
@@ -197,6 +202,7 @@ public actor PassportPipeline {
         )
 
         // 4. Crown and chin, then the crop. The crown is found in working pixels and scaled back.
+        try Task.checkCancellation()
         onStage?(.cropping)
 
         // A photo cropped above the hairline still yields a crown - the clipped edge - and then
@@ -277,6 +283,7 @@ public actor PassportPipeline {
         }
 
         // 6. Re-measure the finished file (LESSONS 13).
+        try Task.checkCancellation()
         onStage?(.verifying)
         let checker = ComplianceChecker(analyzer: analyzer, segmenter: segmenter, tuning: tuning)
         let outputChecks = await checker.check(

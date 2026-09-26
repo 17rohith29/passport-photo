@@ -14,6 +14,9 @@ struct ResultView: View {
 
     @State private var variant: Variant = .single
     @State private var savedOutcome: SaveOutcome?
+    /// The variant captured at the moment a save began. Reading `variant` at completion let the
+    /// user switch the segmented control mid-save and get advice for a file they never saved.
+    @State private var savingVariant: Variant?
     @State private var showingMeasurements = false
     @State private var showingChecks = false
     @State private var exporting = false
@@ -31,12 +34,21 @@ struct ResultView: View {
 
                 Toggle("Measurements", isOn: $showingMeasurements)
                     .toggleStyle(.switch)
+                    .disabled(variant != .single)
 
                 if let risk = spec.background?.editingRisk {
-                    Text(risk)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                            .accessibilityHidden(true)
+                        Text(risk)
+                            .font(.footnote)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+                    .accessibilityElement(children: .combine)
                 }
 
                 saveMenu
@@ -56,14 +68,22 @@ struct ResultView: View {
             defaultFilename: filename
         ) { result in
             if case .success = result {
-                savedOutcome = SaveOutcome(destination: .files, variant: variant)
+                savedOutcome = SaveOutcome(destination: .files, variant: savingVariant ?? variant)
             }
         }
         // Saving to Photos finishes asynchronously, so the end screen follows the saver's state
         // rather than the button tap.
         .onChange(of: saver.state) { _, state in
             if state == .savedToPhotos {
-                savedOutcome = SaveOutcome(destination: .photos, variant: variant)
+                savedOutcome = SaveOutcome(destination: .photos, variant: savingVariant ?? variant)
+            }
+        }
+        // Switching output after a save makes the green "Saved" row a lie: what is in Photos is
+        // the other file. Clear it rather than leave it pointing at the wrong thing.
+        .onChange(of: variant) { _, _ in
+            if savingVariant != variant {
+                saver.reset()
+                savingVariant = nil
             }
         }
         .sheet(item: $savedOutcome) { outcome in
@@ -99,27 +119,46 @@ struct ResultView: View {
             showingChecks = true
         } label: {
             HStack {
-                Image(systemName: verdict == .meetsRequirements ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                Image(systemName: Self.symbol(for: verdict))
                 Text(verdict.headline)
                 Image(systemName: "chevron.right").font(.caption)
             }
             .font(.subheadline.weight(.medium))
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(
-                (verdict == .meetsRequirements ? Color.green : Color.orange).opacity(0.18),
-                in: Capsule()
-            )
+            .padding(.horizontal, 16)
+            // 44pt minimum: this is the control that opens the full check list.
+            .frame(minHeight: 44)
+            .background(Self.tint(for: verdict).opacity(0.18), in: Capsule())
         }
         .buttonStyle(.plain)
+    }
+
+    static func symbol(for verdict: Verdict) -> String {
+        switch verdict {
+        case .meetsRequirements: "checkmark.seal.fill"
+        case .meetsRequirementsWithWarnings: "exclamationmark.triangle.fill"
+        case .cannotUse: "xmark.seal.fill"
+        }
+    }
+
+    static func tint(for verdict: Verdict) -> Color {
+        switch verdict {
+        case .meetsRequirements: .green
+        case .meetsRequirementsWithWarnings: .orange
+        case .cannotUse: .red
+        }
     }
 
     private var saveMenu: some View {
         Menu {
             Button("Save to Photos") {
-                if let data = currentData { saver.saveToPhotos(data) }
+                guard let data = currentData else { return }
+                savingVariant = variant
+                saver.saveToPhotos(data)
             }
-            Button("Save to Files") { exporting = true }
+            Button("Save to Files") {
+                savingVariant = variant
+                exporting = true
+            }
         } label: {
             Label("Save", systemImage: "square.and.arrow.down")
                 .frame(maxWidth: .infinity)
@@ -138,7 +177,7 @@ struct ResultView: View {
             ProgressView()
         case .savedToPhotos:
             Button {
-                savedOutcome = SaveOutcome(destination: .photos, variant: variant)
+                savedOutcome = SaveOutcome(destination: .photos, variant: savingVariant ?? variant)
             } label: {
                 HStack(spacing: 6) {
                     Label("Saved to Photos", systemImage: "checkmark.circle.fill")

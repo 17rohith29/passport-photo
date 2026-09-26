@@ -107,6 +107,32 @@ struct CaptureGuidanceTests {
         #expect(Self.assess(right, spec: spec).cues.contains { $0.kind == .offCentre && $0.message == "Move left" })
     }
 
+    /// `y` is top-left pixels, so eyes near the top of the frame mean the camera is too LOW.
+    /// These two messages shipped the wrong way round, and there was no test on this branch:
+    /// anyone following the spoken cue moved steadily further out of frame.
+    @Test("raise and lower the camera are not mixed up")
+    func cameraHeight() throws {
+        let spec = try Self.spec()
+
+        var high = Self.goodFace()
+        let highShift = Self.frame.height * 0.25
+        high.leftEye.y -= highShift
+        high.rightEye.y -= highShift
+        let highCues = Self.assess(high, spec: spec).cues
+        #expect(highCues.contains { $0.kind == .tooHigh })
+        #expect(highCues.contains { $0.kind == .tooHigh && $0.message == "Raise the camera" })
+        #expect(!highCues.contains { $0.message == "Lower the camera" })
+
+        var low = Self.goodFace()
+        let lowShift = Self.frame.height * 0.25
+        low.leftEye.y += lowShift
+        low.rightEye.y += lowShift
+        let lowCues = Self.assess(low, spec: spec).cues
+        #expect(lowCues.contains { $0.kind == .tooLow })
+        #expect(lowCues.contains { $0.kind == .tooLow && $0.message == "Lower the camera" })
+        #expect(!lowCues.contains { $0.message == "Raise the camera" })
+    }
+
     @Test("chin up and chin down follow the sign of pitch")
     func pitchDirection() throws {
         let spec = try Self.spec()

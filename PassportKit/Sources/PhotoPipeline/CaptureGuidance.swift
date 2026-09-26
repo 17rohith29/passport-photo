@@ -113,12 +113,15 @@ public enum CaptureGuidance {
             ))
         }
 
-        // Eyes should sit a little above the middle of the frame.
+        // Eyes should sit a little above the middle of the frame. `y` is top-left pixels, so a
+        // SMALL eyeY means the face sits HIGH in the frame - which is what a camera held too LOW
+        // produces, and it is fixed by raising the camera. These two messages were the wrong way
+        // round, so anyone following the spoken cue walked themselves out of frame.
         let eyeY = Double(face.eyeMidpoint.y) / Double(frameSize.height)
         if eyeY < 0.30 {
-            cues.append(CaptureCue(kind: .tooHigh, message: "Lower the camera", isBlocking: true))
+            cues.append(CaptureCue(kind: .tooHigh, message: "Raise the camera", isBlocking: true))
         } else if eyeY > 0.55 {
-            cues.append(CaptureCue(kind: .tooLow, message: "Raise the camera", isBlocking: true))
+            cues.append(CaptureCue(kind: .tooLow, message: "Lower the camera", isBlocking: true))
         }
 
         if let yawLimit = spec.pose?.yawDeg?.failAbove, abs(face.yawDeg) > yawLimit {

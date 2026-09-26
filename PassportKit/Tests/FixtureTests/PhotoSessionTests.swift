@@ -28,7 +28,9 @@ struct PhotoSessionTests {
 
         #expect(session.phase == .finished)
         #expect(session.output != nil)
-        #expect(session.sourceImage != nil)
+        // The result screen never reads the source, and at the retry cap it is ~147 MB, so it
+        // is released as soon as a result exists.
+        #expect(session.sourceImage == nil)
         #expect(session.loadError == nil)
 
         // Every stage must end up ticked: a stage that never completes is the spinner bug.
