@@ -190,6 +190,7 @@
 				DEVELOPMENT_TEAM = PP4UG38M36;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Free ID Photos";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Used to take your passport photo and guide you into position. Photos stay on your device.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Saves your finished passport photo to your library. The app never reads your existing photos.";
@@ -215,6 +216,7 @@
 				DEVELOPMENT_TEAM = PP4UG38M36;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Free ID Photos";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Used to take your passport photo and guide you into position. Photos stay on your device.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Saves your finished passport photo to your library. The app never reads your existing photos.";
