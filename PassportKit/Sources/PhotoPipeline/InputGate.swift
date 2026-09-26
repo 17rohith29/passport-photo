@@ -10,10 +10,31 @@ import SpecKit
 /// dlib 68-point model the Python thresholds were tuned on.
 public enum InputGate {
 
+    /// Every authority in the app requires a colour photo, and a greyscale scan otherwise
+    /// passes every other check and earns a green verdict.
+    ///
+    /// The threshold is measured, not guessed: across the fixture photos a colour face reads
+    /// 0.39-0.52 and the same photo desaturated reads exactly 0.00. 0.05 sits in a gap so wide
+    /// that no realistic colour photo can fall through it.
+    public static let minFaceSaturation = 0.05
+
+    public static func colourCheck(_ saturation: Double) -> CheckResult {
+        let ok = saturation >= minFaceSaturation
+        return CheckResult(
+            id: .colour, status: ok ? .pass : .fail,
+            measured: ok ? "colour" : "black and white",
+            requirement: "colour",
+            technical: String(format: "face saturation %.3f, needs %.3f", saturation, minFaceSaturation),
+            userMessage: ok ? nil
+                : "This photo is black and white. Every authority here requires a colour photo."
+        )
+    }
+
     public static func evaluate(
         face: FaceMeasurements,
         sharpness: Double,
         cheekImbalance: Double,
+        faceSaturation: Double? = nil,
         headHeightPx: Double,
         imageSize: CGSize,
         spec: DocumentSpec,
@@ -27,6 +48,7 @@ public enum InputGate {
         }
         checks.append(sharpnessCheck(sharpness, spec: spec))
         checks.append(lightingCheck(cheekImbalance, spec: spec))
+        if let faceSaturation { checks.append(colourCheck(faceSaturation)) }
         checks.append(yawCheck(face, spec: spec))
         checks.append(pitchCheck(face, spec: spec))
         checks.append(rollCheck(face, spec: spec))

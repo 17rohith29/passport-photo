@@ -101,11 +101,18 @@ public struct ComplianceChecker: Sendable {
 
     func fileSizeCheck(_ sizeKB: Double, range: SpecKit.Range) -> CheckResult {
         let status = ThresholdEvaluator.evaluateRange(sizeKB, range)
+        // The encoder only steps quality DOWN to meet range.max; nothing raises quality or pads
+        // to meet range.min. Claiming .automatic on an undersized file promises a fix that no
+        // code here can perform.
+        let tooSmall = sizeKB < range.min
         return CheckResult(
             id: .fileSize, status: status,
             measured: String(format: "%.0f KB", sizeKB),
             requirement: String(format: "%.0f-%.0f KB", range.min, range.max),
-            fixability: .automatic
+            userMessage: tooSmall && status != .pass
+                ? "The finished file is smaller than this document accepts. Use a sharper, higher-resolution photo."
+                : nil,
+            fixability: tooSmall ? .retakeRequired : .automatic
         )
     }
 

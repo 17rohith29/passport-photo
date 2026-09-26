@@ -309,6 +309,7 @@ struct CheckRow: View {
         case .centering: return "Centred"
         case .background: return "Background"
         case .faceIntegrity: return "Face untouched"
+        case .colour: return "Colour photo"
         case .shouldersVisible: return "Shoulders visible"
         }
     }

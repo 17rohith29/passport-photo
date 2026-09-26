@@ -41,6 +41,49 @@ public enum ImageMetrics {
     /// LESSONS 5: this metric is fragile — the same photo scored 2% or 11% under two patch
     /// placements. The placement is therefore fixed by `Tuning` and calibrated on fixtures,
     /// and the result feeds a warn band rather than a single hard limit.
+    /// Mean colour saturation over the face, 0 (perfectly grey) to 1.
+    ///
+    /// Every authority in the app requires a colour photo, and a greyscale scan otherwise sails
+    /// through every other check. Unlike most appearance rules this one is unambiguous: grey is
+    /// grey, so it can be measured rather than declared unenforceable.
+    public static func faceSaturation(
+        _ image: PixelImage, face: FaceMeasurements
+    ) -> Double? {
+        let faceWidth = Double(face.faceWidth)
+        let browY = Double(face.browY), chinY = Double(face.rawChin.y)
+        guard image.width > 0, image.height > 0,
+              faceWidth.isFinite, faceWidth > 1, faceWidth < 1e6,
+              abs(browY) < 1e6, abs(chinY) < 1e6, chinY > browY,
+              abs(Double(face.eyeMidpoint.x)) < 1e6 else { return nil }
+
+        // The cheeks and forehead: skin, not hair, eyes or clothing.
+        let midX = Double(face.eyeMidpoint.x)
+        let x0 = max(0, min(image.width - 1, Int((midX - 0.35 * faceWidth).rounded())))
+        let x1 = max(0, min(image.width - 1, Int((midX + 0.35 * faceWidth).rounded())))
+        let y0 = max(0, min(image.height - 1, Int(browY.rounded())))
+        let y1 = max(0, min(image.height - 1, Int((chinY - 0.1 * (chinY - browY)).rounded())))
+        guard x1 > x0, y1 > y0 else { return nil }
+
+        var total = 0.0
+        var count = 0
+        let step = Swift.max(1, (y1 - y0) / 48)
+        for y in stride(from: y0, through: y1, by: step) {
+            for x in stride(from: x0, through: x1, by: Swift.max(1, (x1 - x0) / 48)) {
+                let offset = image.offset(x: x, y: y)
+                let r = Double(image.pixels[offset])
+                let g = Double(image.pixels[offset + 1])
+                let b = Double(image.pixels[offset + 2])
+                let high = Swift.max(r, Swift.max(g, b))
+                let low = Swift.min(r, Swift.min(g, b))
+                guard high > 0 else { continue }
+                total += (high - low) / high
+                count += 1
+            }
+        }
+        guard count > 0 else { return nil }
+        return total / Double(count)
+    }
+
     public static func cheekImbalance(
         luminance: GrayImage, face: FaceMeasurements, tuning: Tuning = .default
     ) -> Double {

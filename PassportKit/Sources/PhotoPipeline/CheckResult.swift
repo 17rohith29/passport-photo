@@ -8,6 +8,7 @@ public enum CheckID: String, Codable, Sendable, CaseIterable {
     case dimensions, fileSize
     case headHeight, topMargin, eyeLine, centering, headroom
     case background, faceIntegrity, shouldersVisible
+    case colour
 }
 
 public enum CheckStatus: String, Codable, Sendable {

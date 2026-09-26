@@ -171,6 +171,7 @@ public actor PassportPipeline {
 
         var inputChecks = InputGate.evaluate(
             face: face, sharpness: sharpness, cheekImbalance: cheek,
+            faceSaturation: ImageMetrics.faceSaturation(pixels, face: face),
             headHeightPx: estimatedHead, imageSize: pixels.size,
             spec: spec, calibration: calibration
         )

@@ -324,3 +324,27 @@ this public or we can show a heuristic separates on labelled data.
 **Note:** if a heuristic is attempted, it may only ever WARN on detection. "No glasses detected"
 must never count as a pass — a false negative leaves the honest status quo, while a false pass
 is the over-promise non-negotiable 6 forbids.
+
+## 35. A rule every authority states, that nothing checked, that no spec admitted
+All eight authorities require a colour photo — India's booklet says "Do not paste black and white
+photographs", China's says "It must be a color photo", GOV.UK says "in colour". Nothing in the
+app measured colour, `CheckID` had no case for it, and seven of the eight `notEnforced` lists did
+not mention it. A greyscale scan passed every other rule and earned a green "meets requirements".
+`AllDocumentsTests.everyDocumentDeclaresItsGaps` did not catch it: it asserts `notEnforced` is
+non-empty and special-cases glasses and ears, but never enumerates the rules a spec states.
+**Rule:** where a stated rule is cheap and unambiguous to measure, measure it rather than
+declaring it unenforceable. Colour is the clearest case in the app: across the fixtures a colour
+face reads 0.39-0.52 saturation and the same photo desaturated reads exactly 0.00, so the
+threshold sits in a gap nothing realistic can fall through.
+**Rule:** "could not measure" must never share a value with a real reading. `faceSaturation`
+first returned `0` for an unmeasurable face, which the check read as "black and white" and would
+have rejected a perfectly good colour photo. It returns `nil`, and the check is skipped.
+**Test:** `ColourCheckTests`, including the pipeline refusing a desaturated fixture end to end.
+
+## 36. `fixability: .automatic` is a promise the code has to keep
+`fileSizeCheck` hard-coded `.automatic` for both ends of the range, but `JPEGExporter` only steps
+quality DOWN to satisfy `range.max` — nothing raises quality or pads to satisfy `range.min`. An
+undersized file therefore told the user processing would handle something no code in the pipeline
+can do. Not reachable with today's specs, which is why it survived.
+**Rule:** `.automatic` means a stage actually fixes it. If no stage does, it is `.retakeRequired`
+and the user gets told what to do instead.
