@@ -44,7 +44,8 @@ public enum PrintGuidance {
                 symbol: "printer",
                 title: "Printing it instead",
                 detail: "Ask for a \(trim(spec.photo.sizeMM.width)) × \(trim(spec.photo.sizeMM.height)) mm "
-                    + "print, or switch to the Print sheet tab and use that."
+                    + "print, or go back and save the print sheet instead — it lays several out "
+                    + "on one 4 × 6 inch sheet with cut guides."
             ))
 
         case .sheet:
@@ -118,9 +119,11 @@ public enum PrintGuidance {
         return "\(trim(px.width)) × \(trim(px.height)) pixels"
     }
 
+    /// Rounded outwards to whole millimetres: a band printed as "35.25-36.75 mm" invites a
+    /// precision no ruler has, and rounding inwards would state a tighter rule than the country's.
     static func headBandText(_ spec: DocumentSpec) -> String {
         guard let band = HeadHeightBand.inMM(spec: spec) else { return "the required size" }
-        return "\(trim(band.min))–\(trim(band.max)) mm"
+        return "\(Int(band.min.rounded(.down)))–\(Int(band.max.rounded(.up))) mm"
     }
 
     static func trim(_ value: Double) -> String {

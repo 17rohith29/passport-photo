@@ -75,8 +75,10 @@ public enum InputGate {
         return CheckResult(
             id: .sharpness,
             status: status,
-            measured: String(format: "%.0f", value),
-            requirement: threshold?.failBelow.map { String(format: "at least %.0f", $0) } ?? "any",
+            measured: status == .pass ? "sharp" : "softer than we can print",
+            requirement: "sharp at full size",
+            technical: String(format: "sharpness %.0f", value)
+                + (threshold?.failBelow.map { String(format: ", needs %.0f", $0) } ?? ""),
             userMessage: status == .pass ? nil : "The photo is blurry. Hold still, or use a photo taken in better light.",
             fixability: .retakeRequired
         )
@@ -143,8 +145,9 @@ public enum InputGate {
         return CheckResult(
             id: .eyesOpen,
             status: ok ? .pass : .fail,
-            measured: String(format: "%.3f", face.eyeOpenness),
-            requirement: String(format: "at least %.3f", calibration.minEyeOpenness),
+            measured: ok ? "open" : "almost shut",
+            requirement: "clearly open",
+            technical: String(format: "eye openness %.3f, needs %.3f", face.eyeOpenness, calibration.minEyeOpenness),
             userMessage: ok ? nil : "Your eyes look closed. Keep them open and look at the lens.",
             fixability: .retakeRequired
         )
@@ -165,8 +168,9 @@ public enum InputGate {
         return CheckResult(
             id: .mouthClosed,
             status: status,
-            measured: String(format: "%.3f", value),
-            requirement: String(format: "at most %.3f", calibration.mouthFailAbove),
+            measured: status == .pass ? "closed" : "lips are apart",
+            requirement: "closed",
+            technical: String(format: "mouth openness %.3f, fails above %.3f", value, calibration.mouthFailAbove),
             userMessage: status == .pass ? nil : (status == .fail
                 ? "Close your mouth and keep a neutral expression."
                 : "Your lips may be slightly apart. A closed, neutral mouth is safest."),

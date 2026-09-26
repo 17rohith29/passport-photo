@@ -30,9 +30,14 @@ public struct CheckResult: Sendable, Identifiable, Equatable {
     public var requirement: String
     public var userMessage: String?
     public var fixability: Fixability
+    /// The raw figure behind `measured`, for the full checks list. Kept out of `measured` so a
+    /// rejection reads as a sentence rather than as telemetry: "0.171 / 0.180" tells a person
+    /// nothing except that a machine judged them by a rule they cannot see.
+    public var technical: String?
 
     public init(
         id: CheckID, status: CheckStatus, measured: String, requirement: String,
+        technical: String? = nil,
         userMessage: String? = nil, fixability: Fixability = .retakeRequired
     ) {
         self.id = id
@@ -41,6 +46,7 @@ public struct CheckResult: Sendable, Identifiable, Equatable {
         self.requirement = requirement
         self.userMessage = userMessage
         self.fixability = fixability
+        self.technical = technical
     }
 
     public var isFailure: Bool { status == .fail }
