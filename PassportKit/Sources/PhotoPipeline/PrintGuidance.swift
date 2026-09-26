@@ -53,8 +53,9 @@ public enum PrintGuidance {
             steps.append(Step(
                 symbol: "printer",
                 title: "Order a plain 4 × 6 inch print",
-                detail: "Any photo counter or home printer will do. Do NOT ask for their passport "
-                    + "photo service — you have already done that part."
+                detail: "Use a photo counter or lab print on photo paper — several authorities "
+                    + "reject home-printer output. Do NOT ask for their passport photo service; "
+                    + "you have already done that part."
             ))
             steps.append(Step(
                 symbol: "slider.horizontal.3",
