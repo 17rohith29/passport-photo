@@ -8,8 +8,8 @@
     "lastVerified": "2026-09-25",
     "confidence": "low",
     "notes": [
-      "CONFIDENCE IS LOW AND THE REASON MATTERS. The qualitative rules below were read directly from the Consulate General in Warsaw's photo page: a light white or off-white background, not more than 6 months old, full face, non-smiling, and no sunglasses or head covering except for religious or ethnic reasons. That page states NO dimensions.",
-      "The 35 x 45 mm size and the 70-80% face proportion are attributed to the Consulate General in New York, whose page could NOT be loaded to confirm them - it returned an empty document. They are consistent with the ICAO standard Russia follows and with every other 35 x 45 document here, but they were not read first-hand. Check them against your own consulate before relying on this spec.",
+      "Confidence is low, and the reason matters. The qualitative rules above were read directly from the Consulate General in Warsaw's photo page: a light white or off-white background, not more than 6 months old, full face, non-smiling, and no sunglasses or head covering except for religious or ethnic reasons. That page states NO dimensions.",
+      "The 35 x 45 mm size and the 70-80% face proportion are attributed to the Consulate General in New York, whose page could not be loaded to confirm them - it returned an empty document. They are consistent with the ICAO standard Russia follows and with every other 35 x 45 document here, but they were not read first-hand. Check them against your own consulate before relying on this spec.",
       "Russian consulates differ from one another, and the consulate handling your application is the authority. Treat this spec as a starting point rather than a rule.",
       "No digital pixel size is stated, so the sizes here are 300 to 600 dpi at 35 x 45 mm, keeping the 7:9 aspect exactly."
     ],
@@ -19,7 +19,7 @@
       "No sunglasses, hat or cap, unless worn for religious or ethnic reasons - the app cannot detect these.",
       "Non-smiling: the app checks that the mouth is closed but cannot judge a smile.",
       "The photograph must be stuck onto the visa application form.",
-      "THE DIMENSIONS THEMSELVES are not first-hand verified - see the notes above."
+      "The dimensions themselves are not first-hand verified - see \"Where this comes from\", below."
     ]
   },
   "photo": {

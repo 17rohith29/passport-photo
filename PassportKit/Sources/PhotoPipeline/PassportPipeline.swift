@@ -93,11 +93,22 @@ public actor PassportPipeline {
         // request fails there before any photo problem is even measured. It is not the user's
         // photo that is wrong, and no other photo will work either.
         if isDeviceLimitation(error) {
+            // Vision can also fail to build an inference context on a real device - memory
+            // pressure, thermal throttling, an OS fault. Telling someone holding an iPhone that
+            // they need a real iPhone, and naming the Simulator, is the worst string we could
+            // ship, and it gives them nothing to do.
+            #if targetEnvironment(simulator)
             return """
             Photo processing needs a real iPhone. Vision's models are unavailable in the iOS \
             Simulator: on iOS 26 they fail outright, and on iOS 18 they quietly find no face. \
             Nothing can be measured here, and no other photo will work either.
             """
+            #else
+            return """
+            This iPhone couldn't start the photo analysis. Close a few apps or restart the \
+            phone, then try again. Nothing about the photo itself is the problem.
+            """
+            #endif
         }
         switch error {
         case is SegmentationError:

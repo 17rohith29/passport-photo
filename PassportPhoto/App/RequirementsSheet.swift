@@ -51,14 +51,19 @@ struct RequirementsSheet: View {
                                     .font(.subheadline)
                                     .fixedSize(horizontal: false, vertical: true)
                             } icon: {
-                                Image(systemName: "eye.slash")
-                                    .foregroundStyle(.orange)
+                                // Two different things were wearing one icon: "we did not look
+                                // at this" and "this app actively breaks this". The second is
+                                // not the user's to get right, and must not look neutral.
+                                let brokenByApp = item.localizedCaseInsensitiveContains("this app")
+                                Image(systemName: brokenByApp
+                                      ? "exclamationmark.triangle.fill" : "eye.slash")
+                                    .foregroundStyle(brokenByApp ? .red : .orange)
                             }
                         }
                     } header: {
                         Text("What we can't check")
                     } footer: {
-                        Text("Every row above is measured on your photo. The rules here are not — they are yours to get right.")
+                        Text("Every row above is measured on your photo. These are not. Most are yours to get right; where this app itself breaks one, the row says so.")
                             .font(.caption)
                     }
                 }

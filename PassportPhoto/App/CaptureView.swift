@@ -2,6 +2,7 @@ import AVFoundation
 import PhotoPipeline
 import SpecKit
 import SwiftUI
+import UIKit
 
 /// Live preview with a head guide and one instruction at a time.
 struct CaptureView: View {
@@ -21,11 +22,21 @@ struct CaptureView: View {
                 case .running:
                     preview
                 case .denied:
-                    message(
-                        "Camera access is off",
-                        "Turn it on in Settings to take a photo here, or import one instead.",
-                        symbol: "camera.fill"
-                    )
+                    // A dead end before: no way to grant access, and it named importing, which
+                    // this screen cannot do.
+                    ContentUnavailableView {
+                        Label("Camera access is off", systemImage: "camera.fill")
+                    } description: {
+                        Text("Turn it on in Settings to take a photo here.")
+                    } actions: {
+                        Button("Open Settings") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .foregroundStyle(.white)
                 case let .unavailable(text):
                     message("No camera", text, symbol: "camera.fill")
                 case .idle:
@@ -45,12 +56,16 @@ struct CaptureView: View {
                     .accessibilityLabel("Cancel and go back")
                 }
                 ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        camera.flipCamera()
-                    } label: {
-                        Image(systemName: "arrow.triangle.2.circlepath.camera")
+                    // A bright, enabled flip button on a screen with no camera does nothing.
+                    if camera.status == .running {
+                        Button {
+                            camera.flipCamera()
+                        } label: {
+                            Image(systemName: "arrow.triangle.2.circlepath.camera")
+                        }
+                        .disabled(camera.isCapturing)
+                        .accessibilityLabel(camera.usingFrontCamera ? "Use the back camera" : "Use the front camera")
                     }
-                    .accessibilityLabel(camera.usingFrontCamera ? "Use the back camera" : "Use the front camera")
                 }
             }
         }

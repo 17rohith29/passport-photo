@@ -28,8 +28,11 @@ struct SavedView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     header
-                    nextSteps
+                    // Above the steps, not below them: five confident instructions to print,
+                    // cut and submit, followed by "actually they will reject this", is how
+                    // someone mails a non-compliant photo to an authority.
                     if let risk = spec.background?.editingRisk { editingWarning(risk) }
+                    nextSteps
                     if !responsibilities.isEmpty { stillUpToYou }
                     Text("This app checks what it can measure. No app can promise an authority will accept a photo.")
                         .font(.caption)
@@ -129,7 +132,7 @@ struct SavedView: View {
             .padding(.top, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
         } label: {
-            Text("\(responsibilities.count) things we couldn't check")
+            Text("\(responsibilities.count) things we can't check")
                 .font(.subheadline.weight(.medium))
         }
         .padding()

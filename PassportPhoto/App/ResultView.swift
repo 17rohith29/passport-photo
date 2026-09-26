@@ -32,9 +32,12 @@ struct ResultView: View {
                 }
                 .pickerStyle(.segmented)
 
-                Toggle("Measurements", isOn: $showingMeasurements)
-                    .toggleStyle(.switch)
-                    .disabled(variant != .single)
+                Toggle(
+                    variant == .single ? "Measurements" : "Measurements (single photo only)",
+                    isOn: $showingMeasurements
+                )
+                .toggleStyle(.switch)
+                .disabled(variant != .single)
 
                 if let risk = spec.background?.editingRisk {
                     HStack(alignment: .top, spacing: 10) {
@@ -47,7 +50,7 @@ struct ResultView: View {
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+                    .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
                     .accessibilityElement(children: .combine)
                 }
 
@@ -109,7 +112,7 @@ struct ResultView: View {
             .frame(maxHeight: 460)
             // A neutral backdrop so the photo's own white background reads as part of it.
             .padding(10)
-            .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
+            .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
         }
     }
 

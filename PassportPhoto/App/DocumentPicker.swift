@@ -72,6 +72,13 @@ struct DocumentRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                // The spec files are honest about which numbers were never confirmed
+                // first-hand; the list must not render them with equal authority.
+                if spec.status.confidence == .low {
+                    Text("Not verified first-hand")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                }
             }
             Spacer(minLength: 8)
             if isSelected {

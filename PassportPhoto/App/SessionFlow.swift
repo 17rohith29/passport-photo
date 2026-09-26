@@ -190,29 +190,45 @@ struct RejectionView: View {
                 }
 
                 // No point offering another photo when no photo would work here.
-                Button(session.isDeviceLimitation ? "Back" : "Choose Another Photo") {
-                    let another = !session.isDeviceLimitation
-                    session.reset()
-                    // The button named an action and performed a dismissal: it dropped the user
-                    // on Home to find "Choose Photo" themselves, at the moment they are most
-                    // likely to give up.
-                    if another { onChooseAnother() }
-                }
+                // Nothing else to try when no photo would work here: the toolbar's Close is
+                // the only action, so a second button offering the same destination is noise.
+                if !session.isDeviceLimitation {
+                    Button {
+                        session.reset()
+                        // The button named an action and performed a dismissal: it dropped the
+                        // user on Home to find "Choose Photo" themselves, at the moment they
+                        // are most likely to give up.
+                        onChooseAnother()
+                    } label: {
+                        // The frame goes on the label. Applied to the button it widens the hit
+                        // frame while the capsule hugs its text, which left the one recovery
+                        // action on the worst screen looking demoted.
+                        Text("Choose Another Photo")
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
+                    }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
-                    .frame(maxWidth: .infinity)
                     .padding(.top)
+                }
 
                 if !session.isDeviceLimitation { TipsSection() }
             }
             .padding()
         }
-        .navigationTitle(session.isDeviceLimitation ? "Can't process here" : "Can't use this photo")
+        .navigationTitle(session.isDeviceLimitation ? "Couldn't analyse this" : "Can't use this photo")
         .navigationBarTitleDisplayMode(.inline)
     }
 
     private var headline: String {
-        if session.isDeviceLimitation { return "This device can't process photos" }
+        // True in the Simulator, false and insulting on a real iPhone.
+        if session.isDeviceLimitation {
+            #if targetEnvironment(simulator)
+            return "This device can't process photos"
+            #else
+            return "Photo analysis didn't start"
+            #endif
+        }
         guard let first = session.failures.first else {
             return session.failureReason == nil
                 ? "This photo can't be used."

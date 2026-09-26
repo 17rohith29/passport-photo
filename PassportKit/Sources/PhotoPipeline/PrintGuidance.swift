@@ -29,21 +29,21 @@ public enum PrintGuidance {
 
     public static func steps(for spec: DocumentSpec, variant: Variant) -> [Step] {
         var steps: [Step] = []
-        let size = "\(trim(spec.photo.sizeMM.width)) × \(trim(spec.photo.sizeMM.height)) mm"
+        let size = sizeText(spec)
         let copies = spec.photo.print.copiesRequired ?? 1
 
         switch variant {
         case .single:
             steps.append(Step(
                 symbol: "arrow.up.doc",
-                title: "Uploading it",
+                title: "Upload it as it is",
                 detail: "Use the saved file as it is. Don't crop it, rotate it or run it through "
                     + "another app — it is already exactly \(outputSize(spec)) and \(size)."
             ))
             steps.append(Step(
                 symbol: "printer",
-                title: "Printing it instead",
-                detail: "Ask for a \(trim(spec.photo.sizeMM.width)) × \(trim(spec.photo.sizeMM.height)) mm "
+                title: "Print it instead",
+                detail: "Ask for a \(size) "
                     + "print, or go back and save the print sheet instead — it lays several out "
                     + "on one 4 × 6 inch sheet with cut guides."
             ))
@@ -87,10 +87,15 @@ public enum PrintGuidance {
         }
 
         if let channel = spec.document.channel {
+            // Never say "submit this" without the caveat when the authority would reject it on
+            // sight for having been edited.
+            let edited = spec.background?.editingRisk != nil
             steps.append(Step(
                 symbol: "building.columns",
                 title: "Where it goes",
-                detail: "Submit to \(channel)."
+                detail: edited
+                    ? "Submit to \(channel) — but read the warning above first. This photo has an edited background."
+                    : "Submit to \(channel)."
             ))
         }
 
@@ -112,6 +117,13 @@ public enum PrintGuidance {
             gutterPx: 40
         )
         return max(1, grid.columns * grid.rows)
+    }
+
+    /// The size as the user would say it at a counter. The US photo is universally "2 x 2 in";
+    /// asking for a 50.8 mm print gets a blank look.
+    public static func sizeText(_ spec: DocumentSpec) -> String {
+        if let label = spec.photo.sizeLabel, !label.isEmpty { return label }
+        return "\(trim(spec.photo.sizeMM.width)) × \(trim(spec.photo.sizeMM.height)) mm"
     }
 
     static func outputSize(_ spec: DocumentSpec) -> String {

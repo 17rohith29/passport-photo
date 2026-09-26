@@ -57,6 +57,9 @@ public struct Status: Codable, Sendable, Equatable {
 
 public struct Photo: Codable, Sendable, Equatable {
     public var sizeMM: Size
+    /// How the size is normally spoken in that country ("2 x 2 in"). Presentation only: never a
+    /// geometry input. Every measurement still comes from `sizeMM`.
+    public var sizeLabel: String?
     public var digital: Digital
     public var print: PrintSpec
 }

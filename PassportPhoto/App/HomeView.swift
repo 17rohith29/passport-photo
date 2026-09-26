@@ -77,7 +77,9 @@ struct HomeView: View {
                     // A stranger is being asked to hand over a photo of their face. That this
                     // never leaves the phone is the strongest thing the app has, and it was
                     // nowhere in the UI.
-                    Text("Turn a photo you already have into a passport or visa photo that meets the measurements. Everything happens on this iPhone — nothing is uploaded.")
+                    Text(typeSize.isAccessibilitySize
+                         ? "Nothing is uploaded — everything happens on this iPhone."
+                         : "Turn a photo you already have into a passport or visa photo that meets the measurements. Everything happens on this iPhone — nothing is uploaded.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -285,14 +287,17 @@ struct SelectedDocumentCard: View {
                             .font(.headline)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
-                        // At accessibility sizes the summary costs four lines and pushes the
-                        // primary action off screen; the flag is one glyph and identifies the
-                        // document instantly, so it is the summary that goes.
-                        if !typeSize.isAccessibilitySize {
-                            Text(DocumentStyle.summary(for: spec))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.leading)
+                        Text(DocumentStyle.summary(for: spec))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                        // A spec whose numbers were never confirmed first-hand must not look
+                        // like one read out of 8 FAM 402.1.
+                        if spec.status.confidence == .low {
+                            Text("Measurements not verified first-hand — check with your consulate")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         if isGuessed {

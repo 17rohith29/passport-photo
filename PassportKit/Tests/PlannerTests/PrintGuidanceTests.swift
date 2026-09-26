@@ -52,7 +52,7 @@ import Testing
         for spec in try Self.specs() {
             let steps = PrintGuidance.steps(for: spec, variant: .sheet)
             let measure = try #require(steps.first { $0.symbol == "ruler" }, "\(spec.id)")
-            let size = "\(PrintGuidance.trim(spec.photo.sizeMM.width)) × \(PrintGuidance.trim(spec.photo.sizeMM.height)) mm"
+            let size = PrintGuidance.sizeText(spec)
             #expect(measure.detail.contains(size), "\(spec.id) missing \(size): \(measure.detail)")
         }
     }
@@ -115,6 +115,41 @@ import Testing
         for spec in try Self.specs() {
             let steps = PrintGuidance.steps(for: spec, variant: .single)
             #expect(steps.contains { $0.detail.localizedCaseInsensitiveContains("don't crop") }, "\(spec.id)")
+        }
+    }
+
+    /// `sizeLabel` is what the user says at a counter, so it must describe the same physical
+    /// photo as `sizeMM`. A label that disagrees would send someone home with the wrong print.
+    @Test func sizeLabelsDescribeTheRealSize() throws {
+        for spec in try Self.specs() {
+            guard let label = spec.photo.sizeLabel else { continue }
+            #expect(!label.isEmpty, "\(spec.id)")
+            let numbers = label.split(whereSeparator: { !"0123456789.".contains($0) })
+                .compactMap { Double($0) }
+            #expect(numbers.count >= 2, "\(spec.id): cannot read a size out of '\(label)'")
+
+            let inInches = label.localizedCaseInsensitiveContains("in")
+            let factor = inInches ? 25.4 : 1.0
+            let widthMM = numbers[0] * factor, heightMM = numbers[1] * factor
+            #expect(
+                abs(widthMM - spec.photo.sizeMM.width) < 0.5,
+                "\(spec.id): label says \(widthMM) mm wide, spec says \(spec.photo.sizeMM.width)"
+            )
+            #expect(
+                abs(heightMM - spec.photo.sizeMM.height) < 0.5,
+                "\(spec.id): label says \(heightMM) mm tall, spec says \(spec.photo.sizeMM.height)"
+            )
+        }
+    }
+
+    /// The US photo is universally "2 x 2 in" - on travel.state.gov, on the drugstore kiosk, and
+    /// out of the mouth of the person at the counter. 50.8 mm is a conversion artefact.
+    @Test func americanAdviceIsInInches() throws {
+        let us = try #require(Self.specs().first { $0.id == "us-passport" })
+        for variant in PrintGuidance.Variant.allCases {
+            let text = PrintGuidance.steps(for: us, variant: variant).map(\.detail).joined()
+            #expect(text.contains("2 × 2 in"), "\(variant): \(text)")
+            #expect(!text.contains("50.8"), "millimetres leaked into US advice: \(text)")
         }
     }
 
