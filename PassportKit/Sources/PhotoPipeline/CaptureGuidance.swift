@@ -12,6 +12,7 @@ public struct CaptureCue: Sendable, Equatable, Identifiable {
         case turned, chinUp, chinDown, tilted
         case eyesClosed, mouthOpen
         case lighting
+        case darkBackground, busyBackground
         case ready
     }
 
@@ -68,6 +69,7 @@ public enum CaptureGuidance {
         face: FaceMeasurements?,
         headHeightPx: Double?,
         cheekImbalance: Double?,
+        quality: FrameQuality.Reading? = nil,
         frameSize: CGSize,
         spec: DocumentSpec,
         isMirrored: Bool = false,
@@ -147,11 +149,28 @@ public enum CaptureGuidance {
 
         // Lighting is advisory live: it is measured properly on the full-resolution capture, and
         // a preview frame is too small and too noisy to reject someone on.
-        if let cheekImbalance, let limit = spec.lighting?.cheekImbalance?.failAbove,
-           cheekImbalance > limit {
+        // Lighting and background, judged live. Finding out the wall was wrong only after the
+        // photo has been taken is the thing this is here to avoid.
+        let imbalance = cheekImbalance ?? (quality?.isUsable == true ? quality?.cheekImbalance : nil)
+        if let imbalance, let limit = spec.lighting?.cheekImbalance?.failAbove, imbalance > limit {
             cues.append(CaptureCue(
                 kind: .lighting, message: "Turn towards the light", isBlocking: false
             ))
+        }
+
+        if let quality, quality.isUsable {
+            // Advisory, not blocking: the pipeline replaces the background, so a poor wall is not
+            // a rejection - it just makes the cut-out worse, which is what produces the mangled
+            // edges LESSONS 20 is about. Telling someone to move now costs them nothing.
+            if quality.backgroundBrightness < FrameQuality.darkBackgroundBelow {
+                cues.append(CaptureCue(
+                    kind: .darkBackground,
+                    message: "Find a lighter wall behind you", isBlocking: false
+                ))
+            }
+            // No "busy wall" cue: see FrameQuality.busyBackgroundAbove. The metric does not
+            // separate a patterned wall from an unevenly lit plain one on real photos, and a
+            // cue that fires on a good photo is worse than no cue at all.
         }
 
         let blocking = cues.contains { $0.isBlocking }

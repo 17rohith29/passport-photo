@@ -249,14 +249,33 @@ final class CameraController: NSObject {
             guard let self else { return }
             let image = frame.image
             let face = try? await self.analyzer.analyze(image)
+            // Background and lighting, judged on a small copy of the frame: a person can still
+            // move at this point, which they cannot once the photo has been taken.
+            let quality = face.flatMap { Self.quality(of: image, face: $0) }
             let result = CaptureGuidance.assess(
-                face: face, headHeightPx: nil, cheekImbalance: nil,
+                face: face, headHeightPx: nil, cheekImbalance: nil, quality: quality,
                 frameSize: CGSize(width: image.width, height: image.height),
                 spec: spec, isMirrored: mirrored
             )
             self.apply(result)
             self.analysing = false
         }
+    }
+
+    /// Measured on a downscaled copy: the metrics are regional averages, so the detail a full
+    /// frame carries is wasted, and this runs several times a second on a live preview.
+    nonisolated static func quality(
+        of image: CGImage, face: FaceMeasurements
+    ) -> FrameQuality.Reading? {
+        let side = 384
+        let scale = Double(side) / Double(max(image.width, image.height))
+        guard scale > 0, scale <= 1,
+              let small = ImageLoader.resized(image, scale: scale),
+              let pixels = ImageConversion.pixelImage(from: small) else { return nil }
+        let luminance = ImageConversion.luminance(of: pixels)
+        return FrameQuality.assess(
+            image: pixels, luminance: luminance, face: face.scaled(by: scale)
+        )
     }
 
     /// A decoded frame on its way to the main actor.

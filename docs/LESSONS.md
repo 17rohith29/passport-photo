@@ -298,3 +298,29 @@ just a finiteness check. LESSONS 24 said "finite and in range"; only the first h
 **Rule:** a spec must also not be able to contradict itself into rejecting every photo — a
 `colorHex` darker than its own `minChannelValue` fails every correctly rendered background and then
 blames the user for it. `validate()` rejects that pairing.
+
+## 33. A capture cue that fires on a good photo is worse than no cue
+Live background advice looked easy: sample the wall beside the head, flag it if it is dark or
+busy. The dark half worked. The busy half did not: the first threshold, chosen from synthetic
+walls where the right answer was known by construction, would have nagged **13 of the 14 real
+fixture photos**. Real walls are not flat — they carry shadow and gradient, and the fixture with
+the highest "variation" turned out to be a lighting problem (it also has the worst cheek
+imbalance in the set), not a patterned wall.
+**Rule:** a threshold measured only against synthetic input has not been measured. Run it over
+the real photos before it says anything to a user.
+**Rule:** when a metric does not separate, ship silence rather than a cue. The reading is kept
+and tested; no cue is emitted until there is labelled data showing where the line is.
+**Test:** `FrameQualityCalibration` asserts no real attempt is ever told its wall is too dark,
+and that the dark threshold keeps margin under the darkest real photo.
+
+## 34. Glasses detection: the API exists, but not for us
+`VNClassifyFaceAttributesRequest`, `FaceObservation.Attributes.Glasses` (`.none`,
+`.prescription`, `.sunglasses`) and `VNGenerateGlassesSegmentationRequest` are all present as
+symbols in the iOS 26.5 Vision binary — and none of them are in the public SDK headers or
+importable from Swift at any deployment target. They are SPI.
+**Rule:** do not reach for them. Shipping against private API risks rejection and breaks on any
+OS update. `appearance.glassesAllowed` stays in `status.notEnforced` until either Apple makes
+this public or we can show a heuristic separates on labelled data.
+**Note:** if a heuristic is attempted, it may only ever WARN on detection. "No glasses detected"
+must never count as a pass — a false negative leaves the honest status quo, while a false pass
+is the over-promise non-negotiable 6 forbids.
