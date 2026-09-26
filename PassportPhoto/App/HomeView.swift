@@ -37,7 +37,7 @@ struct HomeView: View {
                     )
                 }
             }
-            .navigationTitle("Passport Photo")
+            .navigationTitle("Passport & Visa Photos")
             .navigationBarTitleDisplayMode(typeSize.isAccessibilitySize ? .inline : .large)
         }
     }
@@ -77,7 +77,7 @@ struct HomeView: View {
                     // A stranger is being asked to hand over a photo of their face. That this
                     // never leaves the phone is the strongest thing the app has, and it was
                     // nowhere in the UI.
-                    Text("Turn a photo you already have into a passport photo that meets the measurements. Everything happens on this iPhone — nothing is uploaded.")
+                    Text("Turn a photo you already have into a passport or visa photo that meets the measurements. Everything happens on this iPhone — nothing is uploaded.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
