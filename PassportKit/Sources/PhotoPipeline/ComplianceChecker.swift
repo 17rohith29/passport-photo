@@ -53,18 +53,39 @@ public struct ComplianceChecker: Sendable {
         checks.append(centeringCheck(face, width: pixels.width, spec: spec))
         checks.append(faceIntegrityCheck(pixels, face: face))
 
-        if let matte = try? await segmenter.matte(for: output) {
-            let refined = MatteRefiner.refine(matte: matte, image: pixels, face: face, tuning: tuning)
+        // Head height is the rule that matters most, so failing to measure it has to be loud.
+        // Skipping it silently let a photo whose cut-out was mangled report "meets requirements"
+        // with the single most important check simply absent (LESSONS 18's failure shape).
+        let rawMatte = try? await segmenter.matte(for: output)
+        let refinedMatte = rawMatte.map {
+            MatteRefiner.refine(matte: $0, image: pixels, face: face, tuning: tuning)
+        }
+        if let refined = refinedMatte {
             let chin = ChinRefiner.refine(luminance: luminance, face: face, tuning: tuning)
             if let crown = CrownFinder.find(matte: refined, face: face, tuning: tuning) {
                 checks.append(headHeightCheck(crown: crown, chin: chin, geometry: geometry, spec: spec))
                 checks.append(topMarginCheck(crown: crown, geometry: geometry, spec: spec))
+            } else {
+                checks.append(unmeasuredHeadCheck())
             }
             checks.append(shouldersCheck(refined, spec: spec))
+        } else {
+            checks.append(unmeasuredHeadCheck())
         }
         checks.append(eyeLineCheck(face, height: pixels.height, geometry: geometry, spec: spec))
 
         return checks
+    }
+
+    /// Reported when the finished photo could not be measured at all. A fail, not a skip: the
+    /// user must never be told a photo meets requirements that were never checked.
+    func unmeasuredHeadCheck() -> CheckResult {
+        CheckResult(
+            id: .headHeight, status: .fail,
+            measured: "could not be measured in the finished photo",
+            requirement: "head height must be verifiable",
+            userMessage: "We could not measure the head in the finished photo, so we cannot say it is compliant. Try a photo with more space around the head and a clearer edge between you and the wall."
+        )
     }
 
     func dimensionsCheck(_ image: CGImage, geometry: SpecGeometry) -> CheckResult {

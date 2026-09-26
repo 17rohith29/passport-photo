@@ -12,10 +12,13 @@ public enum CrownFinder {
         matte: AlphaMatte, face: FaceMeasurements, tuning: Tuning = .default
     ) -> CGFloat? {
         let faceWidth = Double(face.faceWidth)
+        // Finite is not enough: every one of these becomes an Int below, and Int(1e300) traps
+        // on overflow exactly as hard as Int(nan) does (LESSONS 24).
         guard faceWidth.isFinite, faceWidth > 0, faceWidth < 1e6,
-              Double(face.contourMinX).isFinite, Double(face.contourMaxX).isFinite,
-              Double(face.rawChin.y).isFinite,
-              matte.width > 0, matte.height > 0 else { return nil }
+              abs(Double(face.contourMinX)) < 1e6, abs(Double(face.contourMaxX)) < 1e6,
+              abs(Double(face.rawChin.y)) < 1e6,
+              matte.width > 0, matte.height > 0,
+              matte.values.count == matte.width * matte.height else { return nil }
 
         // Search a column window around the face, so a raised hand or shoulder cannot qualify.
         let x0 = max(0, Int((Double(face.contourMinX) - 0.3 * faceWidth).rounded()))
@@ -23,7 +26,9 @@ public enum CrownFinder {
         guard x1 > x0 else { return nil }
 
         let required = tuning.crownSpanFraction * faceWidth
+        // A chin above the frame gives a negative row, and 0...negative traps.
         let lastRow = min(matte.height - 1, Int(face.rawChin.y.rounded()))
+        guard lastRow >= 0 else { return nil }
 
         for y in 0...lastRow {
             var span = 0.0
@@ -45,8 +50,9 @@ public enum CrownFinder {
     ) -> Bool {
         let faceWidth = Double(face.faceWidth)
         guard faceWidth.isFinite, faceWidth > 0, faceWidth < 1e6,
-              Double(face.contourMinX).isFinite, Double(face.contourMaxX).isFinite,
-              matte.width > 0, matte.height > 2 else { return false }
+              abs(Double(face.contourMinX)) < 1e6, abs(Double(face.contourMaxX)) < 1e6,
+              matte.width > 0, matte.height > 2,
+              matte.values.count == matte.width * matte.height else { return false }
 
         let x0 = max(0, Int((Double(face.contourMinX) - 0.3 * faceWidth).rounded()))
         let x1 = min(matte.width - 1, Int((Double(face.contourMaxX) + 0.3 * faceWidth).rounded()))

@@ -37,6 +37,11 @@ public struct SpecGeometry: Sendable, Equatable {
         self.requiredHeadPx = (targetMM ?? 0) * pxPerMM
     }
 
+    /// The digital file's true density, for the JPEG's DPI metadata. Stamping
+    /// `photo.print.dpi` there would be a lie: 630x810 at 35x45 mm is 457 ppi, so a lab that
+    /// honours the embedded value would print it 52% too large.
+    public var digitalDPI: Double { pxPerMM * Units.mmPerInch }
+
     public func mmToPx(_ mm: Double) -> Double { mm * pxPerMM }
     public func pxToMM(_ px: Double) -> Double { px / pxPerMM }
 

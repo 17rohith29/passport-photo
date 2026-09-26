@@ -34,7 +34,8 @@ public enum ChinRefiner {
         guard faceWidth.isFinite, chinY.isFinite, faceHeight.isFinite,
               Double(face.rawChin.x).isFinite,
               faceWidth > 0, faceHeight > 0,
-              faceWidth < 1e6, faceHeight < 1e6 else {
+              faceWidth < 1e6, faceHeight < 1e6,
+              abs(chinY) < 1e6, abs(Double(face.rawChin.x)) < 1e6 else {
             return (face.rawChin.y.isFinite ? face.rawChin.y : 0, nil)
         }
 

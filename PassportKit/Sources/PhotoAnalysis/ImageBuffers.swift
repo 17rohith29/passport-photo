@@ -108,7 +108,10 @@ public struct GrayImage: Sendable {
         // buffer. Vision landmarks can degenerate, so this has to be defensive.
         guard rect.minX.isFinite, rect.minY.isFinite,
               rect.width.isFinite, rect.height.isFinite,
-              rect.width >= 1, rect.height >= 1 else {
+              rect.width >= 1, rect.height >= 1,
+              // Finite is not enough: Int(1e300) traps just as hard as Int(nan).
+              abs(rect.minX) < 1e9, abs(rect.minY) < 1e9,
+              rect.width < 1e5, rect.height < 1e5 else {
             return GrayImage(width: 0, height: 0, values: [])
         }
         let x0 = Int(rect.minX.rounded()), y0 = Int(rect.minY.rounded())

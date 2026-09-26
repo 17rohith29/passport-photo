@@ -12,6 +12,10 @@ public enum MatteRefiner {
     public static func refine(
         matte: AlphaMatte, image: PixelImage, face: FaceMeasurements, tuning: Tuning = .default
     ) -> AlphaMatte {
+        // A zero width or height makes the border scans index row -1 (LESSONS 24). Vision's
+        // mattes are always resized to the image, but the segmenter is injectable.
+        guard matte.width > 0, matte.height > 0,
+              matte.values.count == matte.width * matte.height else { return matte }
         var hard = largestComponent(matte)
         fillHoles(&hard, width: matte.width, height: matte.height)
         let distance = signedDistance(hard, width: matte.width, height: matte.height)

@@ -144,22 +144,39 @@ public extension DocumentSpec {
             if let value = bg.minChannelValue, value < 0 || value > 255 {
                 issues.append("background.minChannelValue \(value) must be between 0 and 255")
             }
+            // A spec whose own background colour is darker than its own purity floor can never
+            // pass its own background check: every correct photo would be failed, and the user
+            // would be blamed for it.
+            if let value = bg.minChannelValue, let darkest = darkestChannel(bg.colorHex) {
+                if darkest < value {
+                    issues.append(
+                        "background.colorHex \(bg.colorHex) has a darkest channel of \(darkest), "
+                        + "below background.minChannelValue \(value); no photo could ever pass"
+                    )
+                }
+            }
+        }
+
+        // The renderer never upscales (LESSONS 3), so a spec that permits it would be stating
+        // a rule the app does not implement. Rejected rather than silently ignored.
+        if input?.allowUpscaling == true {
+            issues.append("input.allowUpscaling must be false: the app never upscales")
         }
 
         // Sizes and dpi are multiplied out into pixel counts and buffer allocations.
-        checkPositive(photo.sizeMM.width, "photo.sizeMM.width", &issues)
-        checkPositive(photo.sizeMM.height, "photo.sizeMM.height", &issues)
-        checkPositive(photo.print.dpi, "photo.print.dpi", &issues)
-        if let dpi = photo.digital.dpi { checkPositive(dpi, "photo.digital.dpi", &issues) }
+        checkPositive(photo.sizeMM.width, "photo.sizeMM.width", &issues, max: 1000)
+        checkPositive(photo.sizeMM.height, "photo.sizeMM.height", &issues, max: 1000)
+        checkPositive(photo.print.dpi, "photo.print.dpi", &issues, max: 2400)
+        if let dpi = photo.digital.dpi { checkPositive(dpi, "photo.digital.dpi", &issues, max: 2400) }
         if let size = photo.digital.sizePx {
-            checkPositive(size.width, "photo.digital.sizePx.width", &issues)
-            checkPositive(size.height, "photo.digital.sizePx.height", &issues)
+            checkPositive(size.width, "photo.digital.sizePx.width", &issues, max: 20000)
+            checkPositive(size.height, "photo.digital.sizePx.height", &issues, max: 20000)
         }
         if let range = photo.digital.sizePxRange {
-            checkPositive(range.min.width, "photo.digital.sizePxRange.min.width", &issues)
-            checkPositive(range.min.height, "photo.digital.sizePxRange.min.height", &issues)
-            checkPositive(range.max.width, "photo.digital.sizePxRange.max.width", &issues)
-            checkPositive(range.max.height, "photo.digital.sizePxRange.max.height", &issues)
+            checkPositive(range.min.width, "photo.digital.sizePxRange.min.width", &issues, max: 20000)
+            checkPositive(range.min.height, "photo.digital.sizePxRange.min.height", &issues, max: 20000)
+            checkPositive(range.max.width, "photo.digital.sizePxRange.max.width", &issues, max: 20000)
+            checkPositive(range.max.height, "photo.digital.sizePxRange.max.height", &issues, max: 20000)
         }
         if let copies = photo.print.copiesRequired, copies < 1 {
             issues.append("photo.print.copiesRequired must be at least 1, got \(copies)")
@@ -189,9 +206,25 @@ public extension DocumentSpec {
         }
     }
 
-    private func checkPositive(_ value: Double, _ name: String, _ issues: inout [String]) {
+    /// Countries are data, so a data file must not be able to take the app down. Positive and
+    /// finite is not enough: these values are multiplied into pixel counts and buffer lengths,
+    /// and Int(1e30) traps (LESSONS 24).
+    /// The darkest of the three channels in `#RRGGBB`, or nil if it does not parse.
+    private func darkestChannel(_ hex: String) -> Int? {
+        let digits = hex.dropFirst()
+        guard hex.hasPrefix("#"), digits.count == 6, let value = UInt32(digits, radix: 16)
+        else { return nil }
+        let channels = [(value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF]
+        return channels.min().map(Int.init)
+    }
+
+    private func checkPositive(
+        _ value: Double, _ name: String, _ issues: inout [String], max limit: Double = 1e5
+    ) {
         if !value.isFinite || value <= 0 {
             issues.append("\(name) must be a positive, finite number, got \(value)")
+        } else if value > limit {
+            issues.append("\(name) must be at most \(Int(limit)), got \(value)")
         }
     }
 

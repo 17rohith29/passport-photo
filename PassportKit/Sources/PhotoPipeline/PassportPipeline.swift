@@ -253,7 +253,8 @@ public actor PassportPipeline {
 
         let dpi = spec.photo.print.dpi
         guard let jpeg = JPEGExporter.encode(
-            digitalImage, dpi: dpi, fileSizeKB: spec.photo.digital.fileSizeKB, tuning: tuning
+            digitalImage, dpi: SpecGeometry(spec: spec)?.digitalDPI ?? dpi,
+            fileSizeKB: spec.photo.digital.fileSizeKB, tuning: tuning
         ) else {
             throw PipelineError.renderFailed
         }

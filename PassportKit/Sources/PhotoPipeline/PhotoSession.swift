@@ -27,6 +27,10 @@ public final class PhotoSession {
     public private(set) var loadError: String?
 
     private let pipeline: PassportPipeline
+    /// The cap used when a resolution rejection is retried. Higher than the normal decode cap,
+    /// but still a cap: a 48 MP decode holds roughly a gigabyte of intermediate planes.
+    nonisolated static let retryMaxPixelSize = 7000
+
     private let maxPixelSize: Int
     private var task: Task<Void, Never>?
 
@@ -106,8 +110,11 @@ public final class PhotoSession {
                outcome.failures.contains(where: { $0.id == .resolution }),
                let full = ImageLoader.pixelSize(data: data),
                Int(max(full.width, full.height)) > maxPixelSize {
+                // Still capped, just higher: an uncapped 48 MP decode holds several hundred MB
+                // of intermediate planes at once, and the retry exists for head pixels, not for
+                // every pixel.
                 if let fullImage = try? await Task.detached(priority: .userInitiated, operation: {
-                    try ImageLoader.load(data: data)
+                    try ImageLoader.load(data: data, maxPixelSize: Self.retryMaxPixelSize)
                 }).value {
                     guard !Task.isCancelled else { return }
                     let retry = await pipeline.run(fullImage, spec: spec, onStage: report)

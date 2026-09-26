@@ -213,6 +213,76 @@ struct GeometryCrashSafetyTests {
         ).isFinite)
     }
 
+    /// The crown search runs 0...chinRow. A face whose entire contour sits above the frame
+    /// gives a negative chin row, and `0...(-5)` traps on "Range requires lowerBound <= upperBound".
+    @Test("a chin above the top of the frame does not invert the crown search range")
+    func negativeChinRowIsSafe() {
+        let matte = AlphaMatte(width: 60, height: 60, repeating: 1)
+        for chinY in [CGFloat(-0.4), -1, -5, -100_000] {
+            let face = FaceMeasurements(
+                faceCount: 1, boundingBox: CGRect(x: 10, y: -30, width: 20, height: 20),
+                leftEye: CGPoint(x: 20, y: -20), rightEye: CGPoint(x: 30, y: -20),
+                contour: [CGPoint(x: 15, y: -20), CGPoint(x: 35, y: -20)],
+                rawChin: CGPoint(x: 25, y: chinY), browY: -25,
+                yawDeg: 0, pitchDeg: 0, rollDeg: 0,
+                captureQuality: nil, eyeOpenness: 0.3, mouthOpenness: 0.02
+            )
+            // Either it declines, or it returns a row that is actually in the matte. What it
+            // must never do is evaluate 0...(negative).
+            if let crown = CrownFinder.find(matte: matte, face: face) {
+                #expect(crown >= 0 && crown < CGFloat(matte.height))
+            }
+            _ = CrownFinder.touchesTopEdge(matte: matte, face: face)
+        }
+    }
+
+    /// The matte refiner scans the border rows directly. With a zero height that is row -1.
+    @Test("a matte with a zero dimension is returned untouched instead of indexing row -1")
+    func degenerateMatteIsSafe() {
+        let face = FaceMeasurements(
+            faceCount: 1, boundingBox: CGRect(x: 1, y: 1, width: 2, height: 2),
+            leftEye: CGPoint(x: 1, y: 1), rightEye: CGPoint(x: 3, y: 1),
+            contour: [CGPoint(x: 1, y: 1), CGPoint(x: 3, y: 1)],
+            rawChin: CGPoint(x: 2, y: 3), browY: 1,
+            yawDeg: 0, pitchDeg: 0, rollDeg: 0,
+            captureQuality: nil, eyeOpenness: 0.3, mouthOpenness: 0.02
+        )
+        for (w, h) in [(5, 0), (0, 5), (0, 0)] {
+            let matte = AlphaMatte(width: w, height: h, values: [])
+            let image = PixelImage(width: w, height: h, pixels: [])
+            let out = MatteRefiner.refine(matte: matte, image: image, face: face)
+            #expect(out.width == w && out.height == h)
+        }
+    }
+
+    /// Finite is not enough where a value becomes an `Int`: `Int(1e300)` traps on overflow.
+    @Test("huge finite coordinates do not overflow the Int conversions")
+    func hugeFiniteCoordinatesAreSafe() {
+        let luminance = GrayImage(width: 60, height: 60, repeating: 100)
+        let matte = AlphaMatte(width: 60, height: 60, repeating: 1)
+        for value in [CGFloat(1e300), -1e300, 1e15] {
+            var face = FaceMeasurements(
+                faceCount: 1, boundingBox: CGRect(x: 10, y: 10, width: 20, height: 20),
+                leftEye: CGPoint(x: 20, y: 20), rightEye: CGPoint(x: 30, y: 20),
+                contour: [CGPoint(x: 15, y: 20), CGPoint(x: 35, y: 20)],
+                rawChin: CGPoint(x: value, y: 40), browY: 15,
+                yawDeg: 0, pitchDeg: 0, rollDeg: 0,
+                captureQuality: nil, eyeOpenness: 0.3, mouthOpenness: 0.02
+            )
+            #expect(ChinRefiner.refine(luminance: luminance, face: face).isFinite)
+            face.rawChin = CGPoint(x: 25, y: value)
+            #expect(ChinRefiner.refine(luminance: luminance, face: face).isFinite)
+            _ = CrownFinder.find(matte: matte, face: face)
+        }
+        // Same shape one layer down, where only the sibling function was bounded.
+        let image = GrayImage(width: 40, height: 40, repeating: 1)
+        for rect in [CGRect(x: 0, y: 0, width: 1e300, height: 1e300),
+                     CGRect(x: 1e300, y: 1e300, width: 10, height: 10)] {
+            let out = image.cropped(to: rect)
+            #expect(out.values.count == out.width * out.height)
+        }
+    }
+
     @Test("the chin refiner and crown finder survive a degenerate face")
     func refinersAreSafe() {
         let luminance = GrayImage(width: 60, height: 60, repeating: 100)
