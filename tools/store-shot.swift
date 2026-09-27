@@ -40,6 +40,33 @@ let gradient = CGGradient(colorsSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
 ctx.drawLinearGradient(gradient, start: CGPoint(x: 0, y: H), end: CGPoint(x: 0, y: 0), options: [])
 
 // Text is drawn with CoreText in native CG coordinates, so no flipping games.
+func measure(_ text: String, size: CGFloat, weight: NSFont.Weight,
+             tracking: CGFloat) -> CGSize {
+    let para = NSMutableParagraphStyle()
+    para.alignment = .center
+    para.lineHeightMultiple = 1.06
+    let attributed = NSAttributedString(string: text, attributes: [
+        .font: NSFont.systemFont(ofSize: size, weight: weight),
+        .paragraphStyle: para, .kern: tracking,
+    ])
+    let setter = CTFramesetterCreateWithAttributedString(attributed)
+    return CTFramesetterSuggestFrameSizeWithConstraints(
+        setter, CFRange(location: 0, length: 0), nil,
+        CGSize(width: W - 180, height: .greatestFiniteMagnitude), nil)
+}
+
+/// Largest size at or below `size` that keeps the headline within `maxLines`.
+func fittedSize(_ text: String, from size: CGFloat, weight: NSFont.Weight,
+                tracking: CGFloat, maxLines: Int) -> CGFloat {
+    var candidate = size
+    while candidate > 58 {
+        let h = measure(text, size: candidate, weight: weight, tracking: tracking).height
+        if h <= candidate * 1.14 * CGFloat(maxLines) + 6 { return candidate }
+        candidate -= 4
+    }
+    return candidate
+}
+
 func draw(_ text: String, size: CGFloat, weight: NSFont.Weight, colour: CGColor,
           topY: CGFloat, height: CGFloat, tracking: CGFloat = -1.5) -> CGFloat {
     let para = NSMutableParagraphStyle()
@@ -62,17 +89,19 @@ func draw(_ text: String, size: CGFloat, weight: NSFont.Weight, colour: CGColor,
 }
 
 // Headline block, then an amber rule, then the subline.
-let headlineTop = 132.0
-let headlineHeight = draw(headline, size: 104, weight: .heavy, colour: rgb(0xFFFFFF),
-                          topY: headlineTop, height: 400)
+let headlineTop = 138.0
+let headlineSize = fittedSize(headline, from: 108, weight: .heavy, tracking: -2, maxLines: 2)
+let headlineHeight = draw(headline, size: headlineSize, weight: .heavy, colour: rgb(0xFFFFFF),
+                          topY: headlineTop, height: 420, tracking: -2)
 
-let ruleY = headlineTop + headlineHeight + 46
+let ruleY = headlineTop + headlineHeight + 44
 ctx.setFillColor(amber)
 ctx.fill(CGRect(x: W / 2 - 54, y: H - ruleY - 8, width: 108, height: 8))
 
-let sublineTop = ruleY + 46
-_ = draw(subline, size: 46, weight: .medium, colour: rgb(0xC9D0EA), topY: sublineTop,
-         height: 200, tracking: 0)
+if !subline.isEmpty {
+    _ = draw(subline, size: 46, weight: .medium, colour: rgb(0xC9D0EA), topY: ruleY + 46,
+             height: 200, tracking: 0)
+}
 
 // The capture, inset with rounded corners and a soft shadow.
 let shotWidth = 980.0
@@ -82,6 +111,14 @@ let shotX = (W - shotWidth) / 2
 let shotY = 118.0                      // from the bottom
 let rect = CGRect(x: shotX, y: shotY, width: shotWidth, height: shotHeight)
 let rounded = CGPath(roundedRect: rect, cornerWidth: 54, cornerHeight: 54, transform: nil)
+
+let glow = CGGradient(colorsSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
+                      colors: [rgb(0x6E7CC4, 0.30), rgb(0x6E7CC4, 0)] as CFArray,
+                      locations: [0, 1])!
+ctx.drawRadialGradient(glow, startCenter: CGPoint(x: W / 2, y: shotY + shotHeight * 0.62),
+                       startRadius: 0,
+                       endCenter: CGPoint(x: W / 2, y: shotY + shotHeight * 0.62),
+                       endRadius: W * 0.72, options: [])
 
 ctx.saveGState()
 ctx.setShadow(offset: CGSize(width: 0, height: -18), blur: 54, color: rgb(0x000000, 0.45))
@@ -94,6 +131,13 @@ ctx.saveGState()
 ctx.addPath(rounded)
 ctx.clip()
 ctx.draw(shot, in: rect)
+ctx.restoreGState()
+
+ctx.saveGState()
+ctx.addPath(rounded)
+ctx.setStrokeColor(rgb(0xFFFFFF, 0.16))
+ctx.setLineWidth(3)
+ctx.strokePath()
 ctx.restoreGState()
 
 // The icon's crop marks, framing the phone the way they frame the portrait.

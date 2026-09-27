@@ -24,16 +24,20 @@ instant. Have a second choice ready:
 
 ## Subtitle (30 characters)
 
-**Passport and visa, on device** (29)
+**Passport and visa, sized exactly** (33 - too long, see below)
 
-Alternatives:
-- Passport photos that measure up (30)
-- Cut to size, on your iPhone (27)
+Use one of these instead, all within 30:
+- **Passport and visa, on device** (29)
+- **Cut to the exact size** (21)
+- **Passport photos that measure up** (30)
 
 ## Promotional text (170 characters)
 
 Turn a photo you already have into a passport or visa photo cut to the exact size your country
 asks for. Nothing is uploaded. No account, no subscription.
+
+(Avoid naming a country count here. It goes stale the moment one is added, and promotional text
+is one of the few fields you can change without submitting a new build.)
 
 ## Description
 
@@ -60,8 +64,8 @@ WHAT IT DOES
 
 DOCUMENTS
 
-Australia, Canada, China, India, Russia, Schengen Area, United Kingdom, United States.
-Passports and visas.
+Passports and visas for several countries, with more added over time. Today: Australia, Canada,
+China, India, Russia, the Schengen Area, the United Kingdom and the United States.
 
 FOR COUNTRIES THAT DO NOT ACCEPT EDITED PHOTOS
 
