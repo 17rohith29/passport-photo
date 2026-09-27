@@ -469,3 +469,31 @@ confirms arithmetic, not the photo.
 **Also:** the app's only edge test was `CrownFinder.touchesTopEdge`. A head running off the left,
 right or bottom of the source was never noticed — a face sliced flat against the frame edge
 produced a green verdict with all ten output checks passing. There is now a check for it.
+
+## 43. Calibrating against the fixture set is calibrating against one person
+LESSONS 33 warned that a threshold measured only on synthetic input has not been measured. This
+is the mirror image, and it bit immediately: `minBackdropCoverage` was set to 0.30 from four
+fixture photos, which are one person, one wall, one head of hair.
+
+Measured against synthetic subjects across all eight specs — varying head width, hair volume and
+shoulder width independently:
+
+```
+cn-visa      big hair        29.5%  FAIL
+ca-passport  wide face+hair  26.6%  FAIL
+gb-passport  all three       30.0%  FAIL
+ru-visa      all three       30.0%  FAIL
+```
+
+A China visa applicant with ordinary hair volume would have been rejected. That is a worse
+failure than the false pass the check was written to stop: a false pass yields a bad photo the
+user can retake, while this refuses a good photo and explains nothing.
+**Rule:** for any threshold about a *person*, vary the person — width, hair, build — not just the
+lighting and the wall. The fixture set cannot tell you what a different body does.
+**Rule:** when several signals guard one rule, work out which is doing the discriminating. Here
+the top-band median and "the subject reaches the bottom edge" do it, and neither penalises a
+larger person; coverage only needs to reject a region pieced out of a corner patch, which
+measured 4.6%. A backstop set near the realistic range is a false-rejection machine for no gain,
+so it sits at 0.15 — ten times the fake it catches, ten points clear of the tightest real case.
+**Test:** `NewCheckAuditTests` asserts both directions, and requires eight points of MARGIN, so a
+future tightening cannot quietly reintroduce this.
