@@ -293,6 +293,27 @@ public actor PassportPipeline {
             )
         }
 
+        // The only edge test in the app was CrownFinder.touchesTopEdge. A head running off the
+        // LEFT, RIGHT or BOTTOM of the source was never noticed: measured, a face sliced flat
+        // against the frame edge produced a green verdict with all ten output checks passing.
+        let faceMinX = Double(levelledFace.contourMinX)
+        let faceMaxX = Double(levelledFace.contourMaxX)
+        if faceMinX.isFinite, faceMaxX.isFinite, abs(faceMinX) < 1e6, abs(faceMaxX) < 1e6,
+           faceMinX <= 1 || faceMaxX >= Double(levelledPixels.width) - 2 {
+            inputChecks.append(CheckResult(
+                id: .headroom, status: .fail,
+                measured: "your head runs off the side of the photo",
+                requirement: "your whole head inside the photo",
+                technical: "face spans \(faceMinX)...\(faceMaxX) in width \(levelledPixels.width)",
+                userMessage: "Part of your head is outside the edge of this photo. Step back, or move to the middle of the frame, and take it again.",
+                fixability: .retakeRequired
+            ))
+            return PipelineResult(
+                verdict: .cannotUse, inputChecks: inputChecks, outputChecks: [], output: nil,
+                backgroundMode: mode
+            )
+        }
+
         // Keeping the user's background means painting nothing. A crop that runs past the edge
         // of the photo can only be filled by inventing pixels, and the renderer fills them with
         // the spec colour — which in this mode is both a lie and a false pass, because that

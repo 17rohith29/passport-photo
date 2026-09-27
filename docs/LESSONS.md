@@ -436,3 +436,36 @@ reaches the top corners, it also guaranteed the wall check above passed. A dark 
 overhanging crop was a silent green verdict on a photo the app had invented a sixth of.
 **Rule:** in `keep` mode a crop that runs past the edge of the photo is a rejection, not a fill.
 There is nothing there to keep, and inventing it is the exact edit the mode exists to avoid.
+
+## 41. Fixing a bug on the new path and leaving it on the default path
+LESSONS 39 (the tautology) and 40 (painting what it cannot see) were both found while building
+`keep` mode, and both fixes landed **only in the `keep` branch**. `replace` is the default for
+all eight documents, so the bugs stayed live on the path every user takes, while the notes said
+they were fixed.
+
+Measured on the default path, before this: a photo filled with **pure black**, with a 40x40 white
+patch in one corner and two white side strips, passed `background` for every wall tone from 0 to
+244, reporting **"darkest channel 255"** every time. The same images failed correctly in `keep`.
+End to end, a dark slab of the original room inside a thin painted border — **74.4% of the photo
+below the spec's floor** — returned `meetsRequirements` with all ten output checks passing. That
+is LESSONS 20's photo again, and `sideMarginPurity`, the fix written for LESSONS 20, is evaded
+because it samples only the outer `width/14` px strips that the painted border covers.
+**Rule:** when a bug is found in one mode, check the other mode before writing the lesson. A fix
+that does not run on the default path is not a fix.
+**Rule:** `sideMarginPurity` samples two thin strips, so any fake that covers those strips beats
+it. What a real photo cannot fake is that **the subject runs off the bottom of the frame** — head
+and shoulders always do, and a slab floating inside a border touches no edge. That, plus a
+backdrop-coverage floor calibrated at 30% against real outputs measuring 40-60%, is what catches
+it now.
+
+## 42. A check downstream of the thing it measures is measuring itself
+`centeringCheck` measured the eye midpoint against the frame centre. `CropPlanner` sets
+`rect.x = eyeMidpointX - cropWidth/2`, so the eye midpoint lands at the output centre **by
+construction**. Measured: with the eyes shifted 180 px off the head's own centre, the head sat
+19.8% off centre and touched the right frame edge, and the check reported **"0.00% off centre"**
+against "under 2%". It now measures the head contour's centre, which is what the rule is about.
+**Rule:** ask what the checked value is computed *from*. If the planner placed it, checking it
+confirms arithmetic, not the photo.
+**Also:** the app's only edge test was `CrownFinder.touchesTopEdge`. A head running off the left,
+right or bottom of the source was never noticed — a face sliced flat against the frame edge
+produced a green verdict with all ten output checks passing. There is now a check for it.

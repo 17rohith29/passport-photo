@@ -78,6 +78,10 @@ public struct Tuning: Sendable, Equatable {
     /// faceIntegrity: fraction of the face oval allowed to be near-white. LESSONS 8.
     public var maxFaceWhitened: Double = 0.005
     public var faceWhiteThreshold: UInt8 = 235
+    /// Least of the finished photo that must be backdrop. Real outputs measure 40-60% across
+    /// specs and fixtures (India's 80%-of-height head is the tightest, at 40%), so this leaves
+    /// ten points of margin while rejecting a backdrop "region" pieced out of a corner patch.
+    public var minBackdropCoverage: Double = 0.30
 
     public static let `default` = Tuning()
 

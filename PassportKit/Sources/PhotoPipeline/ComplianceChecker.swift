@@ -157,10 +157,30 @@ public struct ComplianceChecker: Sendable {
             : 1
 
         let status = ThresholdEvaluator.evaluateMinimum(fraction, spec.pureFraction)
-        let channelOK = darkest >= minimum
+        // `darkest` is the minimum over a region that only admits pixels already at or above
+        // `minimum`, so `darkest >= minimum` could never be false. Measured: a pure black photo
+        // with a 40x40 white corner passed, reporting "darkest channel 255" (LESSONS 39, which
+        // was fixed in the keep branch only - and replace is the default for all 8 documents).
+        // Two honest signals replace it, both calibrated on real output.
+        //
+        // 1. How much of the frame is backdrop at all. A real photo measures 40-60% across
+        //    specs and fixtures; a fake region pieced out of a corner patch and two side strips
+        //    measured 4.6%, and LESSONS 20's rectangular slab with a painted border ~26%.
+        let coverage = Double(total) / Double(max(1, pixels.width * pixels.height))
+        let coverageOK = coverage >= tuning.minBackdropCoverage
+        // 2. What the top of the photo actually is. After replacement it should be the spec
+        //    colour; a dark room behind a bright corner patch is not.
+        let topBand = wallBrightness(pixels)
+        let topBandOK = topBand >= Int(minimum)
+        // 3. The subject has to reach the bottom of the frame. In any passport crop the
+        //    shoulders run off the bottom edge, so the largest non-backdrop region touches it.
+        //    A slab of the original room sitting inside a painted border touches no edge at all
+        //    - which is LESSONS 20's photo, and it evades sideMarginPurity because the border
+        //    covers the side strips that samples.
+        let subjectOK = mode == .replace ? subjectReachesBottom(pixels, backdrop: region) : true
         let marginsOK = margins >= 0.9
-        let ok = status == .pass && channelOK && marginsOK
-        let failed = status == .fail || !channelOK || !marginsOK
+        let ok = status == .pass && coverageOK && marginsOK && topBandOK && subjectOK
+        let failed = status == .fail || !coverageOK || !marginsOK || !topBandOK || !subjectOK
 
         // Without compositing there is no "pure" fraction to speak of: a real wall is never one
         // exact value, so the honest question is whether the wall itself is light enough.
@@ -191,11 +211,18 @@ public struct ComplianceChecker: Sendable {
         return [CheckResult(
             id: .background,
             status: ok ? .pass : (failed ? .fail : .warn),
-            measured: String(format: "%.1f%% pure, darkest channel %d, %.0f%% clear beside the head",
-                             100 * fraction, darkest, 100 * margins),
-            requirement: String(format: "at least %.0f%% pure, no channel under %d, clear either side",
-                                100 * (spec.pureFraction?.failBelow ?? 0.95), minimum),
-            userMessage: marginsOK ? nil : "We couldn't separate you from the background cleanly. Try a photo taken against a plain, light wall.",
+            measured: String(
+                format: "%.1f%% pure, %.0f%% of the photo is backdrop, %.0f%% clear beside the head",
+                100 * fraction, 100 * coverage, 100 * margins
+            ),
+            requirement: String(
+                format: "at least %.0f%% pure, at least %.0f%% backdrop, clear either side",
+                100 * (spec.pureFraction?.failBelow ?? 0.95), 100 * tuning.minBackdropCoverage
+            ),
+            technical: String(format: "darkest in region %d, top band median %d, floor %d",
+                              darkest, topBand, minimum),
+            userMessage: (marginsOK && coverageOK && topBandOK) ? nil
+                : "We couldn't separate you from the background cleanly. Try a photo taken against a plain, light wall.",
             fixability: .automatic
         )]
     }
@@ -230,6 +257,44 @@ public struct ComplianceChecker: Sendable {
 
     /// Light pixels reachable from the top corners. Mirrors the reference pipeline, which takes
     /// the connected white component containing the top-left pixel.
+    /// True when the biggest non-backdrop region runs off the bottom of the photo, as a real
+    /// head and shoulders always does.
+    func subjectReachesBottom(_ pixels: PixelImage, backdrop: [Bool]) -> Bool {
+        let width = pixels.width, height = pixels.height
+        guard width > 2, height > 2, backdrop.count == width * height else { return true }
+
+        var seen = [Bool](repeating: false, count: width * height)
+        var bestSize = 0
+        var bestTouchesBottom = false
+
+        for start in 0..<(width * height) where !backdrop[start] && !seen[start] {
+            var size = 0
+            var touchesBottom = false
+            var stack = [start]
+            seen[start] = true
+            while let i = stack.popLast() {
+                size += 1
+                let x = i % width, y = i / width
+                if y >= height - 1 { touchesBottom = true }
+                for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+                    let nx = x + dx, ny = y + dy
+                    guard nx >= 0, nx < width, ny >= 0, ny < height else { continue }
+                    let n = ny * width + nx
+                    guard !seen[n], !backdrop[n] else { continue }
+                    seen[n] = true
+                    stack.append(n)
+                }
+            }
+            if size > bestSize {
+                bestSize = size
+                bestTouchesBottom = touchesBottom
+            }
+        }
+        // Nothing to judge if there is no subject at all; other checks cover that.
+        guard bestSize > 0 else { return true }
+        return bestTouchesBottom
+    }
+
     /// Typical brightness of the wall, as the median darkest-channel over the top band.
     ///
     /// The median is the point: it is what the wall mostly is, so a bright highlight, a lamp
@@ -300,7 +365,19 @@ public struct ComplianceChecker: Sendable {
     }
 
     func centeringCheck(_ face: FaceMeasurements, width: Int, spec: DocumentSpec) -> CheckResult {
-        let offset = abs(Double(face.eyeMidpoint.x) - Double(width) / 2) / Double(width)
+        // The HEAD's centre, not the eye midpoint. `CropPlanner` sets rect.x so the eye midpoint
+        // lands at the output centre by construction, so measuring the eyes measured the
+        // planner's own arithmetic: a head 20% off centre, touching the frame edge, still
+        // reported "0.00% off centre". An asymmetric face - turned head, hair to one side -
+        // moves the eyes off the head's centre, which is exactly the case this should catch.
+        let minX = Double(face.contourMinX), maxX = Double(face.contourMaxX)
+        let centre: Double
+        if minX.isFinite, maxX.isFinite, maxX > minX, abs(minX) < 1e6, abs(maxX) < 1e6 {
+            centre = (minX + maxX) / 2
+        } else {
+            centre = Double(face.eyeMidpoint.x)
+        }
+        let offset = abs(centre - Double(width) / 2) / Double(width)
         let status = ThresholdEvaluator.evaluateMaximum(offset, spec.geometry.horizontalOffsetFraction)
         return CheckResult(
             id: .centering, status: status,

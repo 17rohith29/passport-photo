@@ -62,7 +62,15 @@ public enum CropPlanner {
             return .failure(.missingGeometry("photo.digital size"))
         }
         let headPx = Double(chin - crown)
-        guard headPx > 0, imageSize.width > 0, imageSize.height > 0 else {
+        // `headPx > 0` is true for infinity, and `headPx < requiredHeadPx` is false for it, so
+        // an infinite crown/chin walked past both guards and returned .success carrying an
+        // all-infinite rect. .degenerate plainly means to catch that.
+        guard headPx.isFinite, headPx > 0, headPx < 1e9,
+              Double(crown).isFinite, Double(chin).isFinite,
+              abs(Double(crown)) < 1e9, abs(Double(chin)) < 1e9,
+              imageSize.width.isFinite, imageSize.height.isFinite,
+              imageSize.width > 0, imageSize.height > 0,
+              imageSize.width < 1e9, imageSize.height < 1e9 else {
             return .failure(.degenerate)
         }
 
