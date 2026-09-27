@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Free ID Photos**
+**Exact ID Photo**
 Last updated: 27 September 2026
 
 ## The short version

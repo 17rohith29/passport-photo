@@ -190,7 +190,7 @@
 				DEVELOPMENT_TEAM = PP4UG38M36;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Free ID Photos";
+				INFOPLIST_KEY_CFBundleDisplayName = "Exact ID Photo";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Used to take your passport or visa photo and guide you into position. Photos stay on this iPhone and are never uploaded.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Saves your finished passport or visa photo to your library. The app only adds photos, it never reads your library.";
@@ -216,7 +216,7 @@
 				DEVELOPMENT_TEAM = PP4UG38M36;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Free ID Photos";
+				INFOPLIST_KEY_CFBundleDisplayName = "Exact ID Photo";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Used to take your passport or visa photo and guide you into position. Photos stay on this iPhone and are never uploaded.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Saves your finished passport or visa photo to your library. The app only adds photos, it never reads your library.";

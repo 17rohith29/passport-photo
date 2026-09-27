@@ -4,15 +4,23 @@ Fill these into App Store Connect. Everything here is a draft, not a decision.
 
 ## Name (30 characters)
 
-**Free ID Photos** (14)
+**Exact ID Photo** (14)
 
-One caution worth weighing before you commit. Apple's metadata guidelines say an app name must
-not include prices or promotional terms, and "free" has drawn rejections under that reading in
-the past. Enforcement looks inconsistent, and plenty of shipping apps have it, so treat it as a
-real risk rather than a certainty. If you would rather not gamble on it:
+Chosen over the generic options because the category is saturated. Every obvious combination is
+already on the store: "Passport Photo - ID Photo", "ID Photo - Passport Photo App", "ID
+Photo-Passport Photo maker", "Passport Photo & ID Photo", "ID Photo: Passport Photo Maker" and
+more. A fiftieth near-identical name would be invisible in search, and the name is not where
+discovery comes from anyway: that is the keyword field and the subtitle.
 
-- **ID Photos** (9)
-- **Passport Photos** (15)
+Dropping "Free" also removes a rejection risk. Apple's metadata guidelines say an app name must
+not include prices or promotional terms, and "free" has drawn rejections under that reading.
+
+**Check availability in App Store Connect before anything else.** Search results only show what
+ranks, not what is reserved, so this cannot be confirmed from outside. Reserving is free and
+instant. Have a second choice ready:
+
+- **Cut to Size** (11)
+- **Passport Rules** (14)
 
 ## Subtitle (30 characters)
 
@@ -112,3 +120,20 @@ Suggested text for the reviewer:
 
   The app never claims a photo will be accepted by any authority. Each document lists the rules
   it cannot check, and shows the official source the requirements were read from.
+
+## Screenshots
+
+`docs/store/marketing/` holds five at 1320x2868, the 6.9 inch size Apple requires. Upload in
+the numbered order: the first two are what people see in search results, so they carry the two
+claims that matter most, namely the exact sizing and the honesty about what cannot be checked.
+
+They are generated, not hand-made, by `tools/store-shot.swift`. To change a caption or reshoot
+after a UI change, recapture with the simulator and re-run that tool. The palette comes from the
+app icon: navy #2E3866 to #141936, amber #F7BC4C, with the icon's crop marks framing the device.
+
+`docs/store/screenshots/` holds the raw captures they are built from.
+
+Missing, and only reachable on a real device because Vision does not run in the simulator: the
+result screen with a finished photo on it. That is the most persuasive screenshot the app has,
+and it is worth capturing during device testing. A photo of a stranger is fine for the store as
+long as you have their permission, or use your own.
