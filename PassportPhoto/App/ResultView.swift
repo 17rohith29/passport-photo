@@ -17,6 +17,8 @@ struct ResultView: View {
     /// The variant captured at the moment a save began. Reading `variant` at completion let the
     /// user switch the segmented control mid-save and get advice for a file they never saved.
     @State private var savingVariant: Variant?
+    /// What has actually been written, so the Saved screen offers only what is missing.
+    @State private var savedVariants: Set<Variant> = []
     @State private var showingMeasurements = false
     @State private var showingChecks = false
     @State private var exporting = false
@@ -84,14 +86,18 @@ struct ResultView: View {
             defaultFilename: filename
         ) { result in
             if case .success = result {
-                savedOutcome = SaveOutcome(destination: .files, variant: savingVariant ?? variant)
+                let saved = savingVariant ?? variant
+                savedVariants.insert(saved)
+                savedOutcome = SaveOutcome(destination: .files, variant: saved)
             }
         }
         // Saving to Photos finishes asynchronously, so the end screen follows the saver's state
         // rather than the button tap.
         .onChange(of: saver.state) { _, state in
             if state == .savedToPhotos {
-                savedOutcome = SaveOutcome(destination: .photos, variant: savingVariant ?? variant)
+                let saved = savingVariant ?? variant
+                savedVariants.insert(saved)
+                savedOutcome = SaveOutcome(destination: .photos, variant: saved)
             }
         }
         // Switching output after a save makes the green "Saved" row a lie: what is in Photos is
@@ -103,11 +109,17 @@ struct ResultView: View {
             }
         }
         .sheet(item: $savedOutcome) { outcome in
-            SavedView(spec: spec, outcome: outcome, isUnedited: session.isUnedited) {
-                savedOutcome = nil
-                session.reset()
-                saver.reset()
-            }
+            SavedView(
+                spec: spec, outcome: outcome, isUnedited: session.isUnedited,
+                savedVariants: savedVariants,
+                otherVariant: otherVariant(after: outcome.variant),
+                onSaveOther: { saveOther(after: outcome) },
+                onFinish: {
+                    savedOutcome = nil
+                    session.reset()
+                    saver.reset()
+                }
+            )
         }
     }
 
@@ -221,6 +233,35 @@ struct ResultView: View {
     private var currentData: Data? {
         guard let output = session.output else { return nil }
         return variant == .single ? output.digitalJPEG : (output.printSheetJPEG ?? output.digitalJPEG)
+    }
+
+    /// The format not yet saved, or nil when this document produced only one.
+    private func otherVariant(after saved: Variant) -> Variant? {
+        let other: Variant = saved == .single ? .sheet : .single
+        guard data(for: other) != nil else { return nil }
+        return other
+    }
+
+    private func data(for variant: Variant) -> Data? {
+        guard let output = session.output else { return nil }
+        return variant == .single ? output.digitalJPEG : output.printSheetJPEG
+    }
+
+    /// Saves the other format to wherever the first one went, without leaving the flow.
+    private func saveOther(after outcome: SaveOutcome) {
+        guard let other = otherVariant(after: outcome.variant) else { return }
+        variant = other
+        savingVariant = other
+        savedOutcome = nil
+        switch outcome.destination {
+        case .photos:
+            // The saver only reports a change, so it has to be cleared before the second save
+            // or onChange never fires.
+            saver.reset()
+            if let data = data(for: other) { saver.saveToPhotos(data) }
+        case .files:
+            exporting = true
+        }
     }
 
     static func label(for variant: Variant) -> String {

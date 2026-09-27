@@ -11,6 +11,12 @@ struct SavedView: View {
     let outcome: SaveOutcome
     /// True when the background was kept, so there is no edit to warn about.
     var isUnedited = false
+    /// Formats already saved in this session, so we only offer what is still missing.
+    var savedVariants: Set<PrintGuidance.Variant> = []
+    /// Nil when this document produced no print sheet.
+    var otherVariant: PrintGuidance.Variant?
+    /// Saves the other format to the same place, without leaving this screen.
+    var onSaveOther: () -> Void = {}
     /// Closes the whole flow and returns to Home.
     let onFinish: () -> Void
 
@@ -40,6 +46,8 @@ struct SavedView: View {
                     }
                     nextSteps
                     if !responsibilities.isEmpty { stillUpToYou }
+                    finishing
+
                     Text("This app checks what it can measure. No app can promise an authority will accept a photo.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -53,9 +61,48 @@ struct SavedView: View {
                     Button("Back to photo") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { onFinish() }.fontWeight(.semibold)
+                    Button("Finish") { onFinish() }.fontWeight(.semibold)
                 }
             }
+        }
+    }
+
+    /// The other format, offered explicitly.
+    ///
+    /// Done discards the photo, so the only route to the second format used to be noticing that
+    /// "Back to photo" went there. That is not an affordance anyone would find, and re-importing
+    /// to get a print sheet you were one tap from is a poor way to end the flow.
+    @ViewBuilder
+    private var finishing: some View {
+        if let other = otherVariant, !savedVariants.contains(other) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(other == .sheet
+                     ? "Need it on paper as well?"
+                     : "Need a single file to upload as well?")
+                    .font(.subheadline.weight(.semibold))
+                Text(other == .sheet
+                     ? "The print sheet lays several copies on one 4 × 6 inch sheet with cut guides."
+                     : "The single photo is the one to attach to an online application.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button(action: onSaveOther) {
+                    Text(other == .sheet ? "Also save the print sheet" : "Also save the single photo")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
+        } else if savedVariants.count > 1 {
+            Label("Both the single photo and the print sheet are saved.",
+                  systemImage: "checkmark.circle.fill")
+                .font(.subheadline)
+                .foregroundStyle(.green)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 

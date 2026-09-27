@@ -161,7 +161,13 @@ struct HomeView: View {
             RequirementsSheet(spec: spec, isUnedited: mode(for: spec) == .keep)
         }
         .sheet(item: $debugSaved) { outcome in
-            SavedView(spec: spec, outcome: outcome) { debugSaved = nil }
+            SavedView(
+                spec: spec, outcome: outcome,
+                savedVariants: [outcome.variant],
+                otherVariant: outcome.variant == .single ? .sheet : .single,
+                onSaveOther: {},
+                onFinish: { debugSaved = nil }
+            )
         }
         .sheet(isPresented: $showingPicker) {
             DocumentPickerSheet(
