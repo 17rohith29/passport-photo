@@ -161,11 +161,13 @@ struct HomeView: View {
             RequirementsSheet(spec: spec, isUnedited: mode(for: spec) == .keep)
         }
         .sheet(item: $debugSaved) { outcome in
+            // No pipeline output behind this route, so it offers no second format rather than
+            // a prominent button that does nothing.
             SavedView(
                 spec: spec, outcome: outcome,
+                isUnedited: mode(for: spec) == .keep,
                 savedVariants: [outcome.variant],
-                otherVariant: outcome.variant == .single ? .sheet : .single,
-                onSaveOther: {},
+                otherVariant: nil,
                 onFinish: { debugSaved = nil }
             )
         }

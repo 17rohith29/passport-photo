@@ -45,9 +45,8 @@ public enum PrintGuidance {
             steps.append(Step(
                 symbol: "printer",
                 title: "Print it instead",
-                detail: "Ask for a \(size) "
-                    + "print, or go back and save the print sheet instead. That lays several out "
-                    + "on one 4 × 6 inch sheet with cut guides."
+                detail: "Ask for a \(size) print. If you would rather print several at once, "
+                    + "save the print sheet as well when this screen offers it."
             ))
 
         case .sheet:

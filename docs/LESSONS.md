@@ -497,3 +497,37 @@ measured 4.6%. A backstop set near the realistic range is a false-rejection mach
 so it sits at 0.15, ten times the fake it catches, ten points clear of the tightest real case.
 **Test:** `NewCheckAuditTests` asserts both directions, and requires eight points of MARGIN, so a
 future tightening cannot quietly reintroduce this.
+
+## 44. Every guard protects the path it was written for
+LESSONS 41 said a fix applied to one mode and not the default is not a fix. The same shape came
+straight back in the save-and-finish flow, three times in one commit, and all three were in code
+written two days after that lesson:
+
+- `PhotoSaver`'s `guard state != .saving` exists because "a second tap wrote a second asset with
+  nothing to tell the user". The new `saveOther` called `saver.reset()` first, which disarms it.
+  The comment justifying the reset was also wrong: `saveToPhotos` sets `.saving` first, which is
+  already a change, so `onChange` fires without it.
+- `otherVariant(after:)` correctly refuses a format with no bytes behind it, but the segmented
+  picker and `currentData`'s `printSheetJPEG ?? digitalJPEG` fallback did not, so selecting
+  "Print sheet" on a document that produced none saved the single photo under a `-print-4x6`
+  name with cut-and-measure instructions attached.
+- `HomeView` carries a comment about two presentations fighting in one transaction, and the fix
+  there was to defer to `onDismiss`. `saveOther` dismissed the Saved sheet and presented the file
+  exporter in the same update. A dropped presentation would also have left `exporting` stuck
+  true, killing every later Save to Files for the rest of the session.
+
+**Rule:** when adding a second caller to an existing operation, re-read every guard that
+operation has and ask which path it was written for. A guard is not a property of the function;
+it is a property of the route through it.
+
+## 45. A fallback that substitutes one output for another is a mislabel, not a kindness
+`currentData` returned `printSheetJPEG ?? digitalJPEG`, so a missing print sheet quietly became
+the single photo, saved under a print-sheet filename with "the sheet holds 6 photos, cut 2 out"
+printed beside it. The fallback looks defensive and is the opposite: it produces a plausible
+wrong answer where nil would have produced an honest empty state.
+
+Related, same flow: a completion that recorded `savingVariant ?? variant` fell back to whatever
+the user was *looking at* rather than what was *written*, so switching the picker during a save
+logged a single photo as a print sheet.
+**Rule:** never default one artefact to a different artefact. If the thing asked for does not
+exist, say so and disable the control that offers it.

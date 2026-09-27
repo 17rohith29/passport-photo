@@ -19,6 +19,13 @@ struct ResultView: View {
     @State private var savingVariant: Variant?
     /// What has actually been written, so the Saved screen offers only what is missing.
     @State private var savedVariants: Set<Variant> = []
+    /// Set when "also save the other format" chose Files. The exporter cannot be presented in
+    /// the same update that dismisses the Saved sheet: two presentations in one transaction is
+    /// the bug HomeView already carries a comment about, and a dropped one would leave
+    /// `exporting` stuck true, killing every later Save to Files.
+    @State private var pendingExport: Variant?
+    /// The last outcome shown, so a cancelled export can put the screen back.
+    @State private var lastOutcome: SaveOutcome?
     @State private var showingMeasurements = false
     @State private var showingChecks = false
     @State private var exporting = false
@@ -30,7 +37,10 @@ struct ResultView: View {
                 verdictPill
 
                 Picker("Output", selection: $variant) {
-                    ForEach(Variant.allCases, id: \.self) { Text(Self.label(for: $0)).tag($0) }
+                    ForEach(Variant.allCases, id: \.self) { option in
+                        Text(Self.label(for: option)).tag(option)
+                            .disabled(data(for: option) == nil)
+                    }
                 }
                 .pickerStyle(.segmented)
 
@@ -74,6 +84,9 @@ struct ResultView: View {
             }
             .padding()
         }
+        .task {
+            if data(for: variant) == nil, data(for: .single) != nil { variant = .single }
+        }
         .navigationTitle("Your photo")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingChecks) {
@@ -85,30 +98,42 @@ struct ResultView: View {
             contentType: .jpeg,
             defaultFilename: filename
         ) { result in
+            guard let saved = savingVariant else { return }
+            savingVariant = nil
             if case .success = result {
-                let saved = savingVariant ?? variant
                 savedVariants.insert(saved)
-                savedOutcome = SaveOutcome(destination: .files, variant: saved)
+                record(SaveOutcome(destination: .files, variant: saved))
+            } else {
+                // Cancelled. Put the guidance for the file they did save back on screen
+                // instead of dropping them on the result with no way back to it.
+                savedOutcome = lastOutcome
             }
         }
         // Saving to Photos finishes asynchronously, so the end screen follows the saver's state
         // rather than the button tap.
         .onChange(of: saver.state) { _, state in
-            if state == .savedToPhotos {
-                let saved = savingVariant ?? variant
-                savedVariants.insert(saved)
-                savedOutcome = SaveOutcome(destination: .photos, variant: saved)
-            }
+            guard state == .savedToPhotos, let saved = savingVariant else { return }
+            savingVariant = nil
+            savedVariants.insert(saved)
+            record(SaveOutcome(destination: .photos, variant: saved))
         }
         // Switching output after a save makes the green "Saved" row a lie: what is in Photos is
         // the other file. Clear it rather than leave it pointing at the wrong thing.
         .onChange(of: variant) { _, _ in
-            if savingVariant != variant {
-                saver.reset()
-                savingVariant = nil
-            }
+            // Leave a save that is already running alone. Clearing it here made the completion
+            // record the format the user had just switched to rather than the one written.
+            guard saver.state != .saving, savingVariant == nil else { return }
+            saver.reset()
         }
-        .sheet(item: $savedOutcome) { outcome in
+        .sheet(item: $savedOutcome, onDismiss: {
+            // Present the exporter only once the sheet has actually gone.
+            if let target = pendingExport {
+                pendingExport = nil
+                variant = target
+                savingVariant = target
+                exporting = true
+            }
+        }) { outcome in
             SavedView(
                 spec: spec, outcome: outcome, isUnedited: session.isUnedited,
                 savedVariants: savedVariants,
@@ -227,12 +252,12 @@ struct ResultView: View {
 
     private var currentImage: CGImage? {
         guard let output = session.output else { return nil }
-        return variant == .single ? output.digital : (output.printSheet ?? output.digital)
+        return variant == .single ? output.digital : output.printSheet
     }
 
     private var currentData: Data? {
         guard let output = session.output else { return nil }
-        return variant == .single ? output.digitalJPEG : (output.printSheetJPEG ?? output.digitalJPEG)
+        return variant == .single ? output.digitalJPEG : output.printSheetJPEG
     }
 
     /// The format not yet saved, or nil when this document produced only one.
@@ -247,20 +272,28 @@ struct ResultView: View {
         return variant == .single ? output.digitalJPEG : output.printSheetJPEG
     }
 
+    private func record(_ outcome: SaveOutcome) {
+        lastOutcome = outcome
+        savedOutcome = outcome
+    }
+
     /// Saves the other format to wherever the first one went, without leaving the flow.
     private func saveOther(after outcome: SaveOutcome) {
-        guard let other = otherVariant(after: outcome.variant) else { return }
-        variant = other
-        savingVariant = other
-        savedOutcome = nil
+        guard let other = otherVariant(after: outcome.variant), savingVariant == nil else { return }
         switch outcome.destination {
         case .photos:
-            // The saver only reports a change, so it has to be cleared before the second save
-            // or onChange never fires.
-            saver.reset()
-            if let data = data(for: other) { saver.saveToPhotos(data) }
+            // No reset here. `saveToPhotos` sets .saving first, which is already a change, so
+            // onChange still fires - and resetting would disarm the in-flight guard that stops
+            // two quick taps writing two assets. The sheet stays up and updates when the new
+            // outcome lands.
+            variant = other
+            savingVariant = other
+            guard let data = data(for: other) else { savingVariant = nil; return }
+            saver.saveToPhotos(data)
         case .files:
-            exporting = true
+            // Deferred: see `pendingExport`.
+            pendingExport = other
+            savedOutcome = nil
         }
     }
 
