@@ -35,12 +35,23 @@ struct SpecGeometryTests {
         #expect(abs(geometry.pxPerMM - Units.mmToPx(1, dpi: spec.photo.digital.dpi ?? 300)) > 1.0)
     }
 
-    @Test("required head px matches the Python reference need (648 px)")
+    @Test("required head px is derived the same way as the Python reference")
     func requiredHeadPxMatchesOracle() throws {
         let spec = try SpecLoader.load(contentsOf: #require(RepoPaths.inPassportSpec))
         let geometry = try #require(SpecGeometry(spec: spec))
-        // reference/python/auto_passport.py: need = px[1] * head_mm_target / size_mm[1]
-        #expect(abs(geometry.requiredHeadPx - 648.0) < 1e-9)
+        let px = try #require(spec.photo.digital.outputSizePx)
+
+        // reference/python/auto_passport.py: need = px[1] * head_mm_target / size_mm[1].
+        // What is being cross-validated is the DERIVATION, not a constant. India's target was
+        // 36 mm when the reference was written, giving 648; it is now 34 mm because India's own
+        // booklet states no head figure and ICAO, the only source in the file that does, says
+        // 32-36 mm. Pinning 648 would pin the old spec value, not the formula.
+        let head = try #require(spec.geometry.headHeight.targetMM)
+        let reference = px.height * head / spec.photo.sizeMM.height
+        #expect(abs(geometry.requiredHeadPx - reference) < 1e-9)
+
+        // The formula, fed the reference's own 36 mm, still reproduces its 648 exactly.
+        #expect(abs(px.height * 36.0 / spec.photo.sizeMM.height - 648.0) < 1e-9)
     }
 
     @Test("IMG_0012's ground-truth head height clears the requirement, the far shots do not")
@@ -50,13 +61,19 @@ struct SpecGeometryTests {
         // fixtures/expected.json groundTruth for IMG_0012: headHeightPx 1800.
         #expect(1800.0 / geometry.requiredHeadPx > 2.7)
 
-        // Three-way cross-check: our requiredHeadPx, the oracle's head_px_ratio_vs_required
-        // (2.82) and the hand-placed ground truth (1800 px) are independently derived, so
-        // ratio * requiredHeadPx must land near 1800. It comes out at 1827, 1.5% high,
-        // because the Python ratio uses its est_head = (chin - brow) * 1.64 estimate rather
-        // than a measured crown. Tight enough to catch a wrong pxPerMM, loose enough to
-        // tolerate that estimator.
-        let oracleHeadPx = 2.82 * geometry.requiredHeadPx
+        // Three-way cross-check: the px-per-mm derivation, the oracle's
+        // head_px_ratio_vs_required (2.82) and the hand-placed ground truth (1800 px) are
+        // independently derived, so ratio * required must land near 1800. It comes out at
+        // 1827, 1.5% high, because the Python ratio uses its est_head = (chin - brow) * 1.64
+        // estimate rather than a measured crown.
+        //
+        // The ratio is defined against the ORACLE's required, which came from its own 36 mm
+        // target. Multiplying it by our required conflated the two, and only looked right
+        // while both targets happened to be 36. India's is now 34, so the oracle's figure is
+        // reconstructed from its own head_mm here.
+        let px = try #require(spec.photo.digital.outputSizePx)
+        let oracleRequired = px.height * 36.0 / spec.photo.sizeMM.height
+        let oracleHeadPx = 2.82 * oracleRequired
         #expect(abs(oracleHeadPx - 1800) / 1800 < 0.03)
         // The same arithmetic with dpi-derived px/mm would give 425 px and blow this apart.
         #expect(abs(2.82 * 36.0 * Units.mmToPx(1, dpi: 300) - 1800) / 1800 > 0.3)

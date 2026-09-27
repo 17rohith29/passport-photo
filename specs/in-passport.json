@@ -56,12 +56,12 @@
   "geometry": {
     "headHeight": {
       "measure": "chinToCrown",
-      "targetMM": 36.0,
+      "targetMM": 34.0,
       "passMM": {
-        "min": 35.25,
-        "max": 36.75
+        "min": 32.0,
+        "max": 36.0
       },
-      "note": "Target sits on the boundary of the ICAO and India-strict readings; see status.notes."
+      "note": "ICAO's 70-80% of a 45 mm photo, which is the only head figure any source in this file states. India's own Application Form Instruction Booklet V3.0 publishes no head measurement at all."
     },
     "topMargin": {
       "targetMM": 2.2,

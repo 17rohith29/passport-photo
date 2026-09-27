@@ -26,8 +26,9 @@ struct DocumentSpecDecodingTests {
         #expect(spec.photo.print.dpi == 300)
 
         #expect(spec.geometry.headHeight.measure == .chinToCrown)
-        #expect(spec.geometry.headHeight.targetMM == 36.0)
-        #expect(spec.geometry.headHeight.passMM == Range(min: 35.25, max: 36.75))
+        // 34 mm, ICAO's midpoint: India's own booklet publishes no head figure at all.
+        #expect(spec.geometry.headHeight.targetMM == 34.0)
+        #expect(spec.geometry.headHeight.passMM == Range(min: 32.0, max: 36.0))
         #expect(spec.geometry.eyeLine?.fromBottomFraction == Range(min: 0.50, max: 0.60))
         #expect(spec.geometry.horizontalOffsetFraction?.failAbove == 0.02)
         #expect(spec.geometry.shouldersVisibleFraction?.failBelow == 0.60)

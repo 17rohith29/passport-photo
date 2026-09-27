@@ -94,7 +94,7 @@
     },
     "yawDeg": {
       "warnAbove": 5,
-      "failAbove": 20
+      "failAbove": 8
     },
     "pitchDeg": {
       "warnAbove": 5,

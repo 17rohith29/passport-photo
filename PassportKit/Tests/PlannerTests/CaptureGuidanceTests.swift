@@ -88,8 +88,15 @@ struct CaptureGuidanceTests {
     func distanceDiffersPerSpec() throws {
         let india = CaptureGuidance.targetHeadFraction(spec: try Self.spec("in-passport"))
         let us = CaptureGuidance.targetHeadFraction(spec: try Self.spec("us-passport"))
-        // The US head is a smaller share of its square photo, so the person stands further back.
-        #expect(us.upperBound < india.lowerBound, "india \(india) us \(us)")
+        // The US head is a smaller share of its square photo, so the person stands further
+        // back. The bands used to be fully disjoint; India's target dropped from 36 mm to
+        // 34 mm (its own booklet states no head figure, and ICAO says 32-36), which moved the
+        // two closer, so this now compares where each band sits rather than demanding a gap
+        // that the spec change legitimately closed.
+        let indiaCentre = (india.lowerBound + india.upperBound) / 2
+        let usCentre = (us.lowerBound + us.upperBound) / 2
+        #expect(usCentre < indiaCentre, "india \(india) us \(us)")
+        #expect(indiaCentre - usCentre > 0.05, "india \(india) us \(us)")
     }
 
     @Test("move left and move right are not mixed up")

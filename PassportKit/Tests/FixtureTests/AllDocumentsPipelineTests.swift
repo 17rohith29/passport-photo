@@ -97,7 +97,9 @@ struct AllDocumentsPipelineTests {
         let specs = try Self.specs()
         let china = try #require(specs.first { $0.id == "cn-visa" })
         let india = try #require(specs.first { $0.id == "in-passport" })
-        #expect(china.pose?.yawDeg?.failAbove == 20)
+        // 8, matching every other spec: the source says "tilt", which most naturally
+        // means roll, and roll is capped separately at 20.
+        #expect(china.pose?.yawDeg?.failAbove == 8)
         #expect(india.pose?.yawDeg?.failAbove == 8)
         // Canada frames far looser than India.
         let canada = try #require(specs.first { $0.id == "ca-passport" })

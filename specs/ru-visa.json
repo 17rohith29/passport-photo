@@ -47,7 +47,7 @@
     "yawDeg": { "warnAbove": 5, "failAbove": 8 },
     "pitchDeg": { "warnAbove": 5, "failAbove": 8 }
   },
-  "appearance": { "eyesOpen": true, "mouthClosed": true, "glassesAllowed": false, "expression": "neutral", "earsVisible": false },
+  "appearance": { "eyesOpen": true, "mouthClosed": true, "glassesAllowed": true, "expression": "neutral", "earsVisible": false },
   "lighting": { "cheekImbalance": { "warnAbove": 0.08, "failAbove": 0.12 } },
   "background": {
     "colorHex": "#F7F7F7",

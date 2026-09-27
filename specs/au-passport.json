@@ -27,7 +27,7 @@
   "photo": {
     "sizeMM": { "width": 35, "height": 45 },
     "digital": {
-      "sizePxRange": { "min": { "width": 413, "height": 531 }, "max": { "width": 827, "height": 1063 } },
+      "sizePxRange": { "min": { "width": 413, "height": 531 }, "max": { "width": 826, "height": 1062 } },
       "format": "jpeg"
     },
     "print": { "dpi": 300, "copiesRequired": 2, "paperFinish": "glossy" }

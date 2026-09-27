@@ -1,3 +1,4 @@
+import PhotoPipeline
 import SpecKit
 import SwiftUI
 
@@ -96,7 +97,8 @@ struct DocumentRow: View {
 /// Shared between the picker row and the home card so they never drift apart.
 enum DocumentStyle {
     static func summary(for spec: DocumentSpec) -> String {
-        let size = "\(trim(spec.photo.sizeMM.width)) × \(trim(spec.photo.sizeMM.height)) mm"
+        // "2 x 2 in" for the US. 50.8 mm is a unit conversion nobody says out loud.
+        let size = PrintGuidance.sizeText(spec)
         switch spec.background?.colorHex.uppercased() {
         case "#FFFFFF": return "\(size), white background"
         case .none: return size
