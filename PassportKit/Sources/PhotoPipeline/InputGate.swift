@@ -84,7 +84,7 @@ public enum InputGate {
             measured: String(format: "head is %.0f px tall", headHeightPx),
             requirement: String(format: "at least %.0f px", required),
             userMessage: ok ? nil : String(
-                format: "You're too far from the camera — this photo would need %.1fx enlarging, which blurs it. Take one from about 1.5 m with the 2x lens.",
+                format: "You're too far from the camera. This photo would need %.1fx enlarging, which blurs it. Take one from about 1.5 m with the 2x lens.",
                 factor
             ),
             fixability: .retakeRequired
@@ -114,7 +114,7 @@ public enum InputGate {
             status: status,
             measured: String(format: "%.1f%% difference between cheeks", 100 * value),
             requirement: threshold?.failAbove.map { String(format: "under %.0f%%", 100 * $0) } ?? "any",
-            userMessage: status == .pass ? nil : "One side of your face is brighter than the other. Face a window or a lamp straight on — processing can't fix this.",
+            userMessage: status == .pass ? nil : "One side of your face is brighter than the other. Turn to face a window or a lamp straight on, then take it again. Processing cannot fix uneven light.",
             fixability: .retakeRequired
         )
     }
@@ -157,7 +157,7 @@ public enum InputGate {
             status: status,
             measured: String(format: "head tilted %.1f°", value),
             requirement: limit.map { String(format: "under %.0f° (straightened automatically)", $0) } ?? "any",
-            userMessage: status == .pass ? nil : "Your head is tilted too far to straighten without cropping badly.",
+            userMessage: status == .pass ? nil : "Your head is tilted too far. Straightening it would crop into your face, so take another with your head level.",
             fixability: status == .pass ? .automatic : .retakeRequired
         )
     }
@@ -195,7 +195,7 @@ public enum InputGate {
             technical: String(format: "mouth openness %.3f, fails above %.3f", value, calibration.mouthFailAbove),
             userMessage: status == .pass ? nil : (status == .fail
                 ? "Close your mouth and keep a neutral expression."
-                : "Your lips may be slightly apart. A closed, neutral mouth is safest."),
+                : "Your lips look slightly apart. A closed, neutral mouth is safest."),
             fixability: .retakeRequired
         )
     }

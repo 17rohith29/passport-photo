@@ -52,7 +52,7 @@ struct SpecGeometryTests {
 
         // Three-way cross-check: our requiredHeadPx, the oracle's head_px_ratio_vs_required
         // (2.82) and the hand-placed ground truth (1800 px) are independently derived, so
-        // ratio * requiredHeadPx must land near 1800. It comes out at 1827 — 1.5% high,
+        // ratio * requiredHeadPx must land near 1800. It comes out at 1827, 1.5% high,
         // because the Python ratio uses its est_head = (chin - brow) * 1.64 estimate rather
         // than a measured crown. Tight enough to catch a wrong pxPerMM, loose enough to
         // tolerate that estimator.

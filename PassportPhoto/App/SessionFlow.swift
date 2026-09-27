@@ -23,7 +23,7 @@ struct SessionFlow: View {
                 }
             }
             // These screens are presented in a fullScreenCover, and a VStack or ScrollView only
-            // sizes to its content — so without an explicit opaque background the Home screen
+            // sizes to its content, so without an explicit opaque background the Home screen
             // showed straight through and the cover looked like an overlay rather than a screen.
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(.systemBackground))
@@ -201,7 +201,7 @@ struct RejectionView: View {
                         // NOT spec.editingRisk: that is written in the past tense for the path
                         // where we replaced the background, and would tell the user we replaced
                         // a background we had just kept.
-                        Text("Replacing it would meet the measurements, but \(spec.country.name) rules out a photo altered with software — so a replaced background may not be accepted either.")
+                        Text("Replacing it would meet the measurements. But \(spec.country.name) rules out a photo altered with software, so a replaced background carries a real risk of being rejected too. A whiter wall is the safer fix.")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -242,7 +242,7 @@ struct RejectionView: View {
                         onChooseAnother()
                     }
                     // When the wall is what failed, another photo from the same room has the
-                    // same wall — so "Replace the background anyway" above is the real recovery
+                    // same wall, so "Replace the background anyway" above is the real recovery
                     // and gets the prominence.
                     if keptWallFailed {
                         Button(action: action) { label }

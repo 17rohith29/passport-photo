@@ -73,7 +73,7 @@ struct SavedView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            Text("\(spec.country.name) \(spec.document.displayName.lowercased()) — here is what to do next.")
+            Text("Here is what to do next with your \(spec.country.name) \(spec.document.displayName.lowercased()).")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

@@ -2,7 +2,7 @@ import PhotoPipeline
 import SpecKit
 import SwiftUI
 
-/// Everything here is read from the spec JSON — no requirement is written in Swift.
+/// Everything here is read from the spec JSON, no requirement is written in Swift.
 struct RequirementsSheet: View {
     let spec: DocumentSpec
     /// True when the background will be kept, so the rows about replacing it do not apply.

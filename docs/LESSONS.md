@@ -76,7 +76,7 @@ confusing:
   fine, which is indistinguishable from a genuine "no face in this photo".
 
 The second is the dangerous one: untreated, the app tells the user their clear portrait has no
-face in it, and invites them to pick another photo — none of which will ever work.
+face in it, and invites them to pick another photo, none of which will ever work.
 **Rule:** the Mac fixture suite (`swift test`) is the gate, and the app is only meaningfully
 testable on a real iPhone. Vision failures, and `noFaceFound` when compiled for the Simulator,
 are reported as a device limitation: a different headline, no "choose another photo" button and
@@ -86,7 +86,7 @@ no tips, because nothing the user does here will help.
 
 ## 17. A stage that throws needs a user-visible reason
 The rejection screen originally showed failed *checks* only. When a stage threw instead, the
-screen fell through to a bare "This photo can't be used." with nothing else on it — a dead end
+screen fell through to a bare "This photo can't be used." with nothing else on it, a dead end
 that hid a Vision error completely.
 **Rule:** `PipelineResult` carries `failureReason` (plain language) and `technicalDetail` (the
 raw error, behind a disclosure). Never show the raw error as the headline, and never leave the
@@ -95,12 +95,12 @@ screen with no explanation.
 ## 18. A rule stated in different units gets silently dropped
 Specs state the same rule in whatever unit the authority publishes: India gives head height in
 millimetres, the EU gives it as "70-80% of the photograph", the US gives the eye line in
-millimetres where India gives a fraction. Code that reads only one form does not fail loudly —
+millimetres where India gives a fraction. Code that reads only one form does not fail loudly -
 it reads `nil` and skips the rule.
 
 This bit in three places at once, all found by adding a third country:
 - `ComplianceChecker.headHeightCheck` read `passMM` only, so for the Schengen spec the **head
-  height was never checked at all** — the one rule the Commission actually publishes.
+  height was never checked at all**, the one rule the Commission actually publishes.
 - The requirements sheet read `passMM` only, so Schengen showed **no head-height row**.
 - It read `eyeLine.fromBottomFraction` only, so the US showed **no eye-line row**, and compared
   `colorHex == "#FFFFFF"`, so Schengen showed **no background row**.
@@ -114,7 +114,7 @@ with a rule that silently does not apply.
 ## 19. One face is not a calibration set
 `GateCalibration.maxMouthOpenness` was 0.070 because it split two of the owner's photos:
 IMG_0009 (lips parted, 0.083) from IMG_0016 (0.059). Measured against 17 third-party portraits,
-that threshold **rejected 12 of them** — people with visibly closed mouths.
+that threshold **rejected 12 of them**, people with visibly closed mouths.
 
 Two things were wrong. The metric normalised the inner-lip gap by outer-lip **width**, which is
 yaw-sensitive: turning the head foreshortens the lips horizontally and inflates the ratio, so
@@ -124,7 +124,7 @@ that, and tightened the owner's own set to 0.015-0.030.
 But it did not fix the real problem: **the populations overlap.** Vision's inner-lip contour has
 thickness even when the lips touch, so a closed mouth reads up to 0.096 (a frontal one at 0.077)
 while the owner's parted-lip photo reads 0.062. No threshold separates them. A pixel-based
-attempt — looking for teeth or cavity inside the lip ring — did not separate them either and was
+attempt, looking for teeth or cavity inside the lip ring, did not separate them either and was
 removed rather than left in half-working.
 
 What *is* separable is clearly-open from closed: closed tops out at 0.096, clearly-open starts at
@@ -139,9 +139,9 @@ so the next threshold change is judged against a population rather than one face
 
 ## 20. Numeric checks pass while the cut-out is mangled
 Running 118 third-party portraits through the whole pipeline (not just the metrics) produced
-three photos. **Two of the three were visibly broken** — one kept a rectangular slab of the
+three photos. **Two of the three were visibly broken**, one kept a rectangular slab of the
 original dark photo with hard straight edges, another had blue fringing and a blue patch on the
-shoulder — and both scored **99%+ pure background with faceIntegrity passing**.
+shoulder, and both scored **99%+ pure background with faceIntegrity passing**.
 
 The background check measured purity *inside* the backdrop region connected to the top corners.
 When the cut-out fails, that region is **small but perfectly pure**, so it sails through. This is
@@ -155,10 +155,10 @@ and why, and asserts that nothing accepted misses its own head-height band.
 ## 21. The rim rule only ever worked for a pale wall
 LESSONS 7 says to clean the outer rim of "low-saturation, bright pixels". That was written for the
 owner's grey wall and it only matches a pale wall. Against a saturated backdrop it never fires, so
-the wall's colour survives as a fringe — a blue-backdrop portrait came out with blue edging along
+the wall's colour survives as a fringe, a blue-backdrop portrait came out with blue edging along
 the hair.
 
-The obvious generalisation — clean rim pixels close to *this photo's* wall colour — **was tried and
+The obvious generalisation, clean rim pixels close to *this photo's* wall colour, **was tried and
 reverted**. Against a near-white wall, "close to the wall colour" also matches bright skin: it
 wiped out IMG_0012's face entirely (faceIntegrity 100% near-white). Restricting it to saturated
 walls still damaged the face at 0.47%, above the 0.5%... below the limit but a clear regression
@@ -175,7 +175,7 @@ which is the test that caught it both times.
         must not be higher than self.maxPhotoQualityPrioritization
 
 unless `photoOutput.maxPhotoQualityPrioritization` has been raised to match. It defaults to
-`.balanced`, and this is an **Objective-C exception, so Swift cannot catch it** — the app dies on
+`.balanced`, and this is an **Objective-C exception, so Swift cannot catch it**, the app dies on
 the first shutter press. With auto-capture on it fires by itself, so the whole capture screen
 looks broken rather than one button.
 **Rule:** set `maxPhotoQualityPrioritization` on the output during session configuration, before
@@ -192,7 +192,7 @@ dismissed screen.
 
 ## 24. Swift traps on bad numbers; it does not throw
 A crash hunt across the shipping code found four live trap sites. None of them would ever have
-surfaced as an error — they kill the process:
+surfaced as an error, they kill the process:
 
 - **`background.minChannelValue` was never validated.** The JSON schema bounds it 0-255 but
   `Codable` does not enforce that, and the value is converted straight to `UInt8` when a finished
@@ -201,7 +201,7 @@ surfaced as an error — they kill the process:
   `validate()` now bounds it, along with sizes, dpi, copies, and a head height that must fit
   inside its own photo.
 - **`GrayImage.at()` indexed out of bounds on an empty image.** It clamps to `width - 1`, which
-  is -1 when the image is empty — and degenerate crops legitimately return empty images, so every
+  is -1 when the image is empty, and degenerate crops legitimately return empty images, so every
   caller could reach it.
 - **`ImageMetrics.clamp` converted a NaN rect with `Int(_:)`.** A face whose landmarks collapse to
   a point divides by a zero width and produces exactly that NaN.
@@ -228,8 +228,8 @@ straight through it.
 the `Group` inside `SessionFlow`, which covers all three screens.
 
 ## 26. GOV.UK's own two pages disagree about the shape of a UK photo
-The printed rules say 45 mm by 35 mm — 7:9. The digital rules say "at least 600 pixels wide and
-750 pixels tall" — 4:5. Rendering a 7:9 crop into a 600x750 frame stretches every face about
+The printed rules say 45 mm by 35 mm, 7:9. The digital rules say "at least 600 pixels wide and
+750 pixels tall", 4:5. Rendering a 7:9 crop into a 600x750 frame stretches every face about
 2.9% wider, and nothing in the pipeline would have complained, because both numbers came from the
 spec.
 **Rule:** `gb-passport` outputs **700x900**, which is exactly 7:9 and still clears both stated
@@ -242,7 +242,7 @@ minimums are still met, and that the naive 600x750 reading really would have bee
 Adding four more documents surfaced rules the app has no way to measure: Australia's 200 gsm
 dye-sublimation paper, the UK's "taken in the last month", Canada's "taken in person by a
 commercial photographer", China's head WIDTH of 15-22 mm, and glasses everywhere. Left alone,
-each of those would have vanished — not in the checks, not on screen — and a green verdict would
+each of those would have vanished, not in the checks, not on screen, and a green verdict would
 have implied full compliance.
 **Rule:** `status.notEnforced` lists them, the requirements sheet shows them under "What we can't
 check", and a test asserts every document declares at least one. Any document stating a glasses
@@ -258,7 +258,7 @@ green tick that the issuing authority would reject on sight. The app is genuinel
 checking framing before paying a studio; it is not a substitute for one in Canada.
 
 ## 29. A size range is not a size
-Australia states 35-40 mm wide by 45-50 mm high — a range, where the schema has a fixed
+Australia states 35-40 mm wide by 45-50 mm high, a range, where the schema has a fixed
 `sizeMM`. Extending the schema would have been the obvious move and the wrong one: the app must
 output ONE size regardless, and the head band of 32-36 mm is fixed whatever the photo size, so
 the smallest legal size frames the head most tightly and satisfies every larger one.
@@ -269,7 +269,7 @@ schema change only when a country needs a rule the schema genuinely cannot expre
 ## 30. A check that is skipped reads exactly like a check that passed
 The output verifier ran `headHeight` and `topMargin` inside `if let crown = CrownFinder.find(...)`.
 When segmentation threw, or the crown could not be found in the finished file, those checks were
-simply absent from the array — and `Verdict.from` saw no failures and said "meets requirements".
+simply absent from the array, and `Verdict.from` saw no failures and said "meets requirements".
 The most important rule in the app could vanish silently, and the measurement overlay still drew
 the planner's numbers on top, so it looked measured.
 **Rule:** when a check cannot be performed, append a failing result saying so. Never let the
@@ -281,7 +281,7 @@ which is what proves it does not fire on photos that work.
 ## 31. DPI metadata is an instruction to a printer, not a label
 The digital JPEG was stamped with `photo.print.dpi` (300). A 630x810 px file at 35x45 mm is
 actually 457 ppi, so any lab or print dialog honouring the embedded value would have produced a
-53x69 mm photo — 52% too large — while the app's own advice told the user the file was already
+53x69 mm photo, 52% too large, while the app's own advice told the user the file was already
 the right size.
 **Rule:** the digital file carries `SpecGeometry.digitalDPI` (`pxPerMM * 25.4`), derived the same
 way as every other geometry number. `photo.print.dpi` describes the print tiles and nothing else.
@@ -290,12 +290,12 @@ checks the file would print at the millimetres the spec states.
 
 ## 32. Finite and positive is not a bound
 `checkPositive` accepted 1e30. It is finite, it is positive, and `Int(1e30)` traps on overflow
-just as hard as `Int(nan)` does — reachable from a `specs/*.json` that passes `validate()`, through
+just as hard as `Int(nan)` does, reachable from a `specs/*.json` that passes `validate()`, through
 print-tile sizes, buffer lengths and the printing advice. The same gap sat in `CrownFinder`,
 `ChinRefiner` and `GrayImage.cropped`, which all checked `isFinite` and then converted to `Int`.
 **Rule:** anything that becomes an `Int`, an index or an allocation needs a magnitude bound, not
 just a finiteness check. LESSONS 24 said "finite and in range"; only the first half was implemented.
-**Rule:** a spec must also not be able to contradict itself into rejecting every photo — a
+**Rule:** a spec must also not be able to contradict itself into rejecting every photo, a
 `colorHex` darker than its own `minChannelValue` fails every correctly rendered background and then
 blames the user for it. `validate()` rejects that pairing.
 
@@ -303,7 +303,7 @@ blames the user for it. `validate()` rejects that pairing.
 Live background advice looked easy: sample the wall beside the head, flag it if it is dark or
 busy. The dark half worked. The busy half did not: the first threshold, chosen from synthetic
 walls where the right answer was known by construction, would have nagged **13 of the 14 real
-fixture photos**. Real walls are not flat — they carry shadow and gradient, and the fixture with
+fixture photos**. Real walls are not flat, they carry shadow and gradient, and the fixture with
 the highest "variation" turned out to be a lighting problem (it also has the worst cheek
 imbalance in the set), not a patterned wall.
 **Rule:** a threshold measured only against synthetic input has not been measured. Run it over
@@ -316,17 +316,17 @@ and that the dark threshold keeps margin under the darkest real photo.
 ## 34. Glasses detection: the API exists, but not for us
 `VNClassifyFaceAttributesRequest`, `FaceObservation.Attributes.Glasses` (`.none`,
 `.prescription`, `.sunglasses`) and `VNGenerateGlassesSegmentationRequest` are all present as
-symbols in the iOS 26.5 Vision binary — and none of them are in the public SDK headers or
+symbols in the iOS 26.5 Vision binary, and none of them are in the public SDK headers or
 importable from Swift at any deployment target. They are SPI.
 **Rule:** do not reach for them. Shipping against private API risks rejection and breaks on any
 OS update. `appearance.glassesAllowed` stays in `status.notEnforced` until either Apple makes
 this public or we can show a heuristic separates on labelled data.
 **Note:** if a heuristic is attempted, it may only ever WARN on detection. "No glasses detected"
-must never count as a pass — a false negative leaves the honest status quo, while a false pass
+must never count as a pass, a false negative leaves the honest status quo, while a false pass
 is the over-promise non-negotiable 6 forbids.
 
 ## 35. A rule every authority states, that nothing checked, that no spec admitted
-All eight authorities require a colour photo — India's booklet says "Do not paste black and white
+All eight authorities require a colour photo, India's booklet says "Do not paste black and white
 photographs", China's says "It must be a color photo", GOV.UK says "in colour". Nothing in the
 app measured colour, `CheckID` had no case for it, and seven of the eight `notEnforced` lists did
 not mention it. A greyscale scan passed every other rule and earned a green "meets requirements".
@@ -343,7 +343,7 @@ have rejected a perfectly good colour photo. It returns `nil`, and the check is 
 
 ## 36. `fixability: .automatic` is a promise the code has to keep
 `fileSizeCheck` hard-coded `.automatic` for both ends of the range, but `JPEGExporter` only steps
-quality DOWN to satisfy `range.max` — nothing raises quality or pads to satisfy `range.min`. An
+quality DOWN to satisfy `range.max`, nothing raises quality or pads to satisfy `range.min`. An
 undersized file therefore told the user processing would handle something no code in the pipeline
 can do. Not reachable with today's specs, which is why it survived.
 **Rule:** `.automatic` means a stage actually fixes it. If no stage does, it is `.retakeRequired`
@@ -351,12 +351,12 @@ and the user gets told what to do instead.
 
 ## 37. The wall estimate is computed from the refined matte, so every matte change re-tunes colour everywhere
 The owner reported hair being handled badly. Measured on their output (827x1063, #F0F0F0): **641
-backdrop-coloured pixels punched INTO the subject**, concentrated at rows 80-84 — the crown. The
+backdrop-coloured pixels punched INTO the subject**, concentrated at rows 80-84, the crown. The
 cause is `cleanRim`, which clears any rim pixel that is bright and low-saturation, and sets alpha
 to exactly 0. Hair sheen is bright and low-saturation, so every highlight on a dark strand is
 read as wall.
 
-The obvious repair — put back small enclosed pockets that cannot be walked out to the border —
+The obvious repair, put back small enclosed pockets that cannot be walked out to the border -
 **was tried and reverted, twice**. First restoring any pocket, then only fully opaque ones, then
 only those outside the face region entirely: all three put `faceIntegrity` at **15.33%** on
 IMG_0009 and **0.47%** on IMG_0012, which is the same number LESSONS 21 records for the last
@@ -366,14 +366,14 @@ The reason is not the repair. `Renderer.estimateBackgroundColour` samples the so
 `matte < 0.05`, so changing which pixels are transparent changes the estimated wall colour, which
 feeds `unmix` for **every** pixel including the face. A repair confined to hair still moved the
 face, because the coupling is global. Hole counts were byte-identical across the attempts while
-faceIntegrity swung 15 points — which is how this was finally diagnosed.
+faceIntegrity swung 15 points, which is how this was finally diagnosed.
 **Rule:** measure `faceIntegrity` on IMG_0009 *and* IMG_0012 for any matte change, not just
-IMG_0012 — IMG_0009 is 30x more sensitive.
-**Rule:** a real fix has to break the coupling first — estimate the wall from the *unrefined*
-matte, or from a region fixed before rim cleanup runs — before touching `cleanRim` at all.
+IMG_0012, IMG_0009 is 30x more sensitive.
+**Rule:** a real fix has to break the coupling first, estimate the wall from the *unrefined*
+matte, or from a region fixed before rim cleanup runs, before touching `cleanRim` at all.
 **Fixed, and the diagnosis was the fix.** Two changes, in this order:
-1. `estimateBackgroundColour` now takes the wall from the top corners of the crop — wall in any
-   valid passport framing — by median, and never consults the matte. That breaks the coupling.
+1. `estimateBackgroundColour` now takes the wall from the top corners of the crop, wall in any
+   valid passport framing, by median, and never consults the matte. That breaks the coupling.
    It is also simply better: rim pixels carry subject bleed, so letting them define the wall
    biased the estimate towards the hair it was supposed to be unmixing out.
 2. `cleanRim` now requires a pixel to sit in a backdrop *region* before clearing it: most of its
@@ -382,23 +382,23 @@ matte, or from a region fixed before rim cleanup runs — before touching `clean
 
 With the coupling broken, step 2 costs nothing: `faceIntegrity` is **0.00%** on every fixture,
 and punched holes fall from 0.0239% to **0.0157%** worst case (IMG_0013 improves ten-fold).
-Neither change works without the other — step 2 alone put IMG_0009 at 0.66%, over the 0.5% limit.
+Neither change works without the other, step 2 alone put IMG_0009 at 0.66%, over the 0.5% limit.
 **Rule:** when a local change moves a distant number, look for a global estimator reading the
 thing you changed, before tuning thresholds. Three attempts were spent tuning what was never a
 threshold problem.
 
 ## 38. The background checks were written for a background we painted
-Four authorities rule out an edited photo outright — Canada ("isn't altered or edited in any
-way"), the US, GOV.UK and Australia — and the app replaces the background on every run. So a
+Four authorities rule out an edited photo outright, Canada ("isn't altered or edited in any
+way"), the US, GOV.UK and Australia, and the app replaces the background on every run. So a
 `keep` mode was added: crop, level and scale, composite nothing.
 
 The first run of it failed every strict document, and the reason was instructive. The background
 check counts pixels **exactly equal** to the spec colour. That is a test for "did we paint this",
-not "is this wall acceptable" — a real wall is never one exact value, so it scored 0.0% pure.
+not "is this wall acceptable", a real wall is never one exact value, so it scored 0.0% pure.
 `sideMarginPurity` has the same problem: it is a cut-out integrity signal (LESSONS 20) and means
 nothing when nothing was cut out.
 **Rule:** a check written against synthetic output is not a check of the real thing. In `keep`
-mode the wall is judged on its own terms — light enough, by its darkest channel — and the failure
+mode the wall is judged on its own terms, light enough, by its darkest channel, and the failure
 message talks about the wall rather than blaming separation that never happened.
 
 **Why `replace` is still the default.** Measured on the fixtures, a real wall reads **173-211** on
@@ -413,8 +413,8 @@ The keep-mode wall check read: is the darkest pixel of the backdrop region at or
 the test could not fail while the region was non-empty. What it actually asked was "is there any
 bright blob touching a top corner".
 
-Measured on a 1200x1680 Canada output: a uniform 180-grey wall — dead centre of the 173-211 band
-LESSONS 38 measured on the real fixtures — failed correctly with an empty region, and the *same
+Measured on a 1200x1680 Canada output: a uniform 180-grey wall, dead centre of the 173-211 band
+LESSONS 38 measured on the real fixtures, failed correctly with an empty region, and the *same
 wall with a 12x12 bright corner* (144 px out of 2,016,000) passed, reporting "your wall reads
 100% brightness". A window highlight or a lamp on a wall/ceiling junction is enough, and
 LESSONS 33 already records that real walls carry shadow and gradient.
@@ -446,14 +446,14 @@ they were fixed.
 Measured on the default path, before this: a photo filled with **pure black**, with a 40x40 white
 patch in one corner and two white side strips, passed `background` for every wall tone from 0 to
 244, reporting **"darkest channel 255"** every time. The same images failed correctly in `keep`.
-End to end, a dark slab of the original room inside a thin painted border — **74.4% of the photo
-below the spec's floor** — returned `meetsRequirements` with all ten output checks passing. That
+End to end, a dark slab of the original room inside a thin painted border, **74.4% of the photo
+below the spec's floor**, returned `meetsRequirements` with all ten output checks passing. That
 is LESSONS 20's photo again, and `sideMarginPurity`, the fix written for LESSONS 20, is evaded
 because it samples only the outer `width/14` px strips that the painted border covers.
 **Rule:** when a bug is found in one mode, check the other mode before writing the lesson. A fix
 that does not run on the default path is not a fix.
 **Rule:** `sideMarginPurity` samples two thin strips, so any fake that covers those strips beats
-it. What a real photo cannot fake is that **the subject runs off the bottom of the frame** — head
+it. What a real photo cannot fake is that **the subject runs off the bottom of the frame**, head
 and shoulders always do, and a slab floating inside a border touches no edge. That, plus a
 backdrop-coverage floor calibrated at 30% against real outputs measuring 40-60%, is what catches
 it now.
@@ -467,7 +467,7 @@ against "under 2%". It now measures the head contour's centre, which is what the
 **Rule:** ask what the checked value is computed *from*. If the planner placed it, checking it
 confirms arithmetic, not the photo.
 **Also:** the app's only edge test was `CrownFinder.touchesTopEdge`. A head running off the left,
-right or bottom of the source was never noticed — a face sliced flat against the frame edge
+right or bottom of the source was never noticed, a face sliced flat against the frame edge
 produced a green verdict with all ten output checks passing. There is now a check for it.
 
 ## 43. Calibrating against the fixture set is calibrating against one person
@@ -475,7 +475,7 @@ LESSONS 33 warned that a threshold measured only on synthetic input has not been
 is the mirror image, and it bit immediately: `minBackdropCoverage` was set to 0.30 from four
 fixture photos, which are one person, one wall, one head of hair.
 
-Measured against synthetic subjects across all eight specs — varying head width, hair volume and
+Measured against synthetic subjects across all eight specs, varying head width, hair volume and
 shoulder width independently:
 
 ```
@@ -488,12 +488,12 @@ ru-visa      all three       30.0%  FAIL
 A China visa applicant with ordinary hair volume would have been rejected. That is a worse
 failure than the false pass the check was written to stop: a false pass yields a bad photo the
 user can retake, while this refuses a good photo and explains nothing.
-**Rule:** for any threshold about a *person*, vary the person — width, hair, build — not just the
+**Rule:** for any threshold about a *person*, vary the person, width, hair, build, not just the
 lighting and the wall. The fixture set cannot tell you what a different body does.
 **Rule:** when several signals guard one rule, work out which is doing the discriminating. Here
 the top-band median and "the subject reaches the bottom edge" do it, and neither penalises a
 larger person; coverage only needs to reject a region pieced out of a corner patch, which
 measured 4.6%. A backstop set near the realistic range is a false-rejection machine for no gain,
-so it sits at 0.15 — ten times the fake it catches, ten points clear of the tightest real case.
+so it sits at 0.15, ten times the fake it catches, ten points clear of the tightest real case.
 **Test:** `NewCheckAuditTests` asserts both directions, and requires eight points of MARGIN, so a
 future tightening cannot quietly reintroduce this.

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Every algorithm constant, in one place. No country numbers live here — those are in `specs/`.
+/// Every algorithm constant, in one place. No country numbers live here, those are in `specs/`.
 /// Each value says where it came from and which fixture pins it.
 public struct Tuning: Sendable, Equatable {
     /// Crown = first row where the subject spans this fraction of face width. Skips flyaway

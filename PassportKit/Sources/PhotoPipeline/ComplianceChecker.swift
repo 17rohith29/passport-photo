@@ -87,7 +87,7 @@ public struct ComplianceChecker: Sendable {
             id: .headHeight, status: .fail,
             measured: "could not be measured in the finished photo",
             requirement: "head height must be verifiable",
-            userMessage: "We could not measure the head in the finished photo, so we cannot say it is compliant. Try a photo with more space around the head and a clearer edge between you and the wall."
+            userMessage: "We couldn't measure your head in the finished photo, so we can't tell you whether it meets the size rule. Try one with more space around your head and a clearer edge between you and the wall."
         )
     }
 
@@ -196,12 +196,12 @@ public struct ComplianceChecker: Sendable {
                 id: .background,
                 status: wallOK ? .pass : .fail,
                 measured: "your wall reads \(brightness)% brightness",
-                requirement: "at least \(needed)% — effectively white",
+                requirement: "at least \(needed)%, which is effectively white",
                 technical: String(
                     format: "median darkest channel %d of %d over the top band", wall, minimum
                 ),
                 userMessage: wallOK ? nil
-                    : "Your own background was kept, so your wall has to pass on its own — and yours is too dark. \(country) needs a wall that is almost pure white, not just light, which most painted walls are not. A white sheet, or a white door in bright even light, is the usual way.",
+                    : "Your own background was kept, so your wall has to pass on its own, and yours is too dark. \(country) needs a wall that is almost pure white, not just light, and most painted walls aren't. A white sheet, or a white door in bright even light, is the usual way.",
                 // Nothing in processing can fix this: the alternative is an edit the authority
                 // has ruled out, which the user is offered separately.
                 fixability: .retakeRequired

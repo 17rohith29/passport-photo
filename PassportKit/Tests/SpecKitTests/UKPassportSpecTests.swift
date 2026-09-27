@@ -26,7 +26,7 @@ struct UKPassportSpecTests {
 
         // "at least 50KB and no more than 10MB"
         #expect(spec.photo.digital.fileSizeKB == Range(min: 50, max: 10240))
-        // "plain cream or light grey background" — not white.
+        // "plain cream or light grey background", not white.
         #expect(spec.background?.colorHex != "#FFFFFF")
         #expect(spec.sources.allSatisfy { $0.authority == .official })
     }

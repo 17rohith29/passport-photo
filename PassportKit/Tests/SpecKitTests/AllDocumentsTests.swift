@@ -4,7 +4,7 @@ import TestSupport
 @testable import SpecKit
 
 /// Every supported document, checked as a set. A rule an authority states must end up either in
-/// the checks or in `status.notEnforced` — never silently absent from both.
+/// the checks or in `status.notEnforced`, never silently absent from both.
 @Suite("All documents")
 struct AllDocumentsTests {
 
@@ -58,7 +58,7 @@ struct AllDocumentsTests {
             #expect(official, "\(spec.id) cites no official source")
             // At least one official source must carry quoted text, so the numbers in the spec can
             // be traced back to wording someone actually published. Supporting links need no
-            // quote — demanding one would only invite a fabricated quote to satisfy a test.
+            // quote, demanding one would only invite a fabricated quote to satisfy a test.
             let quoted = spec.sources.contains {
                 ($0.authority == .official || $0.authority == .officialPartner)
                     && !($0.says ?? "").isEmpty

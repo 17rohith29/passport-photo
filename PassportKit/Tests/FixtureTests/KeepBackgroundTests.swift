@@ -8,7 +8,7 @@ import TestSupport
 
 /// Canada, the US, the UK and Australia all rule out an edited photo outright. Replacing the
 /// background is an edit, so for those documents the app crops, levels and scales but leaves the
-/// user's own wall alone — and then the wall has to satisfy the spec on its own merits.
+/// user's own wall alone, and then the wall has to satisfy the spec on its own merits.
 @Suite("Keep the user's background", .serialized, .enabled(if: RepoPaths.hasFixturePhotos))
 struct KeepBackgroundTests {
 
@@ -126,7 +126,7 @@ struct KeepBackgroundTests {
         }
     }
 
-    /// Cropping and scaling are not what those authorities forbid — compositing is. Nothing in
+    /// Cropping and scaling are not what those authorities forbid, compositing is. Nothing in
     /// the kept output may be the painted spec colour.
     @Test("nothing in a kept photo is painted with our colour")
     func noPaintedPixels() async throws {
@@ -151,8 +151,8 @@ struct KeepBackgroundTests {
     }
 }
 
-/// The promise the unedited path makes on screen — "cropped, straightened and resized, not
-/// sharpened or retouched" — has to be literally true, or it is the over-promise the project
+/// The promise the unedited path makes on screen, "cropped, straightened and resized, not
+/// sharpened or retouched", has to be literally true, or it is the over-promise the project
 /// forbids. Sharpening is exactly the "digital manipulation of the facial image" the US and
 /// GOV.UK name.
 extension KeepBackgroundTests {

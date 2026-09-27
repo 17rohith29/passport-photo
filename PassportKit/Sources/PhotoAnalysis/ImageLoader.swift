@@ -74,7 +74,7 @@ public enum ImageLoader {
 
     /// Decodes upright. ImageIO applies the EXIF transform itself with
     /// `kCGImageSourceCreateThumbnailWithTransform`, which avoids hand-rolled orientation
-    /// matrices — those have to fight CGContext's bottom-left origin and got IMG_0012 upside
+    /// matrices, those have to fight CGContext's bottom-left origin and got IMG_0012 upside
     /// down (Vision reported 178 deg of roll and a brow below the eyes).
     ///
     /// `maxPixelSize` caps the longer edge, which is also the downsample knob for very large

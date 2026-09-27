@@ -9,7 +9,7 @@ import PhotoAnalysis
 /// times a second, and they sample the wall beside the head instead of segmenting anything.
 ///
 /// They are hints, not compliance checks. The pipeline replaces the background, so a busy wall is
-/// not a rejection — but it makes the cut-out worse, which is what produces the mangled edges
+/// not a rejection, but it makes the cut-out worse, which is what produces the mangled edges
 /// LESSONS 20 is about. Lighting is different: an unevenly lit face is a real check that will
 /// fail later and cannot be fixed afterwards.
 public enum FrameQuality {

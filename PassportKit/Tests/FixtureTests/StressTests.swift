@@ -7,7 +7,7 @@ import PhotoPipeline
 import SpecKit
 
 /// The binary must not die. This runs a large third-party portrait set against every supported
-/// document — hundreds of runs across eight different geometries — and asserts only that the
+/// document, hundreds of runs across eight different geometries, and asserts only that the
 /// pipeline always returns, always explains itself, and never emits an out-of-spec photo.
 ///
 /// Third-party photos are gitignored, so this skips on a clean clone.

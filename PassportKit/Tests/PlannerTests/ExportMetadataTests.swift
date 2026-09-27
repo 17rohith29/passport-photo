@@ -46,7 +46,7 @@ struct ExportMetadataTests {
     }
 
     /// The bug this guards: stamping print.dpi into the digital file made a 630x810 photo
-    /// print at 53x69 mm instead of 35x45 mm — 52% too large.
+    /// print at 53x69 mm instead of 35x45 mm, 52% too large.
     @Test("each document's digital DPI would print the file at its real physical size")
     func everyDocumentPrintsAtItsStatedSize() throws {
         for spec in try PrintGuidanceTests.specs() {

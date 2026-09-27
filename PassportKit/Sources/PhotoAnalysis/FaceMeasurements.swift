@@ -51,7 +51,7 @@ public struct FaceMeasurements: Sendable, Equatable {
 
     /// Angle of the line between the eyes, in degrees, positive clockwise in top-left space.
     ///
-    /// This — not `rollDeg` — is what the Leveler zeroes and what the output roll check measures.
+    /// This, not `rollDeg`, is what the Leveler zeroes and what the output roll check measures.
     /// Vision's `rollDeg` is a 3D head-pose estimate and is a different quantity: on IMG_0012 it
     /// reads -5.98 deg while the eye line is 1.84 deg, and levelling by the pose value would
     /// visibly over-rotate the photo.

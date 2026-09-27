@@ -44,7 +44,7 @@ struct ResultView: View {
                         Image(systemName: "checkmark.seal")
                             .foregroundStyle(.green)
                             .accessibilityHidden(true)
-                        Text("Your own background was kept. This photo was cropped, straightened and resized — it was not sharpened or retouched, so it is not an edited photo. That is one of \(spec.country.name)'s rules; the rest are still yours to meet.")
+                        Text("Your own background was kept. This photo was cropped, straightened and resized. It was not sharpened or retouched, so it is not an edited photo. That is one of \(spec.country.name)'s rules. The rest are still yours to meet.")
                             .font(.footnote)
                             .fixedSize(horizontal: false, vertical: true)
                     }

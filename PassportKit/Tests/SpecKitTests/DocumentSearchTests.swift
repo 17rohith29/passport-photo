@@ -44,7 +44,7 @@ struct DocumentSearchTests {
     func byCode() throws {
         #expect(try Self.ids("GB").contains("gb-passport"))
         #expect(try Self.ids("AU").contains("au-passport"))
-        // "US" also appears inside "Russia" and "Australia", which is fine for a search box —
+        // "US" also appears inside "Russia" and "Australia", which is fine for a search box -
         // it must at least find the United States.
         #expect(try Self.ids("US").contains("us-passport"))
     }

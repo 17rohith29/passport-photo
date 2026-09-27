@@ -4,7 +4,7 @@ import PhotoAnalysis
 
 /// Rotates the photo about the eye midpoint so the eye line is horizontal.
 ///
-/// Uses the eye-line angle, not Vision's pose roll — see `FaceMeasurements.eyeLineAngleDeg`.
+/// Uses the eye-line angle, not Vision's pose roll, see `FaceMeasurements.eyeLineAngleDeg`.
 /// The canvas keeps the source size; edges that rotate in are filled with the nearest edge
 /// pixel so the crop never sees transparent corners.
 public enum Leveler {

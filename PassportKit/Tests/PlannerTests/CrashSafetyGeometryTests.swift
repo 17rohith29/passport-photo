@@ -6,7 +6,7 @@ import PhotoAnalysis
 import PhotoPipeline
 import SpecKit
 
-/// Vision landmarks can degenerate — coincident points, a zero-width face, values that are not
+/// Vision landmarks can degenerate, coincident points, a zero-width face, values that are not
 /// finite. Those flow straight into `Int(_:)` conversions, buffer allocations and `ClosedRange`,
 /// all of which trap rather than throw. Everything here is a value that reaches such a site.
 @Suite("Crash safety: geometry and buffers")

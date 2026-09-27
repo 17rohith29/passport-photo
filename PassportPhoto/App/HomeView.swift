@@ -84,8 +84,8 @@ struct HomeView: View {
                     // never leaves the phone is the strongest thing the app has, and it was
                     // nowhere in the UI.
                     Text(typeSize.isAccessibilitySize
-                         ? "Nothing is uploaded — everything happens on this iPhone."
-                         : "Turn a photo you already have into a passport or visa photo that meets the measurements. Everything happens on this iPhone — nothing is uploaded.")
+                         ? "Nothing is uploaded. Everything happens on this iPhone."
+                         : "Turn a photo you already have into a passport or visa photo that meets the measurements. Everything happens on this iPhone, and nothing is uploaded.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -107,7 +107,7 @@ struct HomeView: View {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Keep my own background")
                                 .font(.subheadline.weight(.medium))
-                            Text("\(spec.country.name) does not accept a photo edited with software, and replacing the background counts as an edit. On: we only crop, straighten and resize — but your own wall then has to be almost pure white, which most walls are not. Off: we replace it, which looks right but breaks that rule.")
+                            Text("\(spec.country.name) will not accept a photo that has been edited with software, and replacing the background counts as editing it.\n\nOn: we only crop, straighten and resize. Your own wall then has to be almost pure white on its own, which most painted walls are not.\n\nOff: we replace the background. It will look right, but you are taking a real risk that \(spec.country.name) rejects it for being edited.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -319,13 +319,13 @@ struct SelectedDocumentCard: View {
                         // A spec whose numbers were never confirmed first-hand must not look
                         // like one read out of 8 FAM 402.1.
                         if spec.status.confidence == .low {
-                            Text("Measurements not verified first-hand — check with your consulate")
+                            Text("Measurements not verified first-hand. Check with your consulate.")
                                 .font(.caption)
                                 .foregroundStyle(.orange)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         if isGuessed {
-                            Text("Our guess — tap to change")
+                            Text("Our guess. Tap to change.")
                                 .font(.caption)
                                 .foregroundStyle(.orange)
                         }
@@ -378,7 +378,7 @@ struct TipsSection: View {
     }
 
     static let tips = [
-        "Ask someone to take it, or prop the phone on a shelf — the back camera is sharper than the selfie one.",
+        "Ask someone to take it, or prop the phone on a shelf. The back camera is sharper than the selfie one.",
         "Face a window so the light is even on both cheeks.",
         "Stand in front of a plain, light wall.",
         "Hold the phone at eye level, about 1.5 m away.",

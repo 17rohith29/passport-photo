@@ -5,7 +5,7 @@ import TestSupport
 import PhotoAnalysis
 import SpecKit
 
-/// LESSONS 5: the cheek metric is fragile — the same photo scored 2% or 11% under two patch
+/// LESSONS 5: the cheek metric is fragile, the same photo scored 2% or 11% under two patch
 /// placements. These tests pin the placement against the reference pipeline's numbers and,
 /// more importantly, against the decisions the manifest requires.
 /// Serialized: each case decodes a 24 MP photo into full-size pixel and luminance buffers, and

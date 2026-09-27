@@ -139,7 +139,7 @@ public extension DocumentSpec {
                 issues.append("background.colorHex '\(bg.colorHex)' must be #RRGGBB")
             }
             // The schema bounds this 0-255 but Codable does not enforce it, and the value is
-            // converted straight to UInt8 when checking a finished photo — out of range it traps
+            // converted straight to UInt8 when checking a finished photo, out of range it traps
             // and takes the app with it. A country file must not be able to crash the app.
             if let value = bg.minChannelValue, value < 0 || value > 255 {
                 issues.append("background.minChannelValue \(value) must be between 0 and 255")

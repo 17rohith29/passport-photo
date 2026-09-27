@@ -46,7 +46,7 @@ public enum CaptureGuidance {
     /// The head should fill enough of the frame that the passport crop fits inside it with room
     /// for shoulders, but not so much that the crop runs off the top. The crop is
     /// `head / headFraction` tall, so aiming the crop at ~75% of the frame puts the head at
-    /// `0.75 * headFraction` — 0.60 for India, 0.44 for the US, 0.56 for Schengen.
+    /// `0.75 * headFraction`, 0.60 for India, 0.44 for the US, 0.56 for Schengen.
     public static func targetHeadFraction(spec: DocumentSpec, tolerance: Double = 0.07)
         -> ClosedRange<Double> {
         let photoHeightMM = spec.photo.sizeMM.height
@@ -62,7 +62,7 @@ public enum CaptureGuidance {
     }
 
     /// `isMirrored` is true for the front camera, whose preview is flipped. The measurement is
-    /// unaffected — the face really is on that side of the frame — but the *instruction* must be
+    /// unaffected, the face really is on that side of the frame, but the *instruction* must be
     /// reversed, because the person is watching a mirror: moving towards what looks like their
     /// left moves them right in the frame.
     public static func assess(

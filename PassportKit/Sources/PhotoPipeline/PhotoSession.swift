@@ -56,7 +56,7 @@ public final class PhotoSession {
         return nil
     }
 
-    /// Why the run stopped, when no individual check failed — a stage threw. Without surfacing
+    /// Why the run stopped, when no individual check failed, a stage threw. Without surfacing
     /// this the rejection screen is a dead end saying only "this photo can't be used".
     public var failureReason: String? { loadError ?? result?.failureReason }
 

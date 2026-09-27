@@ -40,13 +40,13 @@ public enum PrintGuidance {
                 symbol: "arrow.up.doc",
                 title: "Upload it as it is",
                 detail: "Use the saved file as it is. Don't crop it, rotate it or run it through "
-                    + "another app — it is already exactly \(outputSize(spec)) and \(size)."
+                    + "another app. It is already exactly \(outputSize(spec)) and \(size)."
             ))
             steps.append(Step(
                 symbol: "printer",
                 title: "Print it instead",
                 detail: "Ask for a \(size) "
-                    + "print, or go back and save the print sheet instead — it lays several out "
+                    + "print, or go back and save the print sheet instead. That lays several out "
                     + "on one 4 × 6 inch sheet with cut guides."
             ))
 
@@ -55,7 +55,7 @@ public enum PrintGuidance {
             steps.append(Step(
                 symbol: "printer",
                 title: "Order a plain 4 × 6 inch print",
-                detail: "Use a photo counter or lab print on photo paper — several authorities "
+                detail: "Use a photo counter or a lab print on photo paper. Several authorities "
                     + "reject home-printer output. Do NOT ask for their passport photo service; "
                     + "you have already done that part."
             ))
@@ -69,7 +69,7 @@ public enum PrintGuidance {
                 symbol: "ruler",
                 title: "Measure before you cut",
                 detail: "The sheet holds \(perSheet) photos with grey cut guides. Measure one with "
-                    + "a ruler first: it must be \(size). If it isn't, the print was scaled — "
+                    + "a ruler first: it must be \(size). If it is not, the print was scaled, so "
                     + "print it again."
             ))
             steps.append(Step(
@@ -99,7 +99,7 @@ public enum PrintGuidance {
                 symbol: "building.columns",
                 title: "Where it goes",
                 detail: edited
-                    ? "Submit to \(channel) — but read the warning above first. This photo has an edited background."
+                    ? "Submit to \(channel). Read the warning above first: this photo has an edited background, which they may reject."
                     : "Submit to \(channel)."
             ))
         }
@@ -120,7 +120,7 @@ public enum PrintGuidance {
         var out = stated.filter { !$0.localizedCaseInsensitiveContains("this app replaces") }
         if stated.count != out.count {
             out.append(
-                "Your background was kept, so nothing was replaced — but this photo was still "
+                "Your background was kept, so nothing was replaced. This photo was still "
                 + "cropped, straightened and resized by software."
             )
         }

@@ -27,7 +27,7 @@ public extension DocumentSpec {
                     message: """
                     states \(Self.trim(stated)) dpi, but \(Self.trim(size.width))x\(Self.trim(size.height)) px \
                     at \(Self.trim(photo.sizeMM.width))x\(Self.trim(photo.sizeMM.height)) mm implies \
-                    \(Self.trim(implied.rounded())) dpi. This field is export metadata only — geometry uses \
+                    \(Self.trim(implied.rounded())) dpi. This field is export metadata only; geometry uses \
                     the pixel size (\(Self.trim(size.height / photo.sizeMM.height)) px/mm).
                     """
                 ))

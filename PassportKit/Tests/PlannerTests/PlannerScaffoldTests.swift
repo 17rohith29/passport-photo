@@ -26,7 +26,7 @@ struct PlannerScaffoldTests {
 }
 
 /// Specs state the same rule in different units. Anything that reads only one form silently
-/// drops that rule for some country — it hid the head height for the EU and the eye line for the
+/// drops that rule for some country, it hid the head height for the EU and the eye line for the
 /// US in the requirements sheet, and skipped the head check entirely in ComplianceChecker.
 @Suite("Every spec is renderable")
 struct SpecRenderabilityTests {

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Matching for the document picker. Pure, and in the package rather than the view, because
-/// search is easy to get subtly wrong — case, accents, country codes — and none of that is
+/// search is easy to get subtly wrong, case, accents, country codes, and none of that is
 /// testable from inside a SwiftUI sheet.
 public enum DocumentSearch {
 

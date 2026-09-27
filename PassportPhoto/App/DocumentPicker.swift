@@ -1,8 +1,8 @@
 import SpecKit
 import SwiftUI
 
-/// Picking one of many documents. A card per document stopped scaling at eight — it pushed the
-/// main action below the fold — so the selected one is shown and the rest live behind a
+/// Picking one of many documents. A card per document stopped scaling at eight, it pushed the
+/// main action below the fold, so the selected one is shown and the rest live behind a
 /// searchable list that works just as well at fifty.
 struct DocumentPickerSheet: View {
     let specs: [DocumentSpec]

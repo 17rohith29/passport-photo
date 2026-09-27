@@ -38,7 +38,7 @@ public enum ImageMetrics {
 
     /// Brightness difference between the two cheeks, as a fraction of the brighter one.
     ///
-    /// LESSONS 5: this metric is fragile — the same photo scored 2% or 11% under two patch
+    /// LESSONS 5: this metric is fragile, the same photo scored 2% or 11% under two patch
     /// placements. The placement is therefore fixed by `Tuning` and calibrated on fixtures,
     /// and the result feeds a warn band rather than a single hard limit.
     /// Mean colour saturation over the face, 0 (perfectly grey) to 1.
@@ -191,7 +191,7 @@ public enum ImageMetrics {
     }
 
     /// Clamps a region to the image. Non-finite input returns an empty rect rather than reaching
-    /// `Int(_:)`, which traps on NaN and on infinity — a face whose landmarks collapse to a point
+    /// `Int(_:)`, which traps on NaN and on infinity, a face whose landmarks collapse to a point
     /// divides by a zero width and produces exactly that.
     static func clamp(_ rect: CGRect, width: Int, height: Int) -> CGRect {
         guard rect.minX.isFinite, rect.minY.isFinite,

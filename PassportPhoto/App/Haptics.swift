@@ -2,7 +2,7 @@ import PhotoPipeline
 import UIKit
 
 /// Feedback at the three moments that carry information: a verdict arriving, a rejection, and a
-/// save completing. Nothing fires for ordinary navigation — haptics that fire constantly stop
+/// save completing. Nothing fires for ordinary navigation, haptics that fire constantly stop
 /// meaning anything.
 enum Haptics {
     static func success() { UINotificationFeedbackGenerator().notificationOccurred(.success) }

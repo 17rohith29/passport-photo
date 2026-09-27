@@ -5,7 +5,7 @@ import TestSupport
 @testable import SpecKit
 
 /// Swift traps rather than throws on a bad numeric conversion, a negative buffer size or an
-/// inverted range — those kill the app, they do not surface as errors. Every value here reaches
+/// inverted range, those kill the app, they do not surface as errors. Every value here reaches
 /// such a site, and every case in this suite would have crashed the test process before the
 /// guards went in.
 @Suite("Crash safety: specs")

@@ -83,7 +83,7 @@ struct SchemaConformanceTests {
 
 /// Walks an instance against the schema checking keys only: unknown properties where
 /// `additionalProperties` is false, and missing `required` ones. Not a full JSON Schema
-/// validator — it deliberately does not check types, which `Codable` already enforces.
+/// validator, it deliberately does not check types, which `Codable` already enforces.
 struct SchemaKeyChecker {
     let root: [String: Any]
 

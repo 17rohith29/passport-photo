@@ -2,11 +2,11 @@
 
 One entry per milestone: date, what changed, what was measured (include Vision's raw chin bias and yaw for IMG_0012), open issues.
 
-## M0 — Scaffold (2026-09-21)
+## M0, Scaffold (2026-09-21)
 
 **What changed**
 - `PassportKit` local package (`swift-tools-version: 6.0`, Swift 6 language mode, iOS 18 / macOS 15)
-  with the three source targets — `SpecKit`, `PhotoAnalysis`, `PhotoPipeline` — wired in the
+  with the three source targets, `SpecKit`, `PhotoAnalysis`, `PhotoPipeline`, wired in the
   dependency direction `PhotoPipeline -> PhotoAnalysis -> SpecKit`. `SpecKit` imports only Foundation.
 - Three test targets: `SpecKitTests`, `PlannerTests`, `FixtureTests`.
 - `TestSupport` target with `RepoPaths`: walks up from `#filePath` to the repo root so tests read
@@ -16,7 +16,7 @@ One entry per milestone: date, what changed, what was measured (include Vision's
   file-system-synchronized group, so new files in `PassportPhoto/` need no project edits).
   Shared scheme committed. The app links all three PassportKit libraries; `HomeView` is an
   M0 placeholder that imports `SpecKit`.
-- `PhotoAnalysis` / `PhotoPipeline` are placeholders — the targets exist so the dependency
+- `PhotoAnalysis` / `PhotoPipeline` are placeholders, the targets exist so the dependency
   direction is fixed from the start. Real types land at M2–M4.
 - Filled in the Commands section of `CLAUDE.md`.
 
@@ -30,25 +30,25 @@ One entry per milestone: date, what changed, what was measured (include Vision's
 **Vision API availability (checked against the installed SDK, not assumed)**
 The iOS 18 Swift Vision API is present and marked `@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, *)`,
 so the same code compiles for the app and for `swift test` on the Mac:
-- `DetectFaceLandmarksRequest` -> `FaceObservation.landmarks` (`Landmarks2D`) — M2.
-- `FaceObservation.roll` / `.yaw` / `.pitch`, each `Measurement<UnitAngle>` — M2, replaces the
+- `DetectFaceLandmarksRequest` -> `FaceObservation.landmarks` (`Landmarks2D`), M2.
+- `FaceObservation.roll` / `.yaw` / `.pitch`, each `Measurement<UnitAngle>`, M2, replaces the
   Python half-face yaw estimate per LESSONS 6.
-- `DetectFaceCaptureQualityRequest` -> `faceCaptureQuality` — M2.
+- `DetectFaceCaptureQualityRequest` -> `faceCaptureQuality`, M2.
 - `GeneratePersonSegmentationRequest` (has a `QualityLevel`, use `.accurate`) and
-  `GenerateForegroundInstanceMaskRequest` -> `InstanceMaskObservation` — M3, compare on fixture edges.
+  `GenerateForegroundInstanceMaskRequest` -> `InstanceMaskObservation`, M3, compare on fixture edges.
 - `DetectHumanBodyPoseRequest` available if the shoulders check needs it beyond the matte.
 
 **Open issues**
 - ~~`iPhone 16` has no iOS 26.5 runtime on this Mac.~~ Resolved: the primary command now targets
   `iPhone 17` (OS 26.5, owner's call). The pinned `iPhone 16,OS=18.4` command is kept as the
   iOS 18 deployment-floor check; both were verified to build.
-- **Owed to this file: Vision's raw chin bias and yaw for IMG_0012.** Not yet measurable — it needs
+- **Owed to this file: Vision's raw chin bias and yaw for IMG_0012.** Not yet measurable, it needs
   `VisionFaceAnalyzer`, so it is the first thing M2 must produce. LESSONS 1 predicts a landmark
   chin sitting 3.7–5% of head height high (dlib sat ~55 px high on this photo); LESSONS 6 wants
   Vision's yaw recorded against the Python estimate of 5.5° ± 2°. Do not close M2 without both
   numbers written here.
 
-## M1 — Specs (2026-09-21)
+## M1, Specs (2026-09-21)
 
 **What changed**
 - `DocumentSpec` and friends mirror `specs/document-spec.schema.json` one-to-one: `Codable`,
@@ -72,9 +72,9 @@ so the same code compiles for the app and for `swift test` on the Mac:
   `need = px[1] * head_mm_target / size_mm[1]` = 810 * 36 / 45.
 - `pxPerMM` = **18.0** (810 px / 45 mm). Print tiles = **413 x 531 px** at 300 dpi, matching
   `SPEC['print_px']` in `auto_passport.py`.
-- IMG_0012's ground-truth head (1800 px) is 2.78x the requirement — consistent with the manifest's
+- IMG_0012's ground-truth head (1800 px) is 2.78x the requirement, consistent with the manifest's
   `head_px_ratio_vs_required: 2.82` (the small gap is the landmark-vs-ground-truth chin, not a bug).
-- `fixtures/expected.json` decodes: 14 cases — 1 accept, 10 reject, 3 borderline. Every reason
+- `fixtures/expected.json` decodes: 14 cases, 1 accept, 10 reject, 3 borderline. Every reason
   named in the manifest is in `checkIdVocabulary`, and every reject case names a primary reason.
 
 **Decision worth keeping**
@@ -86,7 +86,7 @@ geometry bug. Pinned by `pxPerMMIgnoresDPI` and `requiredHeadPxMatchesOracle`.
 
 **How the dpi contradiction was resolved** (owner: "do what's right")
 `digital.dpi` is not wrong, it is mislabelled. The Python reference writes it into the exported
-file as metadata (`Image.save(..., dpi=(300,300))`) and never uses it for geometry — so deleting it
+file as metadata (`Image.save(..., dpi=(300,300))`) and never uses it for geometry, so deleting it
 would lose a real field. Instead:
 - The schema's `digital.dpi` description now states it is export metadata, that geometry comes from
   `sizePx / sizeMM`, and that the two can legitimately disagree. **No spec values were changed.**
@@ -94,7 +94,7 @@ would lose a real field. Instead:
   throws only on specs that cannot be used. `in-passport` now reports, out loud, that it states
   300 dpi while 630x810 px at 35x45 mm implies 457 dpi, and that geometry uses 18 px/mm.
 - Two more advisories earn their place: a `headHeight` with no `targetMM` (the planner would aim at
-  a band limit instead of its middle — this fires on the square fixture), and a `targetMM` outside
+  a band limit instead of its middle, this fires on the square fixture), and a `targetMM` outside
   its own `passMM` band.
 Advisories are for whoever edits `specs/`, never shown to users.
 
@@ -105,7 +105,7 @@ Advisories are for whoever edits `specs/`, never shown to users.
   low-confidence spec should show anything to the user (the spec already carries `status.confidence`
   and `notes` for that purpose; advisories are a separate, developer-facing channel).
 
-## M2-M4 — Analysis, geometry, render and verify (2026-09-21)
+## M2-M4, Analysis, geometry, render and verify (2026-09-21)
 
 **What changed**
 - PhotoAnalysis: `ImageLoader`, `VisionFaceAnalyzer`, `ImageMetrics`, `ChinRefiner`,
@@ -113,7 +113,7 @@ Advisories are for whoever edits `specs/`, never shown to users.
 - PhotoPipeline: `InputGate` + `GateCalibration`, `CropPlanner`, `Leveler`, `Renderer`,
   `PrintSheetComposer`, `JPEGExporter`, `ComplianceChecker`, `PassportPipeline`.
 
-**What was measured — IMG_0012, against `fixtures/expected.json`**
+**What was measured, IMG_0012, against `fixtures/expected.json`**
 | | measured | required |
 |---|---|---|
 | crown y | 948 px | 936 ± 15 |
@@ -138,13 +138,13 @@ All 14 fixtures behave as the manifest states. 52 tests green.
   Under the spec's 5° warn threshold, so the golden case now passes yaw outright.
 - Pitch -1.54°, capture quality 0.625.
 
-**Four bugs only real photos could have found** — see the M2-M4 commit message for detail:
+**Four bugs only real photos could have found**, see the M2-M4 commit message for detail:
 EXIF orientation flipped every 24 MP HEIC upside down; the Leveler rotated the wrong way and
 doubled the tilt; Vision's pose roll is not the eye-line angle; and the cheek metric had to be
 rebuilt twice before it ranked IMG_0012 below IMG_0010.
 
 **Performance**
-2.875 s end to end for a 24 MP photo in release on this Mac — inside the M6 target. Debug is
+2.875 s end to end for a 24 MP photo in release on this Mac, inside the M6 target. Debug is
 141 s, because PassportKit compiles unoptimised. Anyone testing the app on a device must switch
 the Run configuration to Release or it looks like a hang.
 
@@ -152,7 +152,7 @@ the Run configuration to Release or it looks like a hang.
 - The renderer is scalar Swift. It hits the target already, but Accelerate or Metal would give
   headroom for 48 MP inputs (M6).
 - `GateCalibration.maxMouthOpenness` is 0.070, splitting IMG_0009 (0.083, a required rejection)
-  from IMG_0016 (0.059). That is a 0.024 gap on one photo — it needs more faces before it can be
+  from IMG_0016 (0.059). That is a 0.024 gap on one photo, it needs more faces before it can be
   trusted as a general threshold.
 - Cheek imbalance now runs lower than the Python's on every fixture (0.036 vs 0.089 on IMG_0012),
   because it is a different, more robust estimator. The spec's 0.08/0.12 thresholds were taken
@@ -160,7 +160,7 @@ the Run configuration to Release or it looks like a hang.
   The two decisions the manifest forces are pinned by tests, but the thresholds deserve a look
   once there are more faces.
 
-## M5 — App flow (2026-09-21)
+## M5, App flow (2026-09-21)
 
 **What changed**
 - `SpecCatalog` loads every bundled spec and hides `isTestFixture` ones. `specs/` is a
@@ -173,12 +173,12 @@ the Run configuration to Release or it looks like a hang.
   segmented control, Save menu), plus the printing instructions after saving.
 - `PhotoSessionModel` drives the pipeline off the main actor, supports cancel, and saves to
   Photos with **add-only** authorization or to Files via `fileExporter`.
-- `INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription` added — without it, saving crashes.
+- `INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription` added, without it, saving crashes.
 
 **What was measured**
 Builds and runs on the iPhone 17 simulator; the Home screen renders the India card from
-`in-passport.json`. The end-to-end flow inside the app has **not** been driven yet — simulator
-control was not granted — so the UI beyond Home is unverified by me.
+`in-passport.json`. The end-to-end flow inside the app has **not** been driven yet, simulator
+control was not granted, so the UI beyond Home is unverified by me.
 
 **Open issues**
 - Drive the whole flow on a real device with a real photo. That is the next thing to do.
@@ -186,7 +186,7 @@ control was not granted — so the UI beyond Home is unverified by me.
   from where the head actually landed, so the lines are nominal, not measured. Fix before M6.
 - No Dynamic Type / VoiceOver / dark mode pass yet (M6).
 
-## M5 follow-up — the flow actually runs (2026-09-21)
+## M5 follow-up, the flow actually runs (2026-09-21)
 
 Prompted by "I pass in a photo and it's just spinning, 'Reading your photo' is not checked".
 
@@ -198,7 +198,7 @@ Prompted by "I pass in a photo and it's just spinning, 'Reading your photo' is n
 2. **The matte ran at full resolution.** `MatteRefiner` allocates several image-sized buffers
    (connected components, a signed distance field, a blur); at 24 MP that is hundreds of
    megabytes, fine on a Mac and not on a phone. Segmentation and refinement now run at
-   `Tuning.matteWorkingSize` (2048 px) — the reference pipeline downsamples for the same reason —
+   `Tuning.matteWorkingSize` (2048 px), the reference pipeline downsamples for the same reason -
    and the renderer samples the smaller matte rather than upscaling it into another full buffer.
    End to end went **2.875 s to 1.678 s** with the same result. Decode is also capped at 4500 px.
 3. **A stage that threw left a dead end.** The rejection screen only rendered failed *checks*, so
@@ -207,7 +207,7 @@ Prompted by "I pass in a photo and it's just spinning, 'Reading your photo' is n
 
 **The Simulator cannot run this app** (LESSONS 16). iOS 26.5 throws Vision code 9, "Could not
 create inference context", on the first landmarks request. iOS 18.4 runs Vision but returns zero
-faces for a photo macOS handles — indistinguishable from a real "no face". Both now surface as a
+faces for a photo macOS handles, indistinguishable from a real "no face". Both now surface as a
 device limitation, with a different headline, no "choose another photo" button and no tips,
 because nothing the user does in the Simulator will help.
 
@@ -217,7 +217,7 @@ because nothing the user does in the Simulator will help.
   finishes with a renderable result and a print sheet, a rejected photo carries advice on every
   failure, garbage data fails cleanly instead of hanging, and reset clears state.
 - `DecodeCapTests` pin that the new 4500 px decode cap still finds a face and agrees with the
-  uncapped image on head height within 5% — the cap was the first suspect for the iOS 18 "no
+  uncapped image on head height within 5%, the cap was the first suspect for the iOS 18 "no
   face" and was ruled out on macOS.
 - Screens seen for real in the Simulator: Home, Processing, and the rejection screen in both its
   photo-problem and device-limitation forms.
@@ -227,34 +227,34 @@ because nothing the user does in the Simulator will help.
   this Mac via "Designed for iPad" needs the Mac registered for development signing, which
   CLAUDE.md says to ask about first. It is the one screen still unverified by eye; its data is
   covered by `PhotoSessionTests`.
-- Saving to Photos and Files is likewise unexercised — both need a real device.
+- Saving to Photos and Files is likewise unexercised, both need a real device.
 - `MeasurementOverlay` now draws the measured crown and chin (`RenderedOutput.crownFraction` /
   `chinFraction`) rather than the spec's targets, but has not been seen on screen.
 
 ## Three countries, and hardening (2026-09-21)
 
-**United States** — `specs/us-passport.json`, sourced from **8 FAM 402.1**, the State
+**United States**, `specs/us-passport.json`, sourced from **8 FAM 402.1**, the State
 Department's own adjudication manual (CT:CITZ-136, 12 Jan 2026), cross-checked against U.S.
 Mission Poland's public page. 2 x 2 in (50.8 mm), head 25-35 mm, no glasses, 54 KB-10 MB.
 Every source is `official`.
 
 The FAM measures the facial image "from the top of the head (not the hairline or the applicant's
-hair) to the bottom of the chin (not including facial hair)" — the **opposite** of this app,
+hair) to the bottom of the chin (not including facial hair)", the **opposite** of this app,
 which deliberately measures the hair mass and the beard (LESSONS 1 and 2). Ours therefore reads
 larger than the official definition, so the target sits mid-band at 30 mm, leaving 5 mm either
 way. Recorded in the spec's notes and pinned by a test.
 
-**Schengen** — `specs/eu-schengen-visa.json`, sourced from the European Commission's own ICAO
+**Schengen**, `specs/eu-schengen-visa.json`, sourced from the European Commission's own ICAO
 photograph guidelines (DG Migration and Home Affairs). It differs from the others in three ways
 that all exercised untested paths: the head is stated as a **percentage** (70-80%) rather than
 millimetres, the background is **light grey**, not white, and **glasses are permitted**.
 
-**The bug the third country found** — see LESSONS 18. A rule stated in a different unit was
+**The bug the third country found**, see LESSONS 18. A rule stated in a different unit was
 silently dropped in three places, including `ComplianceChecker`, where the Schengen head height
 was **never checked at all**. Fixed with `HeadHeightBand.inMM` and a public `eyeLineBand`, and
 guarded by `SpecRenderabilityTests`, which walks every file in `specs/`.
 
-**What was measured — IMG_0012 through all three specs**
+**What was measured, IMG_0012 through all three specs**
 | | India | United States | Schengen |
 |---|---|---|---|
 | output | 630x810 | 1200x1200 | 827x1063 |
@@ -263,13 +263,13 @@ guarded by `SpecRenderabilityTests`, which walks every file in `specs/`.
 | verdict | meets requirements | meets requirements | meets requirements |
 All three inspected by eye. All ten reject fixtures are rejected under all three specs.
 
-**Bad input** — `BadInputTests` needs no private photos, so it runs on any clone: a blank wall,
+**Bad input**, `BadInputTests` needs no private photos, so it runs on any clone: a blank wall,
 pure noise, a 32 px image, 2000x10 and 10x2000 and 1x1, empty and corrupt bytes. The contract is
 that the pipeline always returns, never crashes, and never emits a passport photo from something
 that is not a usable portrait. `BadPortraitTests` builds harder cases from the owner's photos: a
 two-person frame (rejected for faceCount) and a heavily blurred portrait (rejected for sharpness).
 
-**UI** — the country picker became one card per spec, because a segmented control truncated
+**UI**, the country picker became one card per spec, because a segmented control truncated
 "Schengen Area, Schengen visa" at three entries. Cards come straight from the catalogue, so
 adding a country still touches no Swift.
 
@@ -281,13 +281,13 @@ adding a country still touches no Swift.
   cannot check.
 - The US spec's `topMargin` and eye band are this app's framing choices, not published figures.
 
-## M6 — Polish (2026-09-21)
+## M6, Polish (2026-09-21)
 
 **The decode cap could reject a photo that would pass.** `docs/PLAN.md` asks for 48 MP inputs to
 downsample "without dropping below required head pixels", and the 4500 px cap added earlier caps
 the *frame*, not the head: on a 48 MP photo where the head fills a small part of the frame, the
 cap scales a ~1100 px head to ~650 px, right on India's 648 px requirement. `PhotoSession` now
-retries at full resolution when — and only when — the gate failed on `resolution` and the source
+retries at full resolution when, and only when, the gate failed on `resolution` and the source
 was actually larger than the cap. Nothing else is retried: every other rejection is about the
 photo, not the decode.
 
@@ -298,7 +298,7 @@ title goes inline, long check text wraps instead of truncating, and the dimmed s
 the processing screen is dropped where vertical space is scarce. Verified at
 `accessibility-extra-extra-extra-large`: nothing truncates.
 
-**VoiceOver.** A check row read as a pile of fragments; it now reads as one sentence —
+**VoiceOver.** A check row read as a pile of fragments; it now reads as one sentence -
 "Even lighting, failed. Measured 14.0% difference between cheeks. Needs under 12%. One side of
 your face is brighter…". Progress steps announce done / in progress / waiting. The decorative
 source photo and the flag are hidden from the reader.
@@ -311,14 +311,14 @@ on every navigation stop carrying information.
 **Performance.** 1.678 s end to end for a 24 MP photo in release on this Mac, inside the plan's
 3 s target. **Still not measured on a real iPhone.**
 
-**Dead code removed.** `ImageLoader.applying(_:to:)` — the hand-rolled EXIF orientation matrices
-that produced the upside-down bug — was unreferenced and is gone, so nobody reaches for it again.
+**Dead code removed.** `ImageLoader.applying(_:to:)`, the hand-rolled EXIF orientation matrices
+that produced the upside-down bug, was unreferenced and is gone, so nobody reaches for it again.
 
 **Open issues**
 - Perf and the Result screen still need a real device.
 - The visual design is tidy and native but has had no art direction: no custom palette, no icon.
 
-## M7 — Guided capture (2026-09-21)
+## M7, Guided capture (2026-09-21)
 
 Brought forward from "Later" at the owner's request: a mode that helps take the photo rather than
 only judging one that already exists.
@@ -326,7 +326,7 @@ only judging one that already exists.
 **The advice is pure code.** `CaptureGuidance` lives in `PhotoPipeline` and takes
 `FaceMeasurements` plus a frame size and a spec, returning ordered cues. It reads the **same
 spec and the same `GateCalibration`** as the import gate, so the camera asks for exactly what the
-gate will accept. No camera, no Vision, no UI in it — 13 tests drive it without hardware.
+gate will accept. No camera, no Vision, no UI in it, 13 tests drive it without hardware.
 
 **Distance is derived, not guessed.** The passport crop is `head / headFraction` tall, so aiming
 the crop at ~75% of the frame puts the head at `0.75 × headFraction`: 0.60 of frame height for
@@ -349,7 +349,7 @@ shows "The back camera is sharper. Ask someone to hold the phone, or prop it up.
 **App layer.** `CameraController` owns AVFoundation only: frames are analysed five times a second
 rather than every frame, and spoken cues (`AVSpeechSynthesizer`) do not repeat until the cue
 changes or three seconds pass. Frames are converted to `CGImage` **synchronously on the capture
-queue**, because the `CVPixelBuffer` is recycled the moment the delegate returns — Swift 6 strict
+queue**, because the `CVPixelBuffer` is recycled the moment the delegate returns, Swift 6 strict
 concurrency caught the original version sending the buffer across actors.
 
 **What was verified**

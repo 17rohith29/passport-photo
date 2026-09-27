@@ -33,8 +33,8 @@ public enum BackgroundMode: String, Sendable, CaseIterable {
     /// Replace, even where the authority forbids an edit. Measured on real photos, an actual
     /// wall reads 173-211 on its darkest channel where the specs demand 245 or more, so
     /// defaulting to `keep` would reject almost everyone. The app offers `keep` explicitly for
-    /// the documents that forbid editing, says plainly why it matters, and — when the wall does
-    /// not pass — offers the edit as the way out.
+    /// the documents that forbid editing, says plainly why it matters, and, when the wall does
+    /// not pass, offers the edit as the way out.
     public static func `default`(for spec: DocumentSpec) -> BackgroundMode { .replace }
 }
 
@@ -115,7 +115,7 @@ public actor PassportPipeline {
     }
 
     /// A Vision or rendering failure is not the user's fault and is not something they can fix by
-    /// choosing a different photo, so it must not be dressed up as a photo problem — nor dumped
+    /// choosing a different photo, so it must not be dressed up as a photo problem, nor dumped
     /// on them as a raw error string.
     static func plainMessage(for error: Error) -> String {
         // Vision's ML models cannot create an inference context in the iOS Simulator, so every
@@ -141,7 +141,7 @@ public actor PassportPipeline {
         }
         switch error {
         case is SegmentationError:
-            return "This device couldn't separate you from the background."
+            return "This iPhone couldn't separate you from the background."
         case FaceAnalysisError.noFaceFound:
             return "We couldn't find a face in this photo."
         case let FaceAnalysisError.multipleFaces(count):
@@ -149,7 +149,7 @@ public actor PassportPipeline {
         case PipelineError.crownNotFound:
             return "We couldn't find the top of your head. Make sure your whole head is in the photo."
         case PipelineError.undecodable:
-            return "That file couldn't be read as a photo."
+            return "That file couldn't be opened as a photo."
         default:
             return "Something went wrong while processing this photo on this device."
         }
@@ -160,7 +160,7 @@ public actor PassportPipeline {
     /// Vision code 9, "Could not create inference context", means the ML models are unavailable
     /// (matched on the message because the case carries no structured code). In the Simulator the
     /// same unavailability also shows up as an empty result, which is indistinguishable from a
-    /// genuine "no face" — so there, treat that as a device limitation too rather than telling
+    /// genuine "no face", so there, treat that as a device limitation too rather than telling
     /// someone their photo has no face in it.
     static func isDeviceLimitation(_ error: Error) -> Bool {
         let text = "\(error)"
@@ -316,7 +316,7 @@ public actor PassportPipeline {
 
         // Keeping the user's background means painting nothing. A crop that runs past the edge
         // of the photo can only be filled by inventing pixels, and the renderer fills them with
-        // the spec colour — which in this mode is both a lie and a false pass, because that
+        // the spec colour, which in this mode is both a lie and a false pass, because that
         // painted band reaches the top corners where the wall is judged.
         if mode == .keep {
             let rect = plan.rect

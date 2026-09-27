@@ -175,7 +175,7 @@ final class CameraController: NSObject {
             session.addOutput(photoOutput)
             // Must be raised on the OUTPUT before any request asks for .quality. It defaults to
             // .balanced, and capturing with a higher prioritisation than the output allows raises
-            // an Objective-C exception that Swift cannot catch — it crashed the app on the first
+            // an Objective-C exception that Swift cannot catch, it crashed the app on the first
             // shutter press, which is also why auto-capture appeared to break everything.
             photoOutput.maxPhotoQualityPrioritization = .quality
             videoOutput.alwaysDiscardsLateVideoFrames = true
@@ -192,7 +192,7 @@ final class CameraController: NSObject {
     /// The preview layer mirrors the front camera on its own, which is what people expect to see.
     /// The frames Vision measures must NOT be mirrored, or the face would be reported on the wrong
     /// side; `CaptureGuidance` is told separately that the preview is a mirror so it can reverse
-    /// the instruction. The captured photo must not be mirrored either — a flipped passport photo
+    /// the instruction. The captured photo must not be mirrored either, a flipped passport photo
     /// is a wrong passport photo.
     private func orient(_ connection: AVCaptureConnection?) {
         guard let connection else { return }

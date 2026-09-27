@@ -4,7 +4,7 @@ import Foundation
 /// Cleans up a raw segmentation mask.
 ///
 /// Closed-form matting from the reference pipeline is too slow on device, so this keeps the parts
-/// that mattered: fill interior holes **before** any edge work (LESSONS 8 — a seam along the
+/// that mattered: fill interior holes **before** any edge work (LESSONS 8, a seam along the
 /// eyebrows let rim cleanup paint a white streak across the brows while every metric passed),
 /// clean only the outer rim (LESSONS 7), and vary the band width with height (LESSONS 9).
 public enum MatteRefiner {

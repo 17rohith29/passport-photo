@@ -8,7 +8,7 @@ import TestSupport
 
 /// Audits the checks added while fixing LESSONS 39/41/42, with the scepticism those lessons
 /// describe. `minBackdropCoverage` was calibrated on four photos of one person against one wall,
-/// so the risk is not only that a check cannot fail — it is that it rejects real people.
+/// so the risk is not only that a check cannot fail, it is that it rejects real people.
 @Suite("Audit of the new checks")
 struct NewCheckAuditTests {
 
@@ -94,7 +94,7 @@ struct NewCheckAuditTests {
                 let cover = Self.coverage(image, spec: spec)
                 #expect(
                     check.status == .pass,
-                    "\(spec.id) \(label): coverage \(cover * 100)% — \(check.measured)"
+                    "\(spec.id) \(label): coverage \(cover * 100)%, \(check.measured)"
                 )
                 // Margin, not just a pass: at 0.30 a China visa with ordinary hair measured
                 // 29.5% and failed. If a future change narrows this, the floor moved without

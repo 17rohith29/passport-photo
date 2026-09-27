@@ -8,7 +8,7 @@ import PhotoPipeline
 import SpecKit
 import UniformTypeIdentifiers
 
-/// The end-to-end suite. CLAUDE.md: look at the outputs, not just the numbers — these write
+/// The end-to-end suite. CLAUDE.md: look at the outputs, not just the numbers, these write
 /// debug images to /tmp/passportkit-debug/ for inspection by eye.
 @Suite("Pipeline on fixtures", .enabled(if: RepoPaths.hasFixturePhotos))
 struct PipelineFixtureTests {

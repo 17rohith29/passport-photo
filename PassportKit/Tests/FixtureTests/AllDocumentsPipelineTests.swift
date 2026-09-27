@@ -35,7 +35,7 @@ struct AllDocumentsPipelineTests {
         for spec in try Self.specs() {
             let result = await PassportPipeline().run(image, spec: spec)
             guard let output = result.output else {
-                problems.append("\(spec.id): no output — \(result.failureReason ?? "?")")
+                problems.append("\(spec.id): no output, \(result.failureReason ?? "?")")
                 continue
             }
             let geometry = try #require(SpecGeometry(spec: spec))
@@ -68,7 +68,7 @@ struct AllDocumentsPipelineTests {
                                        spec.id, output.digitalSizeKB, kb.min, kb.max))
             }
             for failure in result.failures {
-                problems.append("\(spec.id): failed \(failure.id.rawValue) — \(failure.measured)")
+                problems.append("\(spec.id): failed \(failure.id.rawValue): \(failure.measured)")
             }
         }
 

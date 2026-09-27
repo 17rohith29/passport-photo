@@ -18,7 +18,7 @@ struct FixtureManifestTests {
         #expect(suite.specId == "in-passport")
         #expect(suite.cases.count == 14)
         #expect(suite.cases.filter { $0.expect == .accept }.count == 1)
-        // IMG_0009 moved from reject to borderline on 2026-09-21 — see its note and LESSONS 19.
+        // IMG_0009 moved from reject to borderline on 2026-09-21, see its note and LESSONS 19.
         #expect(suite.cases.filter { $0.expect == .reject }.count == 9)
         #expect(suite.cases.filter { $0.expect == .borderline }.count == 4)
     }
@@ -94,7 +94,7 @@ struct FixtureAvailabilityTests {
         if RepoPaths.hasFixturePhotos {
             #expect(RepoPaths.fixturePhotos != nil)
         } else {
-            print("note: skipping photo-dependent fixture tests — \(RepoPaths.skipReason)")
+            print("note: skipping photo-dependent fixture tests: \(RepoPaths.skipReason)")
         }
     }
 }
