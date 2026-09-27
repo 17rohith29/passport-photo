@@ -13,16 +13,20 @@ store/
 
 ## Upload these five
 
-`marketing/` in numbered order. The first two are what people see in search results, so they
-carry the two claims that matter: exact sizing, and honesty about what cannot be checked.
+`marketing/`, in numbered order. They are written to read as one sentence rather than five
+pictures of an app, because most people swipe the first two and stop:
 
-| File | Headline |
-|---|---|
-| `01-exact-size.png` | Cut to the exact size |
-| `02-cant-check.png` | We tell you what we can't check |
-| `03-how-to-print.png` | Then we show you how to print |
-| `04-countries.png` | Several countries, one tap |
-| `05-unedited.png` | Canada won't take an edited photo |
+| File | Headline | The beat |
+|---|---|---|
+| `01-your-photo.png` | The photo you already have | You do not need a new photo, or a shop |
+| `02-measured.png` | Measured, not guessed | It is real measurement, not a crop tool |
+| `03-honest.png` | And honest about the rest | The thing no competitor does |
+| `04-print.png` | Then exactly how to print it | The part people actually get wrong |
+| `05-countries.png` | Several countries, one tap | Free, no account, nothing uploaded |
+
+Slides 2, 3 and 4 show **one part of a screen, enlarged**, not the whole screen. A full iPhone
+screen is unreadable at the size these are browsed at, and the detail is the point in each case.
+Slides 1 and 5 show the whole app, running off the bottom edge so it reads as a device in use.
 
 1320 x 2868 is the 6.9 inch size. Apple scales it down for smaller devices, so this one set
 covers every iPhone.
@@ -37,6 +41,9 @@ To capture it: run on your iPhone, put it through a photo, and screenshot the re
 Send me the PNG and I will composite it the same way. Suggested caption:
 
 > **Your photo, measured** / Head height, eye line and background, all checked
+
+It would slot in as slide 02, pushing the others down, because a real finished photo is more
+persuasive than any screen of text.
 
 Two notes. A screenshot of a stranger needs their permission, so use your own face or someone
 who has agreed. And set the status bar to 9:41 first if you want it to match the others:
