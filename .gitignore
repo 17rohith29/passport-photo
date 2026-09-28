@@ -3,6 +3,10 @@ fixtures/photos/
 # The finished passport photo is the owner's face too, and an identity-document
 # one at that. M4 compares against it on disk; it never needs to be in history.
 fixtures/reference_output/
+# Exception, decided deliberately: docs/store holds one device screenshot of the owner's face
+# and the App Store slide built from it. Those are destined for a public App Store listing, so
+# a private repo is less exposure than their intended use, and the marketing set has to be
+# reproducible from the repo. No other face photo belongs in history.
 # Xcode
 DerivedData/
 *.xcuserstate
