@@ -19,40 +19,30 @@ pictures of an app, because most people swipe the first two and stop:
 | File | Headline | The beat |
 |---|---|---|
 | `01-your-photo.png` | The photo you already have | You do not need a new photo, or a shop |
-| `02-measured.png` | Measured, not guessed | It is real measurement, not a crop tool |
-| `03-honest.png` | And honest about the rest | The thing no competitor does |
-| `04-print.png` | Then exactly how to print it | The part people actually get wrong |
-| `05-countries.png` | Several countries, one tap | Free, no account, nothing uploaded |
+| `02-measured.png` | Measured, not guessed | A real finished photo, measured on screen |
+| `03-rules.png` | Every rule, checked | It is measurement, not a crop tool |
+| `04-honest.png` | And honest about the rest | The thing no competitor does |
+| `05-print.png` | Then exactly how to print it | The part people actually get wrong |
+| `06-countries.png` | Several countries, one tap | Free, no account, nothing uploaded |
 
-Slides 2, 3 and 4 show **one part of a screen, enlarged**, not the whole screen. A full iPhone
+Slides 2 to 5 show **one part of a screen, enlarged**, not the whole screen. A full iPhone
 screen is unreadable at the size these are browsed at, and the detail is the point in each case.
 Slides 1 and 5 show the whole app, running off the bottom edge so it reads as a device in use.
 
 1320 x 2868 is the 6.9 inch size. Apple scales it down for smaller devices, so this one set
 covers every iPhone.
 
-## The one that is missing
+## The device screenshot
 
-The result screen, with a real finished photo on it. Vision does not run in the Simulator, so it
-can only be captured on a device. It is the most persuasive image the app has and it is worth
-getting during testing.
+`screenshots/6-result.png` is the result screen, captured on an iPhone 15. It cannot be made
+here: Vision does not run in the Simulator, so this screen is unreachable on this machine.
 
-To capture it: run on your iPhone, put it through a photo, and screenshot the result screen.
-Send me the PNG and I will composite it the same way. Suggested caption:
+It is currently a **downscaled copy at 923 x 2000**, and slide 02 upscales it about 1.3x to fill
+the panel. It holds up, but a full-resolution capture (1179 x 2556 on an iPhone 15) would be
+visibly sharper on the one slide that matters most. Worth replacing if a clean original is to
+hand: drop it in as `screenshots/6-result.png` and re-run the tool.
 
-> **Your photo, measured** / Head height, eye line and background, all checked
-
-It would slot in as slide 02, pushing the others down, because a real finished photo is more
-persuasive than any screen of text.
-
-Two notes. A screenshot of a stranger needs their permission, so use your own face or someone
-who has agreed. And set the status bar to 9:41 first if you want it to match the others:
-
-```bash
-xcrun simctl status_bar booted override --time "9:41" --batteryState charged --batteryLevel 100
-```
-
-That only works on the Simulator. On a device, just crop or accept the real status bar.
+Still worth capturing some time: the camera screen with the oval head guide and a live cue.
 
 ## Regenerating
 
