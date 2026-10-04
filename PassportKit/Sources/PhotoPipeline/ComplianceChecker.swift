@@ -67,7 +67,9 @@ public struct ComplianceChecker: Sendable {
             let chin = ChinRefiner.refine(luminance: luminance, face: face, tuning: tuning)
             if let crown = CrownFinder.find(matte: refined, face: face, tuning: tuning) {
                 checks.append(headHeightCheck(crown: crown, chin: chin, geometry: geometry, spec: spec))
-                checks.append(topMarginCheck(crown: crown, geometry: geometry, spec: spec))
+                if let margin = topMarginCheck(crown: crown, geometry: geometry, spec: spec) {
+                    checks.append(margin)
+                }
             } else {
                 checks.append(unmeasuredHeadCheck())
             }
@@ -75,7 +77,11 @@ public struct ComplianceChecker: Sendable {
         } else {
             checks.append(unmeasuredHeadCheck())
         }
-        checks.append(eyeLineCheck(face, height: pixels.height, geometry: geometry, spec: spec))
+        if let eyeLine = eyeLineCheck(
+            face, height: pixels.height, geometry: geometry, spec: spec
+        ) {
+            checks.append(eyeLine)
+        }
 
         return checks
     }
@@ -406,7 +412,11 @@ public struct ComplianceChecker: Sendable {
         )
     }
 
-    func topMarginCheck(crown: CGFloat, geometry: SpecGeometry, spec: DocumentSpec) -> CheckResult {
+    func topMarginCheck(
+        crown: CGFloat, geometry: SpecGeometry, spec: DocumentSpec
+    ) -> CheckResult? {
+        // Same rule as the eye line: no stated band, no row.
+        guard spec.geometry.topMargin?.passMM != nil else { return nil }
         let mm = geometry.pxToMM(Double(crown))
         let band = spec.geometry.topMargin?.passMM
         let status = ThresholdEvaluator.evaluateRange(mm, band)
@@ -420,7 +430,11 @@ public struct ComplianceChecker: Sendable {
 
     func eyeLineCheck(
         _ face: FaceMeasurements, height: Int, geometry: SpecGeometry, spec: DocumentSpec
-    ) -> CheckResult {
+    ) -> CheckResult? {
+        // No band, no rule, no row. A tick against "requirement: any" claims we checked
+        // something the authority never stated.
+        guard CropPlanner.eyeLineBand(spec: spec, photoHeightMM: spec.photo.sizeMM.height) != nil
+        else { return nil }
         let fromBottom = (Double(height) - Double(face.eyeMidpoint.y)) / Double(height)
         let band = CropPlanner.eyeLineBand(spec: spec, photoHeightMM: spec.photo.sizeMM.height)
         // No authority in the set publishes an eye-line position: GOV.UK, canada.ca, the EU

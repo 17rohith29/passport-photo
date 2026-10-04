@@ -19,10 +19,12 @@
       "MOFA states plainly that the standard follows ICAO: 'the passport photo standard is set in accordance with the recommendations of the International Civil Aviation Organization (ICAO)'. That is why the face band here matches the ICAO band used for India and Australia.",
       "The qualitative rules - background colour, glasses, head coverings, how recent, retouching - are in a linked PDF that could not be opened from here, so NONE of them are first-hand verified. White is used as the background because it is the universal safe choice and the sample image on the page shows one, but MOFA may permit other plain light colours. Confidence is medium for that reason, not because the measurements are in doubt.",
       "No eye-line rule is stated and none is invented. MOFA fixes the vertical placement completely with the margins above the head and below the chin, so the eye line follows from them and does not need a band of its own.",
-      "No pixel size is published for a printed submission. The range here is 300 to 600 dpi at 35x45 mm, keeping the 7:9 aspect exactly, which is the same treatment as Australia and the Schengen Area.",
+      "MOFA DOES publish a pixel format, for online applications: 600 x 730 px, face 535 plus or minus 35, 75 plus or minus 35 above the head, 120 plus or minus 35 below the chin, centre 300 plus or minus 35 from the left, side margin at least 35, at mofa.go.jp/mofaj/toko/passport/page24_002222.html, updated 28 August 2026. That frame is 600/730 = 0.822, while 35x45 mm is 0.778: a 5.7% difference, and MOFA annotates the diagram itself with 'the aspect ratio differs from the actual one'. Rendering a 7:9 crop into it would stretch every face by that much, which is exactly the GOV.UK problem in LESSONS 26. This spec therefore outputs 826 x 1062, which is exactly 7:9, and the online frame is listed in notEnforced instead. The proportions agree even though the frames do not: this app's 4/34/7 mm framing is 8.9%/75.6%/15.6% of the height, inside MOFA's px bands of 5.5-15.1%/68.5-78.1%/11.6-21.2%.",
       "Lighting, sharpness and pose thresholds are this app's own calibration, shared with the other documents. MOFA states no numbers for them."
     ],
     "notEnforced": [
+      "MOFA also states a margin BELOW the chin of 7 plus or minus 2 mm and a side margin of at least 2 mm. The app checks neither: it has no bottom-margin check and never measures head width.",
+      "For an ONLINE application MOFA asks for a 600 x 730 px frame, which is a different shape from the printed 35 x 45 mm. This app outputs the printed shape, because matching the online frame would stretch the face 5.7%. Crop or let the portal reframe it if you upload.",
       "Taken within the last 6 months - the app cannot tell when a photo was taken.",
       "The background colour rule was not verified first-hand. MOFA's detailed notice is a PDF this app's author could not open; check it before you submit.",
       "Glasses, head coverings and expression rules were not verified first-hand, and the app cannot detect glasses in any case.",
@@ -46,7 +48,11 @@
           "height": 1062
         }
       },
-      "format": "jpeg"
+      "format": "jpeg",
+      "fileSizeKB": {
+        "min": 20,
+        "max": 600
+      }
     },
     "print": {
       "dpi": 300,
@@ -72,7 +78,7 @@
       }
     },
     "horizontalOffsetFraction": {
-      "failAbove": 0.057
+      "failAbove": 0.0429
     },
     "shouldersVisibleFraction": {
       "failBelow": 0.55

@@ -16,7 +16,7 @@
     "confidence": "medium",
     "notes": [
       "MOFA PUBLISHES NO VISA PHOTO SIZE CENTRALLY. Its own eVISA guidance says only: 'Photo taken within the last six months, against a plain, untextured background, with the entire face clearly centered horizontally.' No dimensions, no face height. The size here comes from a Japanese embassy's own published standard, which is an official source for the issuing country but not a national one.",
-      "The Embassy of Japan in India states: 'Size: 45mm & 45mm with white background', 'Photographed within six months before application', 'Clear front, no hat, no background', 'The photo should be in color, but must have only a white background. Photos with dark or patterned backgrounds will not be accepted', '45 millimeters x 45 millimeters size (no edges)'. The same 45x45 mm figure appears across other Japanese missions.",
+      "The Embassy of Japan in India states: 'Size: 45mm & 45mm with white background', 'Photographed within six months before application', 'Clear front, no hat, no background', 'The photo should be in color, but must have only a white background. Photos with dark or patterned backgrounds will not be accepted', '45 millimeters x 45 millimeters size (no edges)'. The same 45x45 mm figure appears across other Japanese missions. That page carries a 2012 copyright notice and recommends Internet Explorer 7, so it is old; the same 45x45 mm figure was confirmed on other Japanese missions' current pages, which is why it is used.",
       "That page also writes '(2 inches & 2 inches)' beside 45 mm. Those are not the same: 45 mm is 1.77 inches. The millimetre figure is stated twice and precisely, so it is the one used here, and the inch gloss is treated as the embassy's own loose conversion.",
       "NO FACE HEIGHT IS PUBLISHED by MOFA or by the embassy. The 70-80% band here is ICAO's, the same treatment the Schengen and Russia specs use when an authority states a proportion rather than millimetres, and MOFA says elsewhere that Japan's photo standards follow ICAO. It is a reasoned choice, not a quoted rule.",
       "Requirements differ between Japanese missions. The embassy handling your application is the authority; treat this spec as a starting point and check their page.",
@@ -24,6 +24,8 @@
     ],
     "notEnforced": [
       "The face height is not a published Japanese rule. It is ICAO's 70-80% proportion, used because neither MOFA nor the embassy states one.",
+      "The space above the head is this app's framing, not a Japanese rule. No authority states one for a visa, so the same band as the other proportion-based documents is used.",
+      "Japan's eVISA portal reframes the photo you upload into its own guide, so a size you prepare may not be the size it keeps.",
       "Taken within the last 6 months - the app cannot tell when a photo was taken.",
       "No hat or head covering. The app cannot detect them.",
       "The print must have no edges or border.",
@@ -64,6 +66,13 @@
         "max": 0.8
       },
       "note": "ICAO's 70-80% of the photo height. Neither MOFA nor the embassy publishes a face height for visas; see status.notes."
+    },
+    "topMargin": {
+      "targetMM": 3.0,
+      "passMM": {
+        "min": 1.0,
+        "max": 6.0
+      }
     },
     "horizontalOffsetFraction": {
       "failAbove": 0.02
@@ -122,7 +131,7 @@
       "title": "Embassy of Japan in India: photograph standards",
       "authority": "official",
       "url": "https://www.in.emb-japan.go.jp/photo.html",
-      "says": "Size: 45mm & 45mm with white background. Picture should be easily identifiable. Photographed within six months before application. Clear front, no hat, no background. The photo should be in color, but must have only a white background. Photos with dark or patterned backgrounds will not be accepted. 45 millimeters x 45 millimeters size (no edges)."
+      "says": "Size: 45mm&45mm (2 inches & 2 inches) with white background. Picture should be easily identifiable. Photographed within six months before application. Clear front, no hat, no background. The photo should be in color, but must have only a white background. Photos with dark or patterned backgrounds will not be accepted. 45 millimeters x 45 millimeters size (no edges)."
     }
   ]
 }

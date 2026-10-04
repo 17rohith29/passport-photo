@@ -547,3 +547,43 @@ rule exists precisely for the cases that are inconvenient.
 **Note on the substance:** the fraud warning is aimed at services that upload your face to a
 server. This app has no network code at all, which is worth saying next to the quote, but it is
 their stated position and the user gets to weigh it.
+
+## 47. "No pixel size is published" meant "I did not find one"
+The Japan passport spec stated, in its own notes, that MOFA publishes no pixel size. Two clicks
+from the page it cited, mofa.go.jp carries a second dimensioned diagram in **px**: 600 x 730,
+face 535±35, 75±35 above the head, 120±35 below the chin, centre 300±35 from the left, plus file
+caps of 600 KB for Mynaportal and 20 KB to 2 MB for ORR-net. Nothing was enforcing the caps.
+
+And it is LESSONS 26 again: 600/730 = 0.822 against 35/45's 0.778, a 5.7% difference, with
+MOFA's own annotation on the diagram reading "the aspect ratio differs from the actual one".
+Rendering a 7:9 crop into that frame would stretch every face by that much, which is why the
+output stays 7:9 and the online frame is listed in `notEnforced` instead. The proportions do
+agree even though the frames do not, and saying so is more useful than either number alone.
+**Rule:** an absence claim in a spec note is a claim, and needs the same checking as a number.
+"The authority does not state X" should mean the pages were walked, not that one page lacked it.
+
+## 48. Two rules were read off the diagram, written into the note, and then dropped
+The same spec's note says MOFA "fixes the vertical placement completely with the margins above
+the head and below the chin". The below-chin margin, 7±2 mm, appears in neither the checks nor
+`notEnforced`; so does the side margin of at least 2 mm. Both were read, both were described,
+and both then existed nowhere a user would see them. The app has no bottom-margin check at all
+and never measures head width.
+**Rule:** a rule quoted in `notes` must also be in a check or in `notEnforced`. Notes are where
+reasoning goes, not where rules live.
+**Also, from the same review:** the centring was transcribed as a symmetric band when the source
+is not symmetric. 17±2 mm from the left edge of a 35 mm photo, against a 17.5 mm centre, is -2.5
+to +1.5 about centre. The symmetric reading was both wrong and 2.8x looser than every other
+document, so the one centring rule Japan actually publishes was the loosest in the set.
+
+## 49. A tick is a claim that something was checked
+`ThresholdEvaluator.evaluateRange(_, nil)` returns `.pass`, so a check with no band behind it
+rendered as a green tick reading "requirement: any". Japan is the first document to reach it: its
+passport publishes no eye line, its visa published no top margin. Nothing crashed, and the user
+was shown a verified-looking row for a rule no authority states.
+
+This is LESSONS 30 from the other side. There, a check that could not RUN had to fail loudly
+rather than vanish. Here, a check with nothing to test must vanish rather than tick, because the
+tick itself is the claim.
+**Rule:** emit no row when there is no rule. `eyeLineCheck` and `topMarginCheck` return nil.
+**Test:** `NoRuleNoRowTests` ties each row to its spec field and sweeps all ten documents for any
+check advertising its requirement as "any".

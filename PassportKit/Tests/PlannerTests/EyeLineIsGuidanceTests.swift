@@ -27,7 +27,7 @@ struct EyeLineIsGuidanceTests {
         let checker = ComplianceChecker(
             analyzer: VisionFaceAnalyzer(), segmenter: VisionSubjectSegmenter()
         )
-        for spec in try Self.specs() {
+        for spec in try Self.specs() where spec.geometry.eyeLine != nil {
             let geometry = try #require(SpecGeometry(spec: spec), "\(spec.id)")
             let height = Int(geometry.outputSizePx.height)
             // Eyes almost at the bottom of the frame: as far outside any band as it gets.
@@ -39,12 +39,12 @@ struct EyeLineIsGuidanceTests {
                 yawDeg: 0, pitchDeg: 0, rollDeg: 0,
                 captureQuality: nil, eyeOpenness: 0.3, mouthOpenness: 0.02
             )
-            let low = checker.eyeLineCheck(face, height: height, geometry: geometry, spec: spec)
+            let low = try #require(checker.eyeLineCheck(face, height: height, geometry: geometry, spec: spec), "\(spec.id)")
             #expect(low.status != .fail, "\(spec.id) failed a photo on our own eye-line band")
 
             face.leftEye.y = Double(height) * 0.02
             face.rightEye.y = Double(height) * 0.02
-            let high = checker.eyeLineCheck(face, height: height, geometry: geometry, spec: spec)
+            let high = try #require(checker.eyeLineCheck(face, height: height, geometry: geometry, spec: spec), "\(spec.id)")
             #expect(high.status != .fail, "\(spec.id) failed a photo on our own eye-line band")
         }
     }
@@ -66,7 +66,7 @@ struct EyeLineIsGuidanceTests {
             yawDeg: 0, pitchDeg: 0, rollDeg: 0,
             captureQuality: nil, eyeOpenness: 0.3, mouthOpenness: 0.02
         )
-        let check = checker.eyeLineCheck(face, height: height, geometry: geometry, spec: spec)
+        let check = try #require(checker.eyeLineCheck(face, height: height, geometry: geometry, spec: spec))
         #expect(check.status == .warn)
         #expect(check.userMessage?.isEmpty == false)
         #expect(check.requirement.contains("not a stated rule"))
