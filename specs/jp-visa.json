@@ -1,0 +1,128 @@
+{
+  "$schema": "./document-spec.schema.json",
+  "schemaVersion": 1,
+  "id": "jp-visa",
+  "country": {
+    "code": "JP",
+    "name": "Japan"
+  },
+  "document": {
+    "type": "visa",
+    "displayName": "Visa",
+    "channel": "Japanese embassy or consulate"
+  },
+  "status": {
+    "lastVerified": "2026-10-04",
+    "confidence": "medium",
+    "notes": [
+      "MOFA PUBLISHES NO VISA PHOTO SIZE CENTRALLY. Its own eVISA guidance says only: 'Photo taken within the last six months, against a plain, untextured background, with the entire face clearly centered horizontally.' No dimensions, no face height. The size here comes from a Japanese embassy's own published standard, which is an official source for the issuing country but not a national one.",
+      "The Embassy of Japan in India states: 'Size: 45mm & 45mm with white background', 'Photographed within six months before application', 'Clear front, no hat, no background', 'The photo should be in color, but must have only a white background. Photos with dark or patterned backgrounds will not be accepted', '45 millimeters x 45 millimeters size (no edges)'. The same 45x45 mm figure appears across other Japanese missions.",
+      "That page also writes '(2 inches & 2 inches)' beside 45 mm. Those are not the same: 45 mm is 1.77 inches. The millimetre figure is stated twice and precisely, so it is the one used here, and the inch gloss is treated as the embassy's own loose conversion.",
+      "NO FACE HEIGHT IS PUBLISHED by MOFA or by the embassy. The 70-80% band here is ICAO's, the same treatment the Schengen and Russia specs use when an authority states a proportion rather than millimetres, and MOFA says elsewhere that Japan's photo standards follow ICAO. It is a reasoned choice, not a quoted rule.",
+      "Requirements differ between Japanese missions. The embassy handling your application is the authority; treat this spec as a starting point and check their page.",
+      "No pixel size is stated, so the sizes here are 300 to 600 dpi at 45x45 mm. The photo is square, so there is no aspect ratio to get wrong."
+    ],
+    "notEnforced": [
+      "The face height is not a published Japanese rule. It is ICAO's 70-80% proportion, used because neither MOFA nor the embassy states one.",
+      "Taken within the last 6 months - the app cannot tell when a photo was taken.",
+      "No hat or head covering. The app cannot detect them.",
+      "The print must have no edges or border.",
+      "Requirements vary between Japanese embassies and consulates. Check the page of the mission handling your application.",
+      "Unaltered by software. This app replaces the background, which is an alteration."
+    ]
+  },
+  "photo": {
+    "sizeMM": {
+      "width": 45,
+      "height": 45
+    },
+    "digital": {
+      "sizePxRange": {
+        "min": {
+          "width": 531,
+          "height": 531
+        },
+        "max": {
+          "width": 1063,
+          "height": 1063
+        }
+      },
+      "format": "jpeg"
+    },
+    "print": {
+      "dpi": 300,
+      "copiesRequired": 1,
+      "paperFinish": "any"
+    }
+  },
+  "geometry": {
+    "headHeight": {
+      "measure": "chinToCrown",
+      "targetMM": 33.75,
+      "passFraction": {
+        "min": 0.7,
+        "max": 0.8
+      },
+      "note": "ICAO's 70-80% of the photo height. Neither MOFA nor the embassy publishes a face height for visas; see status.notes."
+    },
+    "horizontalOffsetFraction": {
+      "failAbove": 0.02
+    },
+    "shouldersVisibleFraction": {
+      "failBelow": 0.55
+    }
+  },
+  "pose": {
+    "rollDeg": {
+      "inputFailAbove": 10,
+      "outputFailAbove": 2
+    },
+    "yawDeg": {
+      "warnAbove": 5,
+      "failAbove": 8
+    },
+    "pitchDeg": {
+      "warnAbove": 5,
+      "failAbove": 8
+    }
+  },
+  "appearance": {
+    "eyesOpen": true,
+    "mouthClosed": true,
+    "expression": "neutral"
+  },
+  "lighting": {
+    "cheekImbalance": {
+      "warnAbove": 0.08,
+      "failAbove": 0.12
+    }
+  },
+  "background": {
+    "colorHex": "#FFFFFF",
+    "pureFraction": {
+      "failBelow": 0.95
+    },
+    "minChannelValue": 245,
+    "editingRisk": "We replaced the background with white, which is what the embassy asks for. A photo taken against a plain white wall is still safer, since an edited photo may be refused."
+  },
+  "input": {
+    "allowUpscaling": false,
+    "sharpness": {
+      "failBelow": 100
+    }
+  },
+  "sources": [
+    {
+      "title": "Ministry of Foreign Affairs of Japan: JAPAN eVISA FAQ, Q30 photo requirements",
+      "authority": "official",
+      "url": "https://www.evisa.mofa.go.jp/faq",
+      "says": "Photo taken within the last six months, against a plain, untextured background, with the entire face clearly centered horizontally."
+    },
+    {
+      "title": "Embassy of Japan in India: photograph standards",
+      "authority": "official",
+      "url": "https://www.in.emb-japan.go.jp/photo.html",
+      "says": "Size: 45mm & 45mm with white background. Picture should be easily identifiable. Photographed within six months before application. Clear front, no hat, no background. The photo should be in color, but must have only a white background. Photos with dark or patterned backgrounds will not be accepted. 45 millimeters x 45 millimeters size (no edges)."
+    }
+  ]
+}

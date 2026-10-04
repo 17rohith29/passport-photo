@@ -34,11 +34,12 @@ struct StressTests {
     }
 
     /// Every photo against every document. The contract is narrow and absolute.
-    @Test("hundreds of runs across eight documents, and the binary survives")
+    @Test("hundreds of runs across every document, and the binary survives")
     func everyPhotoEveryDocument() async throws {
         let specs = try Self.specs()
         let photos = try Self.photos(limit: 240)
-        #expect(specs.count == 8)
+        // Not a fixed count: a new document should widen this test, not break it.
+        #expect(specs.count >= 8, "only \(specs.count) documents found")
         #expect(photos.count >= 40, "only \(photos.count) photos")
 
         var runs = 0

@@ -11,6 +11,7 @@ struct AllDocumentsTests {
     static let expected = [
         "in-passport", "us-passport", "eu-schengen-visa", "gb-passport",
         "au-passport", "ca-passport", "cn-visa", "ru-visa",
+        "jp-passport", "jp-visa",
     ]
 
     static func all() throws -> [DocumentSpec] {
@@ -22,7 +23,7 @@ struct AllDocumentsTests {
             .filter { $0.status.isTestFixture != true }
     }
 
-    @Test("all eight documents load")
+    @Test("every shipped document loads")
     func allLoad() throws {
         let specs = try Self.all()
         #expect(Set(specs.map(\.id)) == Set(Self.expected))
@@ -99,7 +100,11 @@ struct AllDocumentsTests {
         #expect(Set(specs.map { "\($0.photo.sizeMM.width)x\($0.photo.sizeMM.height)" }).count >= 4)
         #expect(Set(specs.map { $0.background?.colorHex ?? "" }).count >= 3)
         #expect(Set(specs.map { $0.appearance?.glassesAllowed ?? false }).count == 2)
-        #expect(Set(specs.map(\.country.code)).count == specs.count)
+        // Identity is country PLUS document, not country. Japan ships a passport and a visa,
+        // and the schema has always allowed that; this assertion only held while no country
+        // had two.
+        let identities = specs.map { "\($0.country.code)-\($0.document.type.rawValue)" }
+        #expect(Set(identities).count == specs.count, "two documents share a country and type")
     }
 
     @Test("a low-confidence document says why in its notes")

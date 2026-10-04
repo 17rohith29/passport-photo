@@ -1,0 +1,128 @@
+{
+  "$schema": "./document-spec.schema.json",
+  "schemaVersion": 1,
+  "id": "jp-passport",
+  "country": {
+    "code": "JP",
+    "name": "Japan"
+  },
+  "document": {
+    "type": "passport",
+    "displayName": "Passport",
+    "channel": "Ministry of Foreign Affairs of Japan"
+  },
+  "status": {
+    "lastVerified": "2026-10-04",
+    "confidence": "medium",
+    "notes": [
+      "THE GEOMETRY IS FIRST-HAND, THE REST IS NOT. Every measurement here was read off the Ministry of Foreign Affairs' own specification diagram at mofa.go.jp/mofaj/toko/passport/ic_photo.html, updated 3 March 2025: 45 mm high by 35 mm wide, face 34 plus or minus 2 mm, 4 plus or minus 2 mm above the head, 7 plus or minus 2 mm below the chin, the face centred 17 plus or minus 2 mm from the left edge, and side margins of at least 2 mm.",
+      "MOFA states plainly that the standard follows ICAO: 'the passport photo standard is set in accordance with the recommendations of the International Civil Aviation Organization (ICAO)'. That is why the face band here matches the ICAO band used for India and Australia.",
+      "The qualitative rules - background colour, glasses, head coverings, how recent, retouching - are in a linked PDF that could not be opened from here, so NONE of them are first-hand verified. White is used as the background because it is the universal safe choice and the sample image on the page shows one, but MOFA may permit other plain light colours. Confidence is medium for that reason, not because the measurements are in doubt.",
+      "No eye-line rule is stated and none is invented. MOFA fixes the vertical placement completely with the margins above the head and below the chin, so the eye line follows from them and does not need a band of its own.",
+      "No pixel size is published for a printed submission. The range here is 300 to 600 dpi at 35x45 mm, keeping the 7:9 aspect exactly, which is the same treatment as Australia and the Schengen Area.",
+      "Lighting, sharpness and pose thresholds are this app's own calibration, shared with the other documents. MOFA states no numbers for them."
+    ],
+    "notEnforced": [
+      "Taken within the last 6 months - the app cannot tell when a photo was taken.",
+      "The background colour rule was not verified first-hand. MOFA's detailed notice is a PDF this app's author could not open; check it before you submit.",
+      "Glasses, head coverings and expression rules were not verified first-hand, and the app cannot detect glasses in any case.",
+      "Printed on photo paper at the right size, with no border.",
+      "Unaltered by software. This app replaces the background, which is an alteration."
+    ]
+  },
+  "photo": {
+    "sizeMM": {
+      "width": 35,
+      "height": 45
+    },
+    "digital": {
+      "sizePxRange": {
+        "min": {
+          "width": 413,
+          "height": 531
+        },
+        "max": {
+          "width": 826,
+          "height": 1062
+        }
+      },
+      "format": "jpeg"
+    },
+    "print": {
+      "dpi": 300,
+      "copiesRequired": 1,
+      "paperFinish": "any"
+    }
+  },
+  "geometry": {
+    "headHeight": {
+      "measure": "chinToCrown",
+      "targetMM": 34.0,
+      "passMM": {
+        "min": 32.0,
+        "max": 36.0
+      },
+      "note": "MOFA's diagram gives the face as 34 plus or minus 2 mm, crown to chin, which is 32-36 mm."
+    },
+    "topMargin": {
+      "targetMM": 4.0,
+      "passMM": {
+        "min": 2.0,
+        "max": 6.0
+      }
+    },
+    "horizontalOffsetFraction": {
+      "failAbove": 0.057
+    },
+    "shouldersVisibleFraction": {
+      "failBelow": 0.55
+    }
+  },
+  "pose": {
+    "rollDeg": {
+      "inputFailAbove": 10,
+      "outputFailAbove": 2
+    },
+    "yawDeg": {
+      "warnAbove": 5,
+      "failAbove": 8
+    },
+    "pitchDeg": {
+      "warnAbove": 5,
+      "failAbove": 8
+    }
+  },
+  "appearance": {
+    "eyesOpen": true,
+    "mouthClosed": true,
+    "expression": "neutral"
+  },
+  "lighting": {
+    "cheekImbalance": {
+      "warnAbove": 0.08,
+      "failAbove": 0.12
+    }
+  },
+  "background": {
+    "colorHex": "#FFFFFF",
+    "pureFraction": {
+      "failBelow": 0.95
+    },
+    "minChannelValue": 245,
+    "editingRisk": "We replaced the background with white. MOFA's detailed photo rules were not readable from here, so if they forbid an edited photo, a shot taken against a plain light wall is safer."
+  },
+  "input": {
+    "allowUpscaling": false,
+    "sharpness": {
+      "failBelow": 100
+    }
+  },
+  "sources": [
+    {
+      "title": "Ministry of Foreign Affairs of Japan: passport photo standard (updated 3 March 2025)",
+      "authority": "official",
+      "url": "https://www.mofa.go.jp/mofaj/toko/passport/ic_photo.html",
+      "says": "45 (height), 35 (width), 34 plus or minus 2 (face), 4 plus or minus 2 (above the head), 7 plus or minus 2 (below the chin), 17 plus or minus 2 (face centre from the left edge), 2 or more (side margin), units mm. The standard follows the recommendations of the International Civil Aviation Organization (ICAO)."
+    }
+  ]
+}

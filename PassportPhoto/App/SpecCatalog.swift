@@ -26,7 +26,13 @@ final class SpecCatalog {
             }
         }
 
-        specs = loaded.sorted { $0.country.name < $1.country.name }
+        // Country, then document. Japan is the first country with two, and the tiebreak was
+        // whatever order the files happened to load in, which put its visa above its passport.
+        specs = loaded.sorted {
+            $0.country.name == $1.country.name
+                ? $0.document.displayName < $1.document.displayName
+                : $0.country.name < $1.country.name
+        }
         loadFailures = failures
     }
 
