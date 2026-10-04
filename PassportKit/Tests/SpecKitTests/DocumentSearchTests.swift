@@ -91,6 +91,44 @@ struct DocumentSearchTests {
             #expect(found.contains { $0.id == spec.id }, "\(spec.id) cannot be found by its own name")
         }
     }
+
+    /// A country with more than one document must return all of them. Japan is the first, and
+    /// "every document is findable by its country name" only asserted a non-empty result.
+    @Test("searching a country with two documents returns both")
+    func countryWithTwoDocuments() throws {
+        let specs = try AllDocumentsTests.all()
+        var byCountry: [String: [DocumentSpec]] = [:]
+        for spec in specs { byCountry[spec.country.name, default: []].append(spec) }
+        let shared = byCountry.filter { $0.value.count > 1 }
+        #expect(!shared.isEmpty, "no country has two documents, so this test proves nothing")
+
+        for (country, expected) in shared {
+            let found = DocumentSearch.matches(specs, query: country)
+            #expect(
+                found.count == expected.count,
+                "\(country) has \(expected.count) documents but search returned \(found.count)"
+            )
+            for spec in expected {
+                #expect(found.contains { $0.id == spec.id }, "\(spec.id) not found by country name")
+            }
+        }
+    }
+
+    /// And each is reachable by its document type, not only by the country.
+    @Test("each document of a shared country is findable by its type")
+    func findableByType() throws {
+        let specs = try AllDocumentsTests.all()
+        let japan = specs.filter { $0.country.code == "JP" }
+        #expect(japan.count == 2, "expected a Japanese passport and visa")
+        for spec in japan {
+            let found = DocumentSearch.matches(specs, query: spec.document.type.rawValue)
+            #expect(
+                found.contains { $0.id == spec.id },
+                "searching '\(spec.document.type.rawValue)' did not find \(spec.id)"
+            )
+        }
+    }
+
 }
 
 /// A minimal spec, for cases the real files do not cover.
