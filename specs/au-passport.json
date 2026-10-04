@@ -5,10 +5,11 @@
   "country": { "code": "AU", "name": "Australia" },
   "document": { "type": "passport", "displayName": "Passport", "channel": "Australian Passport Office" },
   "status": {
-    "lastVerified": "2026-09-25",
+    "lastVerified": "2026-10-04",
     "confidence": "high",
     "notes": [
-      "Read directly from the Australian Passport Office's own guidelines page.",
+      "Verified first-hand against the Australian Passport Office's own Help centre photo page on 4 October 2026. Every number below is quoted from it: 35-40 mm wide, 45-50 mm high, face 32-36 mm chin to crown, two photos, less than 6 months old, 200 gsm glossy by dye sublimation.",
+      "THE APO ADVISES AGAINST APPS LIKE THIS ONE, in those words: 'We do not recommend using an online passport photo service or a mobile app. These may put you in danger of identity fraud.' It also lists 'Background not plain and edited' among its unacceptable examples. Both are shown to the user rather than buried here.",
       "Australia states a photo SIZE RANGE, not a fixed size: 35-40 mm wide and 45-50 mm high. This spec outputs 35 x 45 mm, the smallest size in that range and the standard photo-booth size, which is legal everywhere in the range. The head band of 32-36 mm is fixed regardless of photo size, so a 35 x 45 photo frames the head most tightly - 71% to 80% of the height.",
       "Glasses are NOT allowed. The APO is explicit: 'You must not wear glasses in a passport photo unless you can't remove them for medical reasons. Vision impairment alone is not an acceptable reason.'",
       "Background may be plain white OR light grey. White is used here; both are stated as acceptable.",
@@ -16,6 +17,8 @@
       "Lighting and sharpness thresholds are this app's own calibration, shared across specs. The APO requires uniform lighting and no shadows or reflections but states no numbers."
     ],
     "notEnforced": [
+      "The Australian Passport Office does not recommend using a mobile app for passport photos at all, and says one may put you at risk of identity fraud. It recommends a professional photo provider. This app runs entirely on your iPhone and uploads nothing, but that is their stated position and you should know it.",
+      "The APO lists \"Background not plain and edited\" among its unacceptable photos, and this app replaces the background.",
       "Printed on heavy-weight glossy paper, minimum 200 gsm, produced by dye sublimation rather than an inkjet printer.",
       "Photo less than 6 months old.",
       "No retouching, such as removing moles, wrinkles or scars.",
@@ -55,13 +58,13 @@
     "colorHex": "#FFFFFF",
     "pureFraction": { "failBelow": 0.95 },
     "minChannelValue": 245,
-    "editingRisk": "We replaced the background. The Australian Passport Office does not accept retouched photos, so a photo taken against a plain white or light grey wall is safer.",
+    "editingRisk": "We replaced the background, and the Australian Passport Office lists an edited background among its unacceptable photos. It also says plainly that it does not recommend a mobile app for passport photos. Use this to check your framing, then have the photo taken by a professional provider.",
     "editingPolicy": "forbidden"
   },
   "input": { "allowUpscaling": false, "sharpness": { "failBelow": 100 } },
   "sources": [
     { "title": "Australian Passport Office: Passport photos", "authority": "official",
-      "url": "https://www.passports.gov.au/PhotoGuidelines",
-      "says": "35-40 mm wide, 45-50 mm high; the height of your face, from your chin to your crown, must be 32-36 mm; less than 6 months old; printed on heavy-weight, glossy paper (minimum 200 gsm) using dye sublimation; a plain white or light grey background that contrasts with your face; uniform lighting; face centred and looking straight at the camera; no retouching; no shadows or reflections; head not tilted; eyes open and a neutral expression; you must not wear glasses unless you can't remove them for medical reasons; 2 photos required" }
+      "url": "https://www.passports.gov.au/help/passport-photos",
+      "says": "Your photos must be: 35-40 mm wide, 45-50 mm high. The height of your face, from your chin to your crown, must be 32-36 mm. Your photos must be: less than 6 months old; good quality colour prints, produced using dye sublimation (i.e. not from an inkjet printer); printed on heavy-weight, glossy paper (minimum 200 gsm). They must have: a plain white or light grey background that contrasts with your face; uniform lighting. They must not have: any retouching, such as removing moles, wrinkles or scars; any shadows or reflections; your head tilted in any direction. You must not wear glasses in a passport photo unless you can't remove them for medical reasons. Religious head coverings must be plain, without patterns. Hearing aids are allowed; AirPods and other wireless earbuds are not. You'll need to include 2 good-quality photos. We do not recommend using an online passport photo service or a mobile app. These may put you in danger of identity fraud." }
   ]
 }

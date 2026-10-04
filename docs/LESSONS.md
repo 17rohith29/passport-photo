@@ -531,3 +531,19 @@ the user was *looking at* rather than what was *written*, so switching the picke
 logged a single photo as a print sheet.
 **Rule:** never default one artefact to a different artefact. If the thing asked for does not
 exist, say so and disable the control that offers it.
+
+## 46. An authority that advises against this kind of app has to be quoted, not quietly omitted
+The Australian Passport Office's photo page says, in those words: "We do not recommend using an
+online passport photo service or a mobile app. These may put you in danger of identity fraud."
+It also lists "Background not plain and edited" among its unacceptable examples.
+
+Every number in the Australian spec turned out to be right, verified first-hand at last. The
+thing the spec was missing was not a measurement, it was that the issuing authority advises
+against the whole category of product this app belongs to.
+**Rule:** when an authority's own guidance argues against using an app like this, it goes in
+`notEnforced` and in `editingRisk`, where the user reads it before deciding, not into a note
+nobody opens. Leaving it out would be the most self-serving omission available, and the honesty
+rule exists precisely for the cases that are inconvenient.
+**Note on the substance:** the fraud warning is aimed at services that upload your face to a
+server. This app has no network code at all, which is worth saying next to the quote, but it is
+their stated position and the user gets to weigh it.
