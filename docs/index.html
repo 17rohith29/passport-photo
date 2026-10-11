@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exact ID Photo &middot; Support</title>
+<style>
+  :root { --ink:#141936; --body:#2d3350; --muted:#6b7280; --rule:#e5e7eb; --accent:#f7bc4c; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:48px 20px 96px; background:#fff; color:var(--body);
+         font:17px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  main { max-width:680px; margin:0 auto; }
+  h1 { color:var(--ink); font-size:36px; line-height:1.15; margin:0 0 8px; letter-spacing:-0.6px; }
+  h2 { color:var(--ink); font-size:21px; margin:38px 0 10px; letter-spacing:-0.2px; }
+  .rule { height:4px; width:56px; background:var(--accent); border-radius:2px; margin:22px 0 28px; }
+  .lead { font-size:19px; color:var(--ink); }
+  ul { padding-left:22px; } li { margin:6px 0; }
+  footer { margin-top:56px; padding-top:20px; border-top:1px solid var(--rule);
+           color:var(--muted); font-size:15px; }
+  a { color:#2563eb; }
+  @media (prefers-color-scheme: dark) {
+    body { background:#10142b; color:#c9d0ea; }
+    h1,h2,.lead { color:#fff; }
+    footer { color:#8b93b5; border-top-color:#2a3157; }
+    a { color:#7aa2ff; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Exact ID Photo</h1>
+  <div class="rule"></div>
+
+  <p class="lead">Turn a photo you already have into a passport or visa photo cut to the exact
+  size your country asks for. Everything happens on your iPhone, and nothing is uploaded.</p>
+
+  <h2>Support</h2>
+  <p>Something wrong, a measurement that looks off, or a country you want added? Open an issue:
+  <a href="https://github.com/17rohith29/passport-photo/issues">github.com/17rohith29/passport-photo/issues</a>.
+  Or email <a href="mailto:17rohith29@gmail.com">17rohith29@gmail.com</a>.</p>
+  <p>If you are reporting a photo that was handled badly, please say which document you picked and
+  what the app told you. Do not send the photo itself unless you are happy for it to be seen.</p>
+
+  <h2>What it can and cannot do</h2>
+  <p>The app measures what can be measured: head height chin to crown, eye line, head angle,
+  sharpness, even lighting, eyes open, mouth closed, and whether the photo is in colour. It cuts
+  the result to the exact millimetre each document requires.</p>
+  <p>It cannot tell whether you are wearing glasses, how old the photo is, what paper you print it
+  on, or whether your expression suits the person behind the counter. Each document lists those in
+  the app, so a green tick is never mistaken for approval. No app can promise an authority will
+  accept a photo, and this one does not.</p>
+
+  <h2>Countries</h2>
+  <p>Australia, Canada, China, India, Japan (passport and visa), Russia, the Schengen Area, the
+  United Kingdom, the United States. Each requirement is read from the issuing authority's own
+  published guidance, with the source and date shown in the app. Where a figure could not be
+  confirmed first-hand, the app says so.</p>
+
+  <h2>Privacy</h2>
+  <p>Nothing is collected. There is no networking code in the app at all, which you can verify
+  yourself in the source. <a href="privacy.html">Full privacy policy</a>.</p>
+
+  <footer><a href="privacy.html">Privacy</a> &middot;
+  <a href="https://github.com/17rohith29/passport-photo">Source on GitHub</a> &middot; Apache 2.0</footer>
+</main>
+</body>
+</html>
