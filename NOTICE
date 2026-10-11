@@ -1,0 +1,13 @@
+Exact ID Photo
+Copyright 2026 Rohith Prabakar
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+The country requirement files in specs/ are this project's own research. Each one records the
+official source it was read from, the date it was last verified, and how confident that reading
+is. They are facts about published government rules, not creative work, but the sourcing and
+the honest record of what could NOT be verified took real effort. If you reuse them, keep the
+sources and the status fields with them.
+
+reference/python/ is a prototype pipeline kept as a behavioural oracle for the Swift port. It
+is not shipped in the app and is not used at runtime.

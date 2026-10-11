@@ -25,3 +25,7 @@ fixtures/calibration/
 node_modules/
 package.json
 package-lock.json
+# The device result screenshot and the slide built from it are the owner's face. The App Store
+# listing is a place they control; a public git history is not. Capture locally, upload direct.
+docs/store/screenshots/6-result.png
+docs/store/marketing/02-result.png
