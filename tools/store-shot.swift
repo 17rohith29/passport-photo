@@ -53,28 +53,22 @@ let slides: [Slide] = [
           subline: "Cut to the exact size your document wants",
           presentation: .device),
 
-    // The only slide that needs a device: Vision does not run in the Simulator.
-    Slide(file: "02-measured.png", source: "6-result.png",
+    Slide(file: "02-measured.png", source: "3-requirements.png",
           headline: "Measured, not guessed",
-          subline: "Chin to crown, to the millimetre",
-          presentation: .detail(CGRect(x: 35, y: 295, width: 855, height: 1270))),
-
-    Slide(file: "03-rules.png", source: "3-requirements.png",
-          headline: "Every rule, checked",
           subline: "Head height, eye line, background, file size",
           presentation: .detail(CGRect(x: 50, y: 420, width: 1220, height: 1300))),
 
-    Slide(file: "04-honest.png", source: "3-requirements.png",
+    Slide(file: "03-honest.png", source: "3-requirements.png",
           headline: "And honest about the rest",
           subline: "A green tick is never a promise",
           presentation: .detail(CGRect(x: 50, y: 1780, width: 1220, height: 965))),
 
-    Slide(file: "05-print.png", source: "4-saved-sheet.png",
+    Slide(file: "04-print.png", source: "4-saved-sheet.png",
           headline: "Then exactly how to print it",
           subline: "Paper, copies, and where to submit them",
           presentation: .detail(CGRect(x: 45, y: 965, width: 1230, height: 1370))),
 
-    Slide(file: "06-countries.png", source: "2-picker.png",
+    Slide(file: "05-countries.png", source: "2-picker.png",
           headline: "Several countries, one tap",
           subline: "Free. No account. Nothing uploaded.",
           presentation: .device),
