@@ -587,3 +587,19 @@ tick itself is the claim.
 **Rule:** emit no row when there is no rule. `eyeLineCheck` and `topMarginCheck` return nil.
 **Test:** `NoRuleNoRowTests` ties each row to its spec field and sweeps all ten documents for any
 check advertising its requirement as "any".
+
+## 50. An archive is a snapshot, not a view of the project
+App Store Connect rejected the first upload: portrait-only orientations in a bundle that claimed
+iPad support, which is invalid because iPad multitasking needs all four. The project was already
+correct. `TARGETED_DEVICE_FAMILY` had been set to `1` at 23:02; the archive was built at 22:57.
+The settings change could not reach a product that had already been built, and the only honest
+evidence either way was the archived `Info.plist` itself:
+
+    UIDeviceFamily => Array { 1 2 }
+
+Reading the source to decide what shipped was the mistake. The source says what the next build
+will contain, and says nothing about the last one.
+**Rule:** when a store validator rejects a bundle, read the rejected bundle's own `Info.plist`
+before changing anything. Re-archive after any change to build settings or version numbers.
+**Check:** `PlistBuddy -c "Print :UIDeviceFamily"` on the archive under
+`~/Library/Developer/Xcode/Archives/`, not on the project.
