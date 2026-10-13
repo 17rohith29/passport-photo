@@ -75,6 +75,27 @@ reads as range rather than as an error. Leave it alone unless the print screen i
 The strongest screenshot the app could have, a finished photo on the result screen with its
 measurements, also needs a device. Same for the camera screen with the oval head guide.
 
+## The optional header and search-results assets
+
+`banners/`, rendered by `tools/store-banner.swift` from the same palette and the same home
+screen capture, so they read as part of the set rather than as stock art.
+
+| File | Size | Well | Note |
+|---|---|---|---|
+| `header.png` | 3840 x 1646 | Header | Also accepts 5244 x 2950 |
+| `search-results.png` | 3840 x 2560 | Search Results | Also accepts 5244 x 2950 and 1920 x 1280 |
+
+Both are optional. The search asset replaces the screenshots in search results when present,
+so it has to carry the whole pitch alone at a size where only a few words survive; that is why
+it says the three things people actually choose on, free, no watermark, nothing uploaded.
+
+Headlines in these carry an explicit newline. Left to wrap on their own they orphan a single
+short word on the second line, which reads as a layout bug rather than a choice.
+
+```bash
+swift tools/store-banner.swift docs/store/screenshots docs/store/banners
+```
+
 ## Regenerating
 
 The screenshots are generated, not drawn, by `tools/store-shot.swift`. After a UI change,
