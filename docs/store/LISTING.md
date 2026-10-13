@@ -24,12 +24,14 @@ instant. Have a second choice ready:
 
 ## Subtitle (30 characters)
 
-**Passport and visa, sized exactly** (33 - too long, see below)
+**Passport and visa, on device** (29)
 
-Use one of these instead, all within 30:
-- **Passport and visa, on device** (29)
+The first draft, "Passport and visa, sized exactly", was 33 characters against a 30 limit. Of
+the replacements that fit, this is the only one carrying both "passport" and "visa", which the
+subtitle is indexed on, and it states the thing most of this category cannot claim. The others
+stay available, and the subtitle can be changed without a new build:
 - **Cut to the exact size** (21)
-- **Passport photos that measure up** (30)
+- **Passport photos that measure up** (30), but it drops the word visa
 
 ## Promotional text (170 characters)
 
@@ -65,7 +67,7 @@ WHAT IT DOES
 DOCUMENTS
 
 Passports and visas for several countries, with more added over time. Today: Australia, Canada,
-China, India, Russia, the Schengen Area, the United Kingdom and the United States.
+China, India, Japan, Russia, the Schengen Area, the United Kingdom and the United States.
 
 FOR COUNTRIES THAT DO NOT ACCEPT EDITED PHOTOS
 
@@ -87,15 +89,23 @@ so rather than pretending.
 
 ## Keywords (100 characters, comma separated, no spaces)
 
-passport,visa,photo,id,35x45,2x2,schengen,size,crop,print,biometric,application,document
+35x45,2x2,schengen,biometric,crop,size,print,offline,usa,uk,canada,india,japan,china,australia
+
+(94 of 100)
+
+The earlier draft opened with passport,visa,photo,id. Apple indexes the name and subtitle
+together with this field, so all four were already covered by "Exact ID Photo" and "Passport
+and visa, on device" and were spending 23 characters to say nothing. That space now holds the
+country names, which is what turns a search like "canada passport photo" into a match. Russia
+is the one supported country left out, on volume. Add it if a country is ever dropped.
 
 ## Support URL
 
-Needed before submission. A GitHub Pages page or a single page on any domain you own will do.
+https://17rohith29.github.io/passport-photo/
 
 ## Privacy policy URL
 
-Needed before submission. Host docs/store/PRIVACY.md somewhere public.
+https://17rohith29.github.io/passport-photo/privacy.html
 
 ## App Privacy answers
 
