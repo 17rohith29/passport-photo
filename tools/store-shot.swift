@@ -111,9 +111,12 @@ for slide in slides {
     guard let shot = load(slide.source) else {
         fputs("missing \(slide.source)\n", stderr); exit(1)
     }
+    // noneSkipLast, not premultipliedLast: the App Store rejects a screenshot carrying an alpha
+    // channel, and reports it as "File dimensions are invalid", which it is not. The canvas is
+    // fully painted by the gradient below, so there is nothing for alpha to carry anyway.
     let ctx = CGContext(data: nil, width: Int(W), height: Int(H), bitsPerComponent: 8,
                         bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
-                        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+                        bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
     let space = CGColorSpace(name: CGColorSpace.sRGB)!
 
     ctx.drawLinearGradient(
