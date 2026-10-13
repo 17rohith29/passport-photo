@@ -47,7 +47,7 @@ covers every iPhone.
 | `2-picker.png` | Document picker | iPhone 17 Pro Max simulator, 12 Oct 2026 |
 | `3-requirements.png` | Requirements, top | iPhone 17 Pro Max simulator, 12 Oct 2026 |
 | `3b-cant-check.png` | Requirements, scrolled | iPhone 17 Pro Max simulator, 12 Oct 2026 |
-| `4-saved-sheet.png` | Print guidance | **stale**, see below |
+| `4-saved-sheet.png` | Print guidance | older, India flow, deliberately kept |
 
 To recapture, boot the simulator, build and launch, then flatten the status bar first or the
 battery renders green:
@@ -66,10 +66,11 @@ is involved anywhere.
 Vision does not run in the Simulator, so every screen past "Choose Photo" is unreachable on this
 machine. That covers the result screen and the print guidance.
 
-`4-saved-sheet.png` is therefore **older than the rest of the set** and still shows the India
-flow, including "Submit to Passport Seva / VFS Global". Slide 04 is built from it. It is not
-wrong, India is a supported document, but it does not match the United States default the other
-four slides now show. Recapture it on a device during testing and re-run the tool.
+`4-saved-sheet.png` is therefore older than the rest of the set and shows the India flow,
+including "Submit to Passport Seva / VFS Global", while the other four slides show the United
+States default. **The owner has decided this is fine and it is not to be changed.** India is a
+supported document, the print guidance on it is correct, and one slide in another country
+reads as range rather than as an error. Leave it alone unless the print screen itself changes.
 
 The strongest screenshot the app could have, a finished photo on the result screen with its
 measurements, also needs a device. Same for the camera screen with the oval head guide.
