@@ -62,12 +62,14 @@ let slides: [Slide] = [
     Slide(file: "02-measured.png", source: "3-requirements.png",
           headline: "Measured, not guessed",
           subline: "Head height, eye line, background, file size",
-          presentation: .detail(CGRect(x: 50, y: 420, width: 1220, height: 1300))),
+          presentation: .detail(CGRect(x: 50, y: 440, width: 1220, height: 1500))),
 
-    Slide(file: "03-honest.png", source: "3-requirements.png",
+    // A second capture, scrolled: the honesty list no longer fits on the same screen as the
+    // measurements it follows.
+    Slide(file: "03-honest.png", source: "3b-cant-check.png",
           headline: "Honest about what it cannot check",
           subline: "A green check is never a promise",
-          presentation: .detail(CGRect(x: 50, y: 1780, width: 1220, height: 1018))),
+          presentation: .detail(CGRect(x: 50, y: 1090, width: 1220, height: 1432))),
 
     Slide(file: "04-print.png", source: "4-saved-sheet.png",
           headline: "Exactly how to print it",

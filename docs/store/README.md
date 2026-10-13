@@ -39,17 +39,40 @@ scroll indicator.
 1320 x 2868 is the 6.9 inch size. Apple scales it down for smaller devices, so this one set
 covers every iPhone.
 
-## The device screenshot
+## Where the raw captures come from
 
-`screenshots/6-result.png` is the result screen, captured on an iPhone 15. It cannot be made
-here: Vision does not run in the Simulator, so this screen is unreachable on this machine.
+| Source | Screen | Captured |
+|---|---|---|
+| `1-home.png` | Home | iPhone 17 Pro Max simulator, 12 Oct 2026 |
+| `2-picker.png` | Document picker | iPhone 17 Pro Max simulator, 12 Oct 2026 |
+| `3-requirements.png` | Requirements, top | iPhone 17 Pro Max simulator, 12 Oct 2026 |
+| `3b-cant-check.png` | Requirements, scrolled | iPhone 17 Pro Max simulator, 12 Oct 2026 |
+| `4-saved-sheet.png` | Print guidance | **stale**, see below |
 
-It is currently a **downscaled copy at 923 x 2000**, and slide 02 upscales it about 1.3x to fill
-the panel. It holds up, but a full-resolution capture (1179 x 2556 on an iPhone 15) would be
-visibly sharper on the one slide that matters most. Worth replacing if a clean original is to
-hand: drop it in as `screenshots/6-result.png` and re-run the tool.
+To recapture, boot the simulator, build and launch, then flatten the status bar first or the
+battery renders green:
 
-Still worth capturing some time: the camera screen with the oval head guide and a live cue.
+```bash
+xcrun simctl status_bar <udid> override --time "9:41" --batteryState discharging \
+  --batteryLevel 100 --cellularBars 4 --wifiBars 3 --dataNetwork wifi
+xcrun simctl io <udid> screenshot docs/store/screenshots/1-home.png
+```
+
+A 17 Pro Max capture is exactly 1320 x 2868, which is the size the store wants, so no scaling
+is involved anywhere.
+
+## What cannot be captured here, and what is stale because of it
+
+Vision does not run in the Simulator, so every screen past "Choose Photo" is unreachable on this
+machine. That covers the result screen and the print guidance.
+
+`4-saved-sheet.png` is therefore **older than the rest of the set** and still shows the India
+flow, including "Submit to Passport Seva / VFS Global". Slide 04 is built from it. It is not
+wrong, India is a supported document, but it does not match the United States default the other
+four slides now show. Recapture it on a device during testing and re-run the tool.
+
+The strongest screenshot the app could have, a finished photo on the result screen with its
+measurements, also needs a device. Same for the camera screen with the oval head guide.
 
 ## Regenerating
 
@@ -57,9 +80,11 @@ The screenshots are generated, not drawn, by `tools/store-shot.swift`. After a U
 recapture with the Simulator and re-run it:
 
 ```bash
-xcrun swiftc -O tools/store-shot.swift -o /tmp/store-shot
-/tmp/store-shot raw.png out.png "Headline" "Subline"
+swift tools/store-shot.swift docs/store/screenshots docs/store/marketing
 ```
+
+It takes two directories, reads every slide from the `slides` array at the top of the file, and
+writes the whole set. Headlines and crops live in that array, not on the command line.
 
 The palette comes from the app icon: navy #2E3866 to #141936, amber #F7BC4C, and the icon's own
 crop marks framing the device. Headlines auto-fit so a long one shrinks to fit two lines rather
