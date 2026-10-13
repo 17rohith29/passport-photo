@@ -22,7 +22,7 @@ pictures of an app, because most people swipe the first two and stop:
 | `02-measured.png` | Measured, not guessed | It is measurement, not a crop tool |
 | `03-honest.png` | Honest about what it cannot check | The thing no competitor does |
 | `04-print.png` | Exactly how to print it | The part people actually get wrong |
-| `05-countries.png` | Ten passports and visas | Free, no account, nothing uploaded |
+| `05-countries.png` | Each country's own published rules | Free, no account, nothing uploaded |
 
 All five show **one part of a screen, enlarged**, except the last. A full iPhone screen is
 unreadable at the size these are browsed at, and on the home screen the lower half is empty.

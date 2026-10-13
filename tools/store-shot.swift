@@ -75,7 +75,7 @@ let slides: [Slide] = [
           presentation: .detail(CGRect(x: 45, y: 965, width: 1230, height: 1370))),
 
     Slide(file: "05-countries.png", source: "2-picker.png",
-          headline: "Ten passports and visas",
+          headline: "Each country's own published rules",
           subline: "Free. No account. Nothing uploaded.",
           presentation: .device),
 ]
