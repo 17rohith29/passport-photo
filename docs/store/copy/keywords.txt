@@ -1,0 +1,1 @@
+maker,editor,size,background,biometric,2x2,35x45,crop,print,schengen,usa,uk,canada,india,japan

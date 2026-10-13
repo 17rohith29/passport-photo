@@ -89,9 +89,14 @@ so rather than pretending.
 
 ## Keywords (100 characters, comma separated, no spaces)
 
-35x45,2x2,schengen,biometric,crop,size,print,offline,usa,uk,canada,india,japan,china,australia
+maker,editor,size,background,biometric,2x2,35x45,crop,print,schengen,usa,uk,canada,india,japan
 
 (94 of 100)
+
+Revised after pulling the top 9 results for "passport photo" from the iTunes Search API.
+Every competitor above 4,000 ratings spends its NAME field on search terms, and the words
+they all share are maker, editor, background and size. Those now lead the field, paid for
+by dropping china, australia and offline. The live copy of all five fields is in copy/.
 
 The earlier draft opened with passport,visa,photo,id. Apple indexes the name and subtitle
 together with this field, so all four were already covered by "Exact ID Photo" and "Passport

@@ -1,0 +1,3 @@
+This app works entirely offline. To try it, pick any photo of a face from the library on the test device, or use the camera. No account or login is needed. The app contains no networking code, so nothing is uploaded at any point.
+
+The app never claims a photo will be accepted by any authority. Each document lists the rules it cannot check, and shows the official source the requirements were read from.
