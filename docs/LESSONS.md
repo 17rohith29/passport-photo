@@ -603,3 +603,24 @@ will contain, and says nothing about the last one.
 before changing anything. Re-archive after any change to build settings or version numbers.
 **Check:** `PlistBuddy -c "Print :UIDeviceFamily"` on the archive under
 `~/Library/Developer/Xcode/Archives/`, not on the project.
+
+## 51. A feature can be complete and still inaudible
+The spoken capture cues did nothing on a real phone. Every part of the feature was present and
+correct: the cue text, the three-second repeat guard, the stop on teardown, a toggle in the UI,
+and `AVSpeechSynthesizer.speak` being called with the right string. Nothing was wrong with any
+of it.
+
+The app had simply never configured an `AVAudioSession`. There was no `setCategory` anywhere in
+the codebase. An app that never sets one gets `.soloAmbient`, which the Ring/Silent switch
+mutes, and a phone on silent is the normal state for someone standing in an office or a library
+reading instructions off a screen. The cues were therefore silent in precisely the situation the
+toggle exists for.
+
+This is the inverse of the usual bug. Nothing was written wrong; something was never written at
+all, and the platform's default filled the gap with a behaviour nobody chose. Reading the speech
+code looking for the fault finds nothing, because the fault is not in it.
+**Rule:** anything that makes sound must state its audio session category out loud. For guidance
+and accessibility prompts that is `.playback` with `.voicePrompt`, ducking rather than
+interrupting, torn down with `.notifyOthersOnDeactivation`.
+**Check:** this one needs hardware. The Simulator plays through the Mac's output and has no
+Ring/Silent switch, so it would have sounded perfect here forever.

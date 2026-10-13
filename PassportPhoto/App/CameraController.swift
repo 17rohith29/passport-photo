@@ -51,6 +51,7 @@ final class CameraController: NSObject {
     private var lastAnalysis = Date.distantPast
     private var lastSpoken: CaptureCue.Kind?
     private var lastSpokenAt = Date.distantPast
+    private var audioSessionActive = false
 
     /// Vision on every frame would heat the phone and drop the preview; five a second is enough
     /// for someone adjusting their position.
@@ -91,6 +92,7 @@ final class CameraController: NSObject {
             if session.isRunning { session.stopRunning() }
         }
         speaker.stopSpeaking(at: .immediate)
+        deactivateAudioSession()
         stabiliser.reset()
         readiness = 0
     }
@@ -306,9 +308,41 @@ final class CameraController: NSObject {
         guard cue.kind != lastSpoken || now.timeIntervalSince(lastSpokenAt) > 3 else { return }
         lastSpoken = cue.kind
         lastSpokenAt = now
+        activateAudioSession()
         let utterance = AVSpeechUtterance(string: cue.message)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate
         speaker.speak(utterance)
+    }
+
+    /// AVSpeechSynthesizer plays through the app's audio session, and an app that never
+    /// configures one gets .soloAmbient, which the Ring/Silent switch mutes outright. A phone on
+    /// silent is the normal state for someone standing in an office or a library, which is
+    /// exactly where this toggle gets turned on, so the cues were inaudible in the case they
+    /// exist for. Nothing was wrong with the speech itself, which is why it looked like a dead
+    /// feature rather than a muted one.
+    ///
+    /// .playback is heard regardless of the switch. Ducking rather than interrupting leaves
+    /// whatever they were listening to playing underneath, and .voicePrompt is the mode built
+    /// for spoken guidance of this kind.
+    private func activateAudioSession() {
+        guard !audioSessionActive else { return }
+        let audio = AVAudioSession.sharedInstance()
+        do {
+            try audio.setCategory(.playback, mode: .voicePrompt,
+                                  options: [.duckOthers, .mixWithOthers])
+            try audio.setActive(true)
+            audioSessionActive = true
+        } catch {
+            // A cue that cannot be spoken is not worth failing a capture over. The same words
+            // are already on screen, which is the primary channel either way.
+        }
+    }
+
+    private func deactivateAudioSession() {
+        guard audioSessionActive else { return }
+        audioSessionActive = false
+        try? AVAudioSession.sharedInstance().setActive(
+            false, options: [.notifyOthersOnDeactivation])
     }
 }
 
