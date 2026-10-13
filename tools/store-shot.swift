@@ -1,9 +1,13 @@
 // Renders the App Store screenshot set.
 //
-// The set is a narrative, not five pictures of the app: the photo you already have, measured,
-// honest about its limits, printed, and free. Slides that make a point about one part of a
-// screen show that part enlarged, because a whole iPhone screen is unreadable at the size these
-// are actually browsed at.
+// The set is a narrative, not five pictures of the app: what it does, measured, honest about
+// its limits, printed, and free. Slides that make a point about one part of a screen show that
+// part enlarged, because a whole iPhone screen is unreadable at the size these are actually
+// browsed at.
+//
+// Every headline has to stand on its own. Apple shows one or two of these in search results,
+// so a caption that only makes sense after reading the previous slide is a caption most people
+// will never understand.
 //
 // usage: store-shot <raw-capture-dir> <output-dir>
 import AppKit
@@ -48,10 +52,12 @@ struct Slide {
 
 // The story, in order. The first two are what most people ever see.
 let slides: [Slide] = [
-    Slide(file: "01-your-photo.png", source: "1-home.png",
-          headline: "The photo you already have",
-          subline: "Cut to the exact size your document wants",
-          presentation: .device),
+    Slide(file: "01-what-it-does.png", source: "1-home.png",
+          headline: "Turn a photo into a passport photo",
+          subline: "Cut to the exact size your country requires",
+          // Cropped past the empty lower half of the home screen. At the size these are
+          // actually browsed, dead white space costs more than the device outline buys.
+          presentation: .detail(CGRect(x: 30, y: 250, width: 1260, height: 2000))),
 
     Slide(file: "02-measured.png", source: "3-requirements.png",
           headline: "Measured, not guessed",
@@ -59,17 +65,17 @@ let slides: [Slide] = [
           presentation: .detail(CGRect(x: 50, y: 420, width: 1220, height: 1300))),
 
     Slide(file: "03-honest.png", source: "3-requirements.png",
-          headline: "And honest about the rest",
-          subline: "A green tick is never a promise",
-          presentation: .detail(CGRect(x: 50, y: 1780, width: 1220, height: 965))),
+          headline: "Honest about what it cannot check",
+          subline: "A green check is never a promise",
+          presentation: .detail(CGRect(x: 50, y: 1780, width: 1220, height: 1018))),
 
     Slide(file: "04-print.png", source: "4-saved-sheet.png",
-          headline: "Then exactly how to print it",
+          headline: "Exactly how to print it",
           subline: "Paper, copies, and where to submit them",
           presentation: .detail(CGRect(x: 45, y: 965, width: 1230, height: 1370))),
 
     Slide(file: "05-countries.png", source: "2-picker.png",
-          headline: "Several countries, one tap",
+          headline: "Ten passports and visas",
           subline: "Free. No account. Nothing uploaded.",
           presentation: .device),
 ]

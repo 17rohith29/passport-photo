@@ -18,16 +18,23 @@ pictures of an app, because most people swipe the first two and stop:
 
 | File | Headline | The beat |
 |---|---|---|
-| `01-your-photo.png` | The photo you already have | You do not need a new photo, or a shop |
-| `02-measured.png` | Measured, not guessed | A real finished photo, measured on screen |
-| `03-rules.png` | Every rule, checked | It is measurement, not a crop tool |
-| `04-honest.png` | And honest about the rest | The thing no competitor does |
-| `05-print.png` | Then exactly how to print it | The part people actually get wrong |
-| `06-countries.png` | Several countries, one tap | Free, no account, nothing uploaded |
+| `01-what-it-does.png` | Turn a photo into a passport photo | What the app is, in one line |
+| `02-measured.png` | Measured, not guessed | It is measurement, not a crop tool |
+| `03-honest.png` | Honest about what it cannot check | The thing no competitor does |
+| `04-print.png` | Exactly how to print it | The part people actually get wrong |
+| `05-countries.png` | Ten passports and visas | Free, no account, nothing uploaded |
 
-Slides 2 to 5 show **one part of a screen, enlarged**, not the whole screen. A full iPhone
-screen is unreadable at the size these are browsed at, and the detail is the point in each case.
-Slides 1 and 5 show the whole app, running off the bottom edge so it reads as a device in use.
+All five show **one part of a screen, enlarged**, except the last. A full iPhone screen is
+unreadable at the size these are browsed at, and on the home screen the lower half is empty.
+
+Every headline stands on its own. Apple shows one or two of these in search results, so a
+caption that only parses after reading the previous slide is one most people never read. That
+is why slide 1 names the function rather than opening a story, and why slides 3 and 4 no longer
+begin with "And" and "Then".
+
+When changing a `.detail` crop, re-render and look at the result. The crop is in source pixels
+and does not know where a row ends, so it will happily cut a sentence in half or catch the
+scroll indicator.
 
 1320 x 2868 is the 6.9 inch size. Apple scales it down for smaller devices, so this one set
 covers every iPhone.
