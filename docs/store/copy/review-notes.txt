@@ -1,48 +1,35 @@
-WHAT THIS APP DOES
+What the app is for, and who for
 
-Exact ID Photo turns a photo already on the device into a passport or visa photo cropped to the exact size a particular country's document requires. All processing happens on the device.
+It takes a photo you already have and crops it to the exact size a particular country wants for a passport or visa. All the work happens on the phone.
 
-TARGET AUDIENCE AND THE PROBLEM IT SOLVES
+It's for anyone applying for one. Normally that means paying a shop, or uploading a photo of your face to a website. This does the measuring on your phone instead, so the photo never leaves it, and it's free.
 
-Anyone applying for a passport or a visa. Getting a compliant photo normally means paying a shop, or uploading a photo of your own face to a website. This app measures and crops on the phone, so the photo never leaves it, and it costs nothing.
+How to test it
 
-HOW TO SET UP AND TEST
+There's nothing to set up: no account, no login, no credentials, so there's no demo account to give you. No part of the app is paid, and there's no user-generated content, so there's nothing to report or block.
 
-There is no account, no login, no credentials, no paid content and nothing to configure.
+Open the app and it pre-selects a document based on your region, labelled "Our guess. Tap to change." Tap "Choose Photo" and pick any photo with a clearly visible face. An ordinary portrait or selfie is fine. It measures the face, straightens and crops the image, then lists what it could and couldn't check. Tap Save and it writes to your library using add-only Photos permission.
 
-1. Launch the app. It pre-selects a document from the device region and labels it "Our guess. Tap to change." Tap that row to pick from ten documents.
-2. Tap "Choose Photo" and select ANY photo containing a clearly visible face from the test device's library. An ordinary portrait or selfie is fine. "Take a Photo" uses the camera instead.
-3. The app measures the face, straightens and crops the image, and lists what it could and could not check.
-4. Tap Save. The photo is written to the library using add-only Photos permission. A "Saved" screen then explains how to print it.
+One thing worth knowing: it needs a face the system can actually detect. Hand it a landscape or an object and it refuses with an explanation. That's intended, not a bug.
 
-The photo must contain a face the system can detect. A landscape or an object is refused with an explanation; that is intended behaviour, not a failure.
+Two other things you might try. "Requirements" shows every rule for the chosen document, with the official source and when I last checked it. And for the US, Canada, the UK and Australia there's a "Keep my own background" toggle, because those four don't accept software-edited photos.
 
-Also worth exercising:
-- "Requirements" lists every rule for the selected document, the official source it came from, and the date it was last verified.
-- For the United States, Canada, the United Kingdom and Australia a "Keep my own background" toggle appears, because those four rule out software-edited photos. With it on, the app only crops and resizes.
-- On the camera screen a "Voice" button speaks the framing cues aloud.
+External services
 
-EXTERNAL SERVICES, TOOLS AND PLATFORMS
+There aren't any.
 
-None. This app uses no external service of any kind.
+No networking code at all: no URLSession, no Network framework, no sockets. Nothing is uploaded or downloaded at any point, including analytics or crash reports. No third-party SDKs and no package dependencies. No authentication, no payments, no data providers, no ad networks. No cloud services and no third-party AI. The face measurement and background separation both use Apple's on-device Vision framework.
 
-- No network code. The binary contains no URLSession, no Network framework and no sockets. Nothing is uploaded or downloaded at any point, including analytics or crash data.
-- No third-party SDKs or libraries. The project has no remote package dependencies.
-- No authentication service, no payment processor, no data provider, no advertising network.
-- No cloud service and no third-party AI service. Face measurement and background separation use Apple's on-device Vision framework.
+The whole app is open source under Apache 2.0 at github.com/17rohith29/passport-photo, so you can check any of that yourself rather than take my word for it.
 
-Apple frameworks only: SwiftUI, Vision, Core Image, Core Graphics, AVFoundation, Photos, PhotosUI, ImageIO, UIKit, Foundation.
+Regional differences
 
-The source is public under the Apache 2.0 licence at github.com/17rohith29/passport-photo, so every claim above can be verified directly.
+There aren't any. Every document is available everywhere and nothing is gated by country. The only thing that varies is cosmetic: on first launch it guesses a likely document from your region and says on screen that it's a guess. You can pick any other one.
 
-REGIONAL DIFFERENCES
+Regulated industry and third-party material
 
-The app behaves identically in every region. All documents are available everywhere and no feature or content is gated by country. The only region-dependent behaviour is cosmetic: on first launch the app pre-selects a likely document from the device region, clearly marked as a guess, and any other document can be chosen.
+This isn't a government service and I'm not affiliated with any passport authority. The app doesn't suggest otherwise anywhere, in the app or on the listing.
 
-REGULATED INDUSTRY AND THIRD-PARTY MATERIAL
+There's no protected material in it either. What it holds are measurements, things like sizes in millimetres, head-height ranges and background colour, taken from each authority's own published guidance. Every document shows the source and the date I last verified it, and where I couldn't confirm a figure first-hand the app says so instead of pretending.
 
-This app is not a government service. It is not affiliated with, endorsed by or authorised by any government or passport authority, and it does not claim to be anywhere in the app or in its App Store listing.
-
-It contains no protected third-party material. What it holds are factual measurements, such as photo dimensions in millimetres, head-height ranges and background colour, read from each authority's own published guidance. For every document the app shows the official source and the date it was last verified. Where a figure could not be confirmed first-hand, the app says so rather than presenting it as verified.
-
-The app never claims a photo will be accepted. Every document lists the rules the app cannot check, such as how recently the photo was taken or whether the subject wears glasses, so a passed check is never presented as approval.
+It also never claims a photo will be accepted. Each document lists what the app can't check, like how recent the photo is or whether you're wearing glasses, so a passed check is never presented as approval.

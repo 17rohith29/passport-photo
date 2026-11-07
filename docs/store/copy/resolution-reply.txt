@@ -1,0 +1,48 @@
+Hi,
+
+Thanks for taking a look. I've attached a screen recording made on my own iPhone, and I've answered each of your questions below. The same answers are now in the App Review Notes field too.
+
+1. Screen recording
+
+It starts on the home screen, opens the app, and runs through the whole thing: picking the document, choosing a photo, the app measuring and cropping it, the list of checks it could and couldn't verify, saving to Photos, and the printing instructions at the end.
+
+None of the three sub-points apply here. There are no accounts, so nothing to register, sign into or delete. Nothing is user-generated or shared between people, so there's no reporting or blocking to show. And there's nothing to pay for.
+
+2. What it's for, and who for
+
+It takes a photo you already have and crops it to the exact size a particular country wants for a passport or visa. All the work happens on the phone.
+
+It's for anyone applying for one. Normally that means paying a shop, or uploading a photo of your face to a website. This does the measuring on your phone instead, so the photo never leaves it, and it's free.
+
+3. How to test it
+
+There's nothing to set up: no account, no login, no credentials, so there's no demo account to give you.
+
+Open the app and it pre-selects a document based on your region, labelled "Our guess. Tap to change." Tap "Choose Photo" and pick any photo with a clearly visible face. An ordinary portrait or selfie is fine. It measures the face, straightens and crops the image, then lists what it could and couldn't check. Tap Save and it writes to your library using add-only Photos permission.
+
+One thing worth knowing: it needs a face the system can actually detect. Hand it a landscape or an object and it refuses with an explanation. That's intended, not a bug.
+
+Two other things you might try. "Requirements" shows every rule for the chosen document, with the official source and when I last checked it. And for the US, Canada, the UK and Australia there's a "Keep my own background" toggle, because those four don't accept software-edited photos.
+
+4. External services
+
+There aren't any.
+
+No networking code at all: no URLSession, no Network framework, no sockets. Nothing is uploaded or downloaded at any point, including analytics or crash reports. No third-party SDKs and no package dependencies. No authentication, no payments, no data providers, no ad networks. No cloud services and no third-party AI. The face measurement and background separation both use Apple's on-device Vision framework.
+
+The whole app is open source under Apache 2.0 at github.com/17rohith29/passport-photo, so you can check any of that yourself rather than take my word for it.
+
+5. Regional differences
+
+There aren't any. Every document is available everywhere and nothing is gated by country. The only thing that varies is cosmetic: on first launch it guesses a likely document from your region and says on screen that it's a guess. You can pick any other one.
+
+6. Regulated industry and third-party material
+
+This isn't a government service and I'm not affiliated with any passport authority. The app doesn't suggest otherwise anywhere, in the app or on the listing.
+
+There's no protected material in it either. What it holds are measurements, things like sizes in millimetres, head-height ranges and background colour, taken from each authority's own published guidance. Every document shows the source and the date I last verified it, and where I couldn't confirm a figure first-hand the app says so instead of pretending.
+
+It also never claims a photo will be accepted. Each document lists what the app can't check, like how recent the photo is or whether you're wearing glasses, so a passed check is never presented as approval.
+
+Thanks,
+Rohith
