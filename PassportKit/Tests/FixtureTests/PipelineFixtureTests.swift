@@ -75,12 +75,18 @@ struct PipelineFixtureTests {
         #expect(output.digital.height == 810)
         #expect(output.digitalSizeKB >= 10 && output.digitalSizeKB <= 250)
 
-        // expected.json allows only yaw and lighting to warn.
-        let allowed: Set<CheckID> = [.yaw, .lighting]
+        // expected.json allows only yaw and lighting to warn. .unedited joins them because this
+        // runs in replace mode and the document publishes an editing risk.
+        let allowed: Set<CheckID> = [.yaw, .lighting, .unedited]
         for check in result.allChecks where check.status != .pass {
             #expect(allowed.contains(check.id) && check.status == .warn,
                     "\(check.id.rawValue) was \(check.status.rawValue): \(check.measured)")
         }
+        // Not incidental. A replaced background has to count against the verdict, or the result
+        // screen goes back to claiming a clean pass beside a banner saying the photo may be
+        // refused for being edited, which is what App Review called misleading.
+        #expect(result.allChecks.contains { $0.id == .unedited && $0.status == .warn },
+                "a replaced background must warn")
         #expect(result.verdict != .cannotUse)
     }
 

@@ -187,16 +187,16 @@ struct ResultView: View {
 
     static func symbol(for verdict: Verdict) -> String {
         switch verdict {
-        case .meetsRequirements: "checkmark.seal.fill"
-        case .meetsRequirementsWithWarnings: "exclamationmark.triangle.fill"
+        case .inRange: "checkmark.seal.fill"
+        case .inRangeWithWarnings: "exclamationmark.triangle.fill"
         case .cannotUse: "xmark.seal.fill"
         }
     }
 
     static func tint(for verdict: Verdict) -> Color {
         switch verdict {
-        case .meetsRequirements: .green
-        case .meetsRequirementsWithWarnings: .orange
+        case .inRange: .green
+        case .inRangeWithWarnings: .orange
         case .cannotUse: .red
         }
     }

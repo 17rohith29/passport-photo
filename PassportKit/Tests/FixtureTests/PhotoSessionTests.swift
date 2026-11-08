@@ -104,7 +104,11 @@ struct PhotoSessionTests {
         #expect(!output.digitalJPEG.isEmpty)
         #expect(output.printSheet != nil, "the Print sheet tab would be empty")
         #expect(output.printSheetJPEG?.isEmpty == false)
-        #expect(session.result?.verdict == .meetsRequirements)
+        // Qualified, not clean: this runs in replace mode, so .unedited warns. It used to read
+        // .inRange, rendered as "Meets requirements", directly above a banner warning the photo
+        // might be refused for being edited.
+        #expect(session.result?.verdict == .inRangeWithWarnings)
+        #expect(session.checks.contains { $0.id == .unedited && $0.status == .warn })
         #expect(!session.checks.isEmpty)
     }
 }

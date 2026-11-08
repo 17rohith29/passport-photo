@@ -11,8 +11,8 @@ enum Haptics {
 
     static func forVerdict(_ verdict: Verdict) {
         switch verdict {
-        case .meetsRequirements: success()
-        case .meetsRequirementsWithWarnings: warning()
+        case .inRange: success()
+        case .inRangeWithWarnings: warning()
         case .cannotUse: failure()
         }
     }

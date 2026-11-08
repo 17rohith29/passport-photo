@@ -97,7 +97,7 @@ struct EndToEndContractTests {
             }
 
             // 7. The verdict and the checks agree.
-            if result.verdict == .meetsRequirements {
+            if result.verdict == .inRange {
                 #expect(result.failures.isEmpty, "\(spec.id) passed with failures")
             }
         }

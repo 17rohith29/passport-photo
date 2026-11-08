@@ -29,7 +29,7 @@ struct SessionFlow: View {
             .background(Color(.systemBackground))
             .onChange(of: session.phase) { _, phase in
                 switch phase {
-                case .finished: Haptics.forVerdict(session.result?.verdict ?? .meetsRequirements)
+                case .finished: Haptics.forVerdict(session.result?.verdict ?? .inRange)
                 case .rejected: Haptics.failure()
                 default: break
                 }
@@ -376,6 +376,7 @@ struct CheckRow: View {
         case .faceIntegrity: return "Face untouched"
         case .colour: return "Colour photo"
         case .shouldersVisible: return "Shoulders visible"
+        case .unedited: return "Unedited photo"
         }
     }
 

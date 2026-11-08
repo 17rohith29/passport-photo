@@ -9,6 +9,9 @@ public enum CheckID: String, Codable, Sendable, CaseIterable {
     case headHeight, topMargin, eyeLine, centering, headroom
     case background, faceIntegrity, shouldersVisible
     case colour
+    /// Whether the finished photo counts as unedited. Replacing the background is an edit, and
+    /// several authorities reject edited photos outright.
+    case unedited
 }
 
 public enum CheckStatus: String, Codable, Sendable {
@@ -54,23 +57,29 @@ public struct CheckResult: Sendable, Identifiable, Equatable {
 }
 
 public enum Verdict: Sendable, Equatable {
-    case meetsRequirements
-    case meetsRequirementsWithWarnings
+    case inRange
+    case inRangeWithWarnings
     case cannotUse
 
-    /// Never promises acceptance (CLAUDE.md non-negotiable 6).
+    /// Speaks only for what was measured (CLAUDE.md non-negotiable 6).
+    ///
+    /// This used to read "Meets requirements", which claimed more than the app can know. The app
+    /// measures a handful of things it can measure; it cannot see how old the photo is, whether
+    /// glasses are being worn, or what it will be printed on, and it says so on the same screen.
+    /// A headline asserting the requirements are met, sitting directly above a warning that the
+    /// photo breaks one of them, is a contradiction however carefully the warning is worded.
     public var headline: String {
         switch self {
-        case .meetsRequirements: return "Meets requirements"
-        case .meetsRequirementsWithWarnings: return "Meets requirements with warnings"
+        case .inRange: return "Measurements are in range"
+        case .inRangeWithWarnings: return "In range, with warnings"
         case .cannotUse: return "Can't use this photo"
         }
     }
 
     public static func from(_ checks: [CheckResult]) -> Verdict {
         if checks.contains(where: { $0.status == .fail }) { return .cannotUse }
-        if checks.contains(where: { $0.status == .warn }) { return .meetsRequirementsWithWarnings }
-        return .meetsRequirements
+        if checks.contains(where: { $0.status == .warn }) { return .inRangeWithWarnings }
+        return .inRange
     }
 }
 

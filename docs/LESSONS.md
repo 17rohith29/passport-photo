@@ -624,3 +624,31 @@ and accessibility prompts that is `.playback` with `.voicePrompt`, ducking rathe
 interrupting, torn down with `.notifyOthersOnDeactivation`.
 **Check:** this one needs hardware. The Simulator plays through the Mac's output and has no
 Ring/Silent switch, so it would have sounded perfect here forever.
+
+## 52. A disclaimer beside a claim does not cancel the claim
+App Review rejected the app under guideline 1.1.6, misleading content, and the reason was on the
+result screen the whole time. The headline read "Meets requirements" in green. Directly beneath
+it sat an orange banner saying the State Department does not accept an edited photo and this one
+was edited. The app asserted compliance and non-compliance in the same view, about the same
+photo, four lines apart.
+
+Structurally the fault was that `editingRisk` was drawn in `ResultView` and never reached
+`Verdict.from`. It was decoration. Every check that could lower the verdict was a `CheckResult`;
+this one was a paragraph. So a photo the app knew would likely be refused still earned the top
+verdict, for four of nine documents, in their default mode.
+
+Apple's wording named the shape exactly: a disclaimer is not sufficient if the rest of the app
+is misleading. The banner was the disclaimer. The headline was the thing that needed to change.
+Every honest sentence in that banner was already written, and none of it helped, because the
+green seal above it is what a user reads.
+
+Two rules come out of it, and the second is the one that nearly got missed.
+**Rule:** a verdict may only speak for what was measured. "Measurements are in range" is a claim
+the app can support; "Meets requirements" is a claim about a decision made by someone else.
+**Rule:** anything that qualifies a verdict must be a check, not a caption. If it cannot change
+the verdict, it is not a safeguard, whatever it says.
+**Also renamed the enum.** `meetsRequirements` as a case name behind a headline that no longer
+says that is how this drifts back.
+**Test:** `VerdictLanguageTests` fails on any headline containing compliant, approved, accepted,
+guaranteed, will pass or meets requirement, and the fixture tests now assert that a replaced
+background warns rather than merely tolerating it.

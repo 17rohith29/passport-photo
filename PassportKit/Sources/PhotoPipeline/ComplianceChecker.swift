@@ -34,6 +34,7 @@ public struct ComplianceChecker: Sendable {
         if let range = spec.photo.digital.fileSizeKB {
             checks.append(fileSizeCheck(jpegSizeKB, range: range))
         }
+        if let edited = uneditedCheck(spec: spec, mode: mode) { checks.append(edited) }
 
         guard let pixels = ImageConversion.pixelImage(from: output) else { return checks }
         let background = RGB(hex: spec.background?.colorHex ?? "#FFFFFF") ?? .white
@@ -88,6 +89,31 @@ public struct ComplianceChecker: Sendable {
 
     /// Reported when the finished photo could not be measured at all. A fail, not a skip: the
     /// user must never be told a photo meets requirements that were never checked.
+    /// Replacing the background is an edit, and several authorities reject edited photos. This
+    /// used to be shown only as a banner beside the verdict, which meant a photo the app itself
+    /// said would likely be refused still earned a clean top verdict. The banner was the
+    /// disclaimer; the verdict was the claim that contradicted it.
+    ///
+    /// Emitting it as a real check puts it where it belongs: in the thing that decides the
+    /// verdict. A replaced background can no longer produce an unqualified result.
+    ///
+    /// Nil when the background was kept, or when the document says nothing about editing. No
+    /// rule, no row (LESSONS 49).
+    func uneditedCheck(spec: DocumentSpec, mode: BackgroundMode) -> CheckResult? {
+        guard mode == .replace, let risk = spec.background?.editingRisk else { return nil }
+        let forbidden = spec.forbidsEditing
+        return CheckResult(
+            id: .unedited,
+            status: .warn,
+            measured: "the background was replaced, which counts as editing",
+            requirement: forbidden
+                ? "\(spec.country.name) does not accept an edited photo"
+                : "\(spec.country.name) may not accept an edited photo",
+            userMessage: risk,
+            fixability: .retakeRequired
+        )
+    }
+
     func unmeasuredHeadCheck() -> CheckResult {
         CheckResult(
             id: .headHeight, status: .fail,
